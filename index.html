@@ -2,263 +2,179 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Media Hub - CapacitiumX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CapacitiumX Media Hub</title>
     
-    <meta name="theme-color" content="#1e1b4b">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/1384/1384061.png">
+
+    <script>
+        const manifest = {
+            "name": "CapacitiumX Media Hub",
+            "short_name": "MediaHub",
+            "start_url": "./",
+            "display": "standalone",
+            "background_color": "#000000",
+            "theme_color": "#a855f7",
+            "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/1384/1384061.png", "sizes": "512x512", "type": "image/png"}]
+        };
+        const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+        document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="${URL.createObjectURL(blob)}">`);
+    </script>
 
     <style>
         :root {
-            --bg: #0f172a;
-            --sidebar: #1e293b;
-            --accent: #a855f7;
-            --text: #f1f5f9;
-            --card: #334155;
-            --gradient: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+            --glass: rgba(255, 255, 255, 0.05);
+            --neon: #a855f7;
+            --bg: #050505;
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
+            margin: 0; font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg); color: white; height: 100vh; display: flex; overflow: hidden;
         }
 
-        /* SIDEBAR */
+        /* Sidebar Glassmorphism */
         .sidebar {
-            width: 250px;
-            background: var(--sidebar);
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            border-right: 1px solid #475569;
+            width: 260px; background: rgba(15, 15, 15, 0.8);
+            backdrop-filter: blur(20px); border-right: 1px solid rgba(255,255,255,0.1);
+            display: flex; flex-direction: column; padding: 30px 15px;
         }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 900;
-            margin-bottom: 40px;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .logo { font-size: 22px; font-weight: 900; background: linear-gradient(90deg, #a855f7, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 40px; }
+
+        .nav-link {
+            padding: 12px 15px; border-radius: 12px; margin-bottom: 8px; cursor: pointer;
+            display: flex; align-items: center; gap: 12px; transition: 0.3s; color: #94a3b8;
+        }
+        .nav-link:hover, .nav-link.active { background: var(--glass); color: white; box-shadow: inset 0 0 10px rgba(168, 85, 247, 0.2); }
+
+        /* Main Content area */
+        .main { flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 30px; }
+
+        /* Input Maestro */
+        .input-hub {
+            background: var(--glass); border: 1px solid rgba(255,255,255,0.1);
+            padding: 10px; border-radius: 20px; display: flex; gap: 10px; align-items: center;
+        }
+        .input-hub input {
+            flex: 1; background: transparent; border: none; color: white; padding: 10px; outline: none; font-size: 16px;
+        }
+        .btn-play {
+            background: linear-gradient(to right, #a855f7, #ec4899);
+            border: none; color: white; padding: 10px 25px; border-radius: 15px;
+            font-weight: bold; cursor: pointer; text-transform: uppercase;
         }
 
-        .nav-item {
-            padding: 12px 15px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: 0.3s;
-            margin-bottom: 5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        /* Video / Audio Container */
+        .player-window {
+            width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 25px;
+            overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            display: none; border: 1px solid rgba(168, 85, 247, 0.3);
         }
+        iframe { width: 100%; height: 100%; border: none; }
 
-        .nav-item:hover, .nav-item.active {
-            background: rgba(168, 85, 247, 0.2);
-            color: var(--accent);
+        /* Estética Premium: Tarjetas */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+        .media-card {
+            background: var(--glass); border-radius: 20px; padding: 15px; transition: 0.4s;
+            border: 1px solid transparent; cursor: pointer;
         }
+        .media-card:hover { transform: translateY(-10px); background: rgba(255,255,255,0.08); border-color: var(--neon); }
+        .media-card img { width: 100%; border-radius: 15px; margin-bottom: 12px; }
 
-        /* CONTENIDO PRINCIPAL */
-        .main-content {
-            flex: 1;
-            padding: 30px;
-            overflow-y: auto;
-            position: relative;
+        /* Footer Player */
+        .master-footer {
+            position: fixed; bottom: 20px; left: 280px; right: 20px;
+            background: rgba(20, 20, 20, 0.9); backdrop-filter: blur(15px);
+            padding: 15px 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: space-between;
         }
-
-        .header-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .search-bar {
-            background: var(--card);
-            border: none;
-            padding: 12px 20px;
-            border-radius: 50px;
-            color: white;
-            width: 300px;
-            outline: none;
-        }
-
-        /* GRID DE TARJETAS */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        .card {
-            background: var(--card);
-            border-radius: 20px;
-            padding: 20px;
-            text-align: center;
-            transition: 0.3s;
-            cursor: pointer;
-            border: 1px solid transparent;
-        }
-
-        .card:hover {
-            transform: translateY(-10px);
-            border-color: var(--accent);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
-
-        .card img {
-            width: 100%;
-            border-radius: 15px;
-            margin-bottom: 15px;
-        }
-
-        /* REPRODUCTOR FLOTANTE */
-        .player-bar {
-            position: fixed;
-            bottom: 0;
-            left: 250px;
-            right: 0;
-            background: rgba(30, 41, 59, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 15px 40px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-top: 1px solid #475569;
-        }
-
-        .progress-container {
-            flex: 1;
-            margin: 0 30px;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background: #475569;
-            border-radius: 10px;
-            position: relative;
-        }
-
-        .progress-fill {
-            width: 45%;
-            height: 100%;
-            background: var(--gradient);
-            border-radius: 10px;
-        }
-
-        .play-btn {
-            background: var(--gradient);
-            border: none;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-
-        /* OCULTAR SECCIONES */
-        .page { display: none; }
-        .page.active { display: block; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="logo">CAPACITIUMX</div>
-        <div class="nav-item active" onclick="showPage('explore')">🌐 Explorar</div>
-        <div class="nav-item" onclick="showPage('music')">🎵 Música</div>
-        <div class="nav-item" onclick="showPage('video')">📺 Video</div>
-        <div class="nav-item" onclick="showPage('library')">📚 Biblioteca</div>
-        <div style="margin-top: auto;" class="nav-item">⚙️ Ajustes</div>
+        <div class="logo">CAPACITIUM HUB</div>
+        <div class="nav-link active">🔥 Tendencias</div>
+        <div class="nav-link">🎵 Playlist Pro</div>
+        <div class="nav-link">🎬 Cine Studio</div>
+        <div class="nav-link">💾 Descargas</div>
     </div>
 
-    <div class="main-content">
-        <div id="explore" class="page active">
-            <div class="header-section">
-                <h1>Descubrir</h1>
-                <input type="text" class="search-bar" placeholder="Buscar música o videos...">
-            </div>
-            
-            <div class="grid">
-                <div class="card" onclick="playMedia('Lo-Fi Hip Hop', 'Lofi Girl')">
-                    <img src="https://images.unsplash.com/photo-1459749411177-042180ce673c?w=400" alt="Music">
-                    <b>YouTube</b>
-                    <p style="font-size: 0.8rem; opacity: 0.6;">Abrir sitio</p>
-                </div>
-                <div class="card" onclick="playMedia('Spotify Mix', 'CapacitiumX')">
-                    <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=400" alt="Music">
-                    <b>Spotify</b>
-                    <p style="font-size: 0.8rem; opacity: 0.6;">Abrir sitio</p>
-                </div>
-                <div class="card">
-                    <img src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400" alt="Music">
-                    <b>TikTok</b>
-                    <p style="font-size: 0.8rem; opacity: 0.6;">Abrir sitio</p>
-                </div>
-                <div class="card">
-                    <img src="https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=400" alt="Music">
-                    <b>Instagram</b>
-                    <p style="font-size: 0.8rem; opacity: 0.6;">Abrir sitio</p>
-                </div>
-            </div>
+    <div class="main">
+        <div class="header">
+            <h1 style="margin:0; font-size: 32px;">Centro de Medios IA</h1>
+            <p style="color: #94a3b8;">Pega cualquier link de YouTube para visualizarlo instantáneamente.</p>
         </div>
 
-        <div id="music" class="page">
-            <h1>Mi Música</h1>
-            <p>Aquí puedes pegar tus enlaces de descarga...</p>
-            <input type="text" class="search-bar" style="width: 100%;" placeholder="Pega el link de YouTube o Spotify aquí">
+        <div class="input-hub">
+            <input type="text" id="mediaUrl" placeholder="Pega el URL de YouTube aquí (ej: https://www.youtube.com/watch?v=...)">
+            <button class="btn-play" onclick="processUrl()">REPRODUCIR</button>
         </div>
-    </div>
 
-    <div class="player-bar">
-        <div style="width: 200px;">
-            <b id="now-playing">Selecciona un tema</b><br>
-            <small id="now-artist">Artista</small>
+        <div id="player-container" class="player-window">
+            <iframe id="videoFrame" allow="autoplay; encrypted-media" allowfullscreen></iframe>
         </div>
-        
-        <div class="progress-container">
-            <div class="progress-bar">
-                <div class="progress-fill"></div>
+
+        <div class="grid">
+            <div class="media-card" onclick="autoPlay('dQw4w9WgXcQ')">
+                <img src="https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg">
+                <b>Música Demo 1</b>
+                <p style="font-size: 12px; color: #94a3b8;">CapacitiumX Records</p>
+            </div>
+            <div class="media-card" onclick="autoPlay('jfKfPfyJRdk')">
+                <img src="https://img.youtube.com/vi/jfKfPfyJRdk/mqdefault.jpg">
+                <b>Lo-Fi Studio</b>
+                <p style="font-size: 12px; color: #94a3b8;">Focus Beats</p>
+            </div>
+            <div class="media-card" onclick="autoPlay('5qap5aO4i9A')">
+                <img src="https://img.youtube.com/vi/5qap5aO4i9A/mqdefault.jpg">
+                <b>Cine 4K Tech</b>
+                <p style="font-size: 12px; color: #94a3b8;">Visual Masters</p>
             </div>
         </div>
-
-        <button class="play-btn" id="master-play">▶</button>
     </div>
 
     <script>
-        function showPage(pageId) {
-            // Ocultar todas
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            // Quitar active de nav
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        function processUrl() {
+            const urlInput = document.getElementById('mediaUrl').value;
+            const videoId = extractVideoId(urlInput);
             
-            // Mostrar seleccionada
-            document.getElementById(pageId).classList.add('active');
-            event.currentTarget.classList.add('active');
+            if (videoId) {
+                const iframe = document.getElementById('videoFrame');
+                const container = document.getElementById('player-container');
+                
+                // Transformamos el URL normal en uno de EMBED (para que YouTube permita verlo dentro)
+                iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+                container.style.display = 'block';
+                container.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                alert("URL no válido. Por favor, pega un link de YouTube completo.");
+            }
         }
 
-        function playMedia(title, artist) {
-            document.getElementById('now-playing').innerText = title;
-            document.getElementById('now-artist').innerText = artist;
-            const btn = document.getElementById('master-play');
-            btn.innerText = '⏸';
-            alert("Reproduciendo: " + title);
+        function autoPlay(id) {
+            document.getElementById('mediaUrl').value = `https://www.youtube.com/watch?v=${id}`;
+            processUrl();
         }
 
-        // PWA - Manifest dinámico para icono
-        const manifest = {
-            "name": "Media Hub Pro",
-            "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/1384/1384061.png", "sizes": "512x512"}]
-        };
-        const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-        document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="${URL.createObjectURL(blob)}">`);
+        function extractVideoId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        // Service Worker dinámico para instalación
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));`;
+                const blob = new Blob([swCode], {type: 'application/javascript'});
+                navigator.serviceWorker.register(URL.createObjectURL(blob));
+            });
+        }
     </script>
 </body>
 </html>
