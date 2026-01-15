@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Hub - CapacitiumX</title>
+    
+    <meta name="theme-color" content="#1e1b4b">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/1384/1384061.png">
+
+    <style>
+        :root {
+            --bg: #0f172a;
+            --sidebar: #1e293b;
+            --accent: #a855f7;
+            --text: #f1f5f9;
+            --card: #334155;
+            --gradient: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 250px;
+            background: var(--sidebar);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            border-right: 1px solid #475569;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: 40px;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-item {
+            padding: 12px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(168, 85, 247, 0.2);
+            color: var(--accent);
+        }
+
+        /* CONTENIDO PRINCIPAL */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .search-bar {
+            background: var(--card);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            color: white;
+            width: 300px;
+            outline: none;
+        }
+
+        /* GRID DE TARJETAS */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            transition: 0.3s;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .card img {
+            width: 100%;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+
+        /* REPRODUCTOR FLOTANTE */
+        .player-bar {
+            position: fixed;
+            bottom: 0;
+            left: 250px;
+            right: 0;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid #475569;
+        }
+
+        .progress-container {
+            flex: 1;
+            margin: 0 30px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #475569;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .progress-fill {
+            width: 45%;
+            height: 100%;
+            background: var(--gradient);
+            border-radius: 10px;
+        }
+
+        .play-btn {
+            background: var(--gradient);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* OCULTAR SECCIONES */
+        .page { display: none; }
+        .page.active { display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo">CAPACITIUMX</div>
+        <div class="nav-item active" onclick="showPage('explore')">🌐 Explorar</div>
+        <div class="nav-item" onclick="showPage('music')">🎵 Música</div>
+        <div class="nav-item" onclick="showPage('video')">📺 Video</div>
+        <div class="nav-item" onclick="showPage('library')">📚 Biblioteca</div>
+        <div style="margin-top: auto;" class="nav-item">⚙️ Ajustes</div>
+    </div>
+
+    <div class="main-content">
+        <div id="explore" class="page active">
+            <div class="header-section">
+                <h1>Descubrir</h1>
+                <input type="text" class="search-bar" placeholder="Buscar música o videos...">
+            </div>
+            
+            <div class="grid">
+                <div class="card" onclick="playMedia('Lo-Fi Hip Hop', 'Lofi Girl')">
+                    <img src="https://images.unsplash.com/photo-1459749411177-042180ce673c?w=400" alt="Music">
+                    <b>YouTube</b>
+                    <p style="font-size: 0.8rem; opacity: 0.6;">Abrir sitio</p>
+                </div>
+                <div class="card" onclick="playMedia('Spotify Mix', 'CapacitiumX')">
+                    <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=400" alt="Music">
+                    <b>Spotify</b>
+                    <p style="font-size: 0.8rem; opacity: 0.6;">Abrir sitio</p>
+                </div>
+                <div class="card">
+                    <img src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400" alt="Music">
+                    <b>TikTok</b>
+                    <p style="font-size: 0.8rem; opacity: 0.6;">Abrir sitio</p>
+                </div>
+                <div class="card">
+                    <img src="https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=400" alt="Music">
+                    <b>Instagram</b>
+                    <p style="font-size: 0.8rem; opacity: 0.6;">Abrir sitio</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="music" class="page">
+            <h1>Mi Música</h1>
+            <p>Aquí puedes pegar tus enlaces de descarga...</p>
+            <input type="text" class="search-bar" style="width: 100%;" placeholder="Pega el link de YouTube o Spotify aquí">
+        </div>
+    </div>
+
+    <div class="player-bar">
+        <div style="width: 200px;">
+            <b id="now-playing">Selecciona un tema</b><br>
+            <small id="now-artist">Artista</small>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+
+        <button class="play-btn" id="master-play">▶</button>
+    </div>
+
+    <script>
+        function showPage(pageId) {
+            // Ocultar todas
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            // Quitar active de nav
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            // Mostrar seleccionada
+            document.getElementById(pageId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        function playMedia(title, artist) {
+            document.getElementById('now-playing').innerText = title;
+            document.getElementById('now-artist').innerText = artist;
+            const btn = document.getElementById('master-play');
+            btn.innerText = '⏸';
+            alert("Reproduciendo: " + title);
+        }
+
+        // PWA - Manifest dinámico para icono
+        const manifest = {
+            "name": "Media Hub Pro",
+            "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/1384/1384061.png", "sizes": "512x512"}]
+        };
+        const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+        document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="${URL.createObjectURL(blob)}">`);
+    </script>
+</body>
+</html>
