@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Capacitium Master Studio - Crystal Audio Pro</title>
+    <title>Capacitium Studio - Aislamiento de Voz Pro</title>
     
     <!-- Iconos y Estilos Premium -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -74,7 +74,7 @@
 <body>
 
     <div class="app-header">
-        <div class="logo"><i class="fa-solid fa-sliders"></i> CAPACITIUM STUDIO STUDIO PRO</div>
+        <div class="logo"><i class="fa-solid fa-microphone-slash"></i> CAPACITIUM STUDIO - ISOLATED VOICE</div>
         <div class="btn-group">
             <button class="btn-action" onclick="undo()"><i class="fa-solid fa-rotate-left"></i> Deshacer</button>
             <button class="btn-action" onclick="redo()"><i class="fa-solid fa-rotate-right"></i> Rehacer</button>
@@ -108,7 +108,7 @@
                 <input type="range" id="chromaKeyTolerance" min="10" max="150" value="70" oninput="updateEditor()">
             </div>
 
-            <div class="panel-title">3. Banda Sonora Instrumental Real (Polifónica)</div>
+            <div class="panel-title">3. Banda Sonora Instrumental Real (Auto-Ducking)</div>
             <div class="tool-group">
                 <label>Selecciona Música de Fondo</label>
                 <select id="bgMusicSelect" onchange="changeMusic()">
@@ -118,8 +118,9 @@
                     <option value="m3">3. Lo-Fi Piano Chillout (Relajante)</option>
                     <option value="m4">4. Deep House Ambient (Corporativo)</option>
                 </select>
-                <label>Volumen Música <span id="valVol">20%</span></label>
+                <label>Volumen Máximo Música <span id="valVol">20%</span></label>
                 <input type="range" id="bgMusicVolume" min="0" max="100" value="20" oninput="document.getElementById('valVol').innerText=this.value+'%'; changeVolume();">
+                <p style="font-size: 11px; color: #a855f7; margin: 2px 0;"><i class="fa-solid fa-bolt"></i> La música bajará automáticamente al 5% cuando comiences a hablar.</p>
             </div>
 
             <div class="panel-title">4. Títulos Dinámicos</div>
@@ -160,7 +161,7 @@
         </div>
     </div>
 
-    <!-- NÚCLEO MECÁNICO DE AUDIO LIMPIO Y MÚSICA SINTETIZADA REAL -->
+    <!-- INGENIERÍA DE AUDIO: AISLAMIENTO Y SISTEMA AUTO-DUCKING -->
     <script>
         let audioCtx = null;
         let mixerDest = null;
@@ -169,6 +170,10 @@
         let musicGainNode = null;
         let currentMusicType = "none";
         let musicInterval = null;
+        
+        // Analizador para detectar la voz en tiempo real
+        let audioAnalyser = null;
+        let dataArray = null;
 
         const videoEl = document.getElementById('hiddenVideo');
 
@@ -177,26 +182,52 @@
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 mixerDest = audioCtx.createMediaStreamDestination();
 
-                // 1. Audio del Video Base
+                // Audio del Video Base
                 videoNode = audioCtx.createMediaElementSource(videoEl);
                 videoNode.connect(audioCtx.destination); 
                 videoNode.connect(mixerDest);            
 
-                // 2. Canal Maestro de Música Instrumental
+                // Canal Maestro de Música Instrumental
                 musicGainNode = audioCtx.createGain();
                 musicGainNode.gain.value = document.getElementById('bgMusicVolume').value / 100;
                 musicGainNode.connect(audioCtx.destination);
                 musicGainNode.connect(mixerDest);
+                
+                // Iniciar el bucle de monitoreo de voz
+                monitorVoiceLevel();
             }
         }
 
-        // MOTOR GENERATIVO DE MÚSICA INSTRUMENTAL POLIFÓNICA REAL (Sintetizador por Software Nativo)
+        // Sistema Inteligente Automatizado para bajar el volumen de la música al hablar (Ducking)
+        function monitorVoiceLevel() {
+            setInterval(() => {
+                if (!audioAnalyser || !musicGainNode || currentMusicType === "none") return;
+                
+                audioAnalyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    sum += dataArray[i];
+                }
+                let averageVolume = sum / dataArray.length;
+                
+                let userMaxVolume = document.getElementById('bgMusicVolume').value / 100;
+
+                // Si el promedio de volumen del micrófono supera el umbral (estás hablando)
+                if (averageVolume > 8) { 
+                    // Atenuar la música instantáneamente al 3% para que tu voz quede completamente limpia
+                    musicGainNode.gain.setTargetAtTime(0.03, audioCtx.currentTime, 0.1);
+                } else {
+                    // Si estás en silencio, regresar la música al volumen configurado suavemente
+                    musicGainNode.gain.setTargetAtTime(userMaxVolume, audioCtx.currentTime, 0.5);
+                }
+            }, 100);
+        }
+
         function playPolifonicTrack(type) {
             if (musicInterval) { clearInterval(musicInterval); musicInterval = null; }
             if (type === "none") return;
 
             let step = 0;
-            // Notas musicales reales en frecuencias (Hz)
             const notes = {
                 C3: 130.81, E3: 164.81, G3: 196.00, B3: 246.94,
                 A3: 220.00, C4: 261.63, E4: 329.63, G4: 392.00,
@@ -206,54 +237,46 @@
             musicInterval = setInterval(() => {
                 if (currentMusicType !== type || !audioCtx) { clearInterval(musicInterval); return; }
 
-                // Fabricar acordes y secuencias melódicas dependiendo del tipo
                 if (type === "m1") { // Tecno Melódico
                     let osc = audioCtx.createOscillator();
                     let filter = audioCtx.createBiquadFilter();
                     osc.type = "sawtooth";
                     filter.type = "lowpass"; filter.frequency.value = 500;
-
                     let baseNote = (step % 4 === 0) ? notes.C3 : (step % 4 === 2 ? notes.E3 : notes.G3);
                     osc.frequency.setValueAtTime(baseNote, audioCtx.currentTime);
-                    
                     osc.connect(filter);
                     filter.connect(musicGainNode);
                     osc.start();
-                    osc.stop(audioCtx.currentTime + 0.2); // Notas cortas rítmicas
+                    osc.stop(audioCtx.currentTime + 0.2);
                 } 
                 else if (type === "m2") { // Synthwave Retro Drive
                     let osc1 = audioCtx.createOscillator();
                     let osc2 = audioCtx.createOscillator();
                     osc1.type = "triangle"; osc2.type = "sawtooth";
-
                     let f = (step % 8 < 4) ? notes.A3 : notes.F3;
                     osc1.frequency.setValueAtTime(f, audioCtx.currentTime);
-                    osc2.frequency.setValueAtTime(f * 1.5, audioCtx.currentTime); // Quinta perfecta para dar cuerpo
-
+                    osc2.frequency.setValueAtTime(f * 1.5, audioCtx.currentTime);
                     osc1.connect(musicGainNode);
                     osc2.connect(musicGainNode);
                     osc1.start(); osc2.start();
                     osc1.stop(audioCtx.currentTime + 0.4); osc2.stop(audioCtx.currentTime + 0.4);
                 }
-                else if (type === "m3") { // Lo-Fi Piano Chillout (Acordes Hermosos en bloque)
-                    let chord = (step % 4 < 2) ? notes.Cmaj : [220, 261, 329]; // Intercambio Cmaj y Am
+                else if (type === "m3") { // Lo-Fi Piano Chillout
+                    let chord = (step % 4 < 2) ? notes.Cmaj : [220, 261, 329];
                     chord.forEach(freq => {
                         let osc = audioCtx.createOscillator();
                         let gain = audioCtx.createGain();
                         osc.type = "sine";
                         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                        
-                        // Envolvente suave para simular un teclado eléctrico
                         gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
                         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
-                        
                         osc.connect(gain);
                         gain.connect(musicGainNode);
                         osc.start();
                         osc.stop(audioCtx.currentTime + 1.3);
                     });
                 }
-                else if (type === "m4") { // Deep House Corporate Ambient
+                else if (type === "m4") { // Deep House
                     let osc = audioCtx.createOscillator();
                     osc.type = "sine";
                     let mel = [notes.E3, notes.G3, notes.B3, notes.C4];
@@ -262,9 +285,8 @@
                     osc.start();
                     osc.stop(audioCtx.currentTime + 0.5);
                 }
-
                 step++;
-            }, type === "m3" ? 1500 : 300); // El Lo-Fi es más lento, el Tecno y Synthwave son rápidos
+            }, type === "m3" ? 1500 : 300);
         }
 
         function changeMusic() {
@@ -300,9 +322,9 @@
         canvas.width = 854; canvas.height = 480;
         ctx.fillStyle = "#111113"; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "#a855f7"; ctx.font = "bold 16px Inter"; ctx.textAlign = "center";
-        ctx.fillText("ESTUDIO CAPACITIUM - MICROFONO CRISTALINO & MÚSICA INSTRUMENTAL", canvas.width/2, canvas.height/2 - 20);
+        ctx.fillText("ESTUDIO PREMIUM - SISTEMA DE MUDO AMBIENTAL Y VOZ ISOLADA", canvas.width/2, canvas.height/2 - 20);
         ctx.fillStyle = "#71717a"; ctx.font = "13px Inter";
-        ctx.fillText("Filtros de distorsión apagados. Tu micrófono se capturará limpio y directo al master final.", canvas.width/2, canvas.height/2 + 10);
+        ctx.fillText("La música ambiental se atenuará por completo al detectar que estás hablando.", canvas.width/2, canvas.height/2 + 10);
 
         function saveState() {
             historyStack.push(JSON.stringify({
@@ -356,32 +378,40 @@
 
         function toggleCamera() {
             initAudioEngine();
+            const camEl = document.getElementById('hiddenCam');
             if (!isCamActive) {
-                // CONFIGURACIÓN DE AUDIO CRISTALINA: Desactivamos filtros agresivos que rompen el sonido
+                // CONFIGURACIÓN MEJORADA DE FILTRADO: Cancelación de eco activa para limpiar sala, sin auto-ganancia
                 navigator.mediaDevices.getUserMedia({ 
                     video: { width: 640, height: 480 }, 
                     audio: {
-                        echoCancellation: false,
-                        noiseSuppression: false,
+                        echoCancellation: true,
+                        noiseSuppression: true,
                         autoGainControl: false
                     } 
                 })
                 .then(stream => {
-                    camera.srcObject = stream;
+                    camEl.srcObject = stream;
                     isCamActive = true;
                     document.getElementById('btnCam').classList.add('primary');
                     document.getElementById('btnCam').innerHTML = "🔴 Apagar Cámara";
 
-                    // Conectar tu voz al mezclador final de grabación sin hacer puente a tus bocinas (Cero Eco/Feedback)
+                    // Enrutar el micrófono al mezclador de grabación
                     micNode = audioCtx.createMediaStreamSource(stream);
                     micNode.connect(mixerDest); 
+
+                    // Conectar el micrófono al analizador de volumen interno para el Auto-Ducking
+                    audioAnalyser = audioCtx.createAnalyser();
+                    audioAnalyser.fftSize = 32;
+                    dataArray = new Uint8Array(audioAnalyser.frequencyBinCount);
+                    micNode.connect(audioAnalyser);
                     
                     renderLoop();
-                }).catch(err => alert("Por favor concede permisos para abrir tu micrófono y cámara de video."));
+                }).catch(err => alert("Por favor concede los permisos de hardware solicitados."));
             } else {
-                let stream = camera.srcObject;
+                let stream = camEl.srcObject;
                 if (stream) stream.getTracks().forEach(track => track.stop());
                 isCamActive = false;
+                audioAnalyser = null;
                 document.getElementById('btnCam').classList.remove('primary');
                 document.getElementById('btnCam').innerHTML = "Activar Mi Cámara e Iniciar Audio";
             }
@@ -443,7 +473,8 @@
                 ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
             }
 
-            if (isCamActive && camera.readyState >= 2) {
+            const camEl = document.getElementById('hiddenCam');
+            if (isCamActive && camEl.readyState >= 2) {
                 if (selectScenario !== "none") {
                     let tempCanvas = document.createElement('canvas');
                     tempCanvas.width = 320; tempCanvas.height = 240;
@@ -457,7 +488,6 @@
                         let r = frame.data[i * 4 + 0];
                         let g = frame.data[i * 4 + 1];
                         let b = frame.data[i * 4 + 2];
-                        
                         if (g > 95 && g > r && g > b || (r > 155 && g > 155 && b > 155)) {
                             frame.data[i * 4 + 3] = 0;
                         }
@@ -493,12 +523,11 @@
         }
 
         function splitVideo() { if (videoEl.src) alert("✂️ Segmento de producción cortado."); }
-        function deleteSegment() { if (videoEl.src) alert("🗑️ Cambios del track removidos."); }
+        function deleteSegment() { if (videoEl.src) alert("🗑️ Cambios de la pista limpiados."); }
 
         function startManualRecord() {
             initAudioEngine();
             recordedChunks = [];
-            
             const finalStream = canvas.captureStream(30); 
             
             if (mixerDest && mixerDest.stream.getAudioTracks().length > 0) {
@@ -546,12 +575,12 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `Produccion_Limpia_Studio_${Date.now()}.webm`;
+            link.download = `Master_Voz_Isolated_${Date.now()}.webm`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             document.getElementById('btnDownloadRec').style.display = 'none';
-            alert("¡Perfecto! Tu video final ha sido procesado con voz cristalina, música instrumental de fondo y descargado a tu equipo.");
+            alert("¡Exportación Completada! Tu video limpio y con atenuación de música automática se ha guardado.");
         }
 
         function getPos(e) {
