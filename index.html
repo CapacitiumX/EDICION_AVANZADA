@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Capacitium Studio - Aislamiento de Voz Pro</title>
+    <title>Capacitium Studio - Voice Booster Edition</title>
     
     <!-- Iconos y Estilos Premium -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -74,7 +74,7 @@
 <body>
 
     <div class="app-header">
-        <div class="logo"><i class="fa-solid fa-microphone-slash"></i> CAPACITIUM STUDIO - ISOLATED VOICE</div>
+        <div class="logo"><i class="fa-solid fa-volume-high"></i> CAPACITIUM STUDIO - VOICE BOOST MASTER</div>
         <div class="btn-group">
             <button class="btn-action" onclick="undo()"><i class="fa-solid fa-rotate-left"></i> Deshacer</button>
             <button class="btn-action" onclick="redo()"><i class="fa-solid fa-rotate-right"></i> Rehacer</button>
@@ -108,8 +108,11 @@
                 <input type="range" id="chromaKeyTolerance" min="10" max="150" value="70" oninput="updateEditor()">
             </div>
 
-            <div class="panel-title">3. Banda Sonora Instrumental Real (Auto-Ducking)</div>
+            <div class="panel-title">3. Amplificador de Voz & Música (Calibrado)</div>
             <div class="tool-group">
+                <label>Volumen de tu Micrófono <span id="valMic" style="color: #22c55e; font-weight: bold;">300% (BOOST)</span></label>
+                <input type="range" id="voiceBoosterVol" min="100" max="400" value="300" oninput="document.getElementById('valMic').innerText=this.value+'% (BOOST)'; changeVoiceBoost();">
+
                 <label>Selecciona Música de Fondo</label>
                 <select id="bgMusicSelect" onchange="changeMusic()">
                     <option value="none">Sin música de fondo</option>
@@ -118,9 +121,8 @@
                     <option value="m3">3. Lo-Fi Piano Chillout (Relajante)</option>
                     <option value="m4">4. Deep House Ambient (Corporativo)</option>
                 </select>
-                <label>Volumen Máximo Música <span id="valVol">20%</span></label>
-                <input type="range" id="bgMusicVolume" min="0" max="100" value="20" oninput="document.getElementById('valVol').innerText=this.value+'%'; changeVolume();">
-                <p style="font-size: 11px; color: #a855f7; margin: 2px 0;"><i class="fa-solid fa-bolt"></i> La música bajará automáticamente al 5% cuando comiences a hablar.</p>
+                <label>Volumen Fondo Musical <span id="valVol">5%</span></label>
+                <input type="range" id="bgMusicVolume" min="0" max="30" value="5" oninput="document.getElementById('valVol').innerText=this.value+'%'; changeVolume();">
             </div>
 
             <div class="panel-title">4. Títulos Dinámicos</div>
@@ -133,7 +135,7 @@
         </div>
 
         <div class="preview-area">
-            <div class="status-overlay" id="statusOverlay">🔴 GRABANDO MULTICAPA EN VIVO...</div>
+            <div class="status-overlay" id="statusOverlay">🔴 GRABANDO MASTER CON GANANCIA...</div>
             <div class="canvas-container" id="canvasContainer" style="cursor: move;">
                 <canvas id="videoCanvas"></canvas>
             </div>
@@ -161,17 +163,17 @@
         </div>
     </div>
 
-    <!-- INGENIERÍA DE AUDIO: AISLAMIENTO Y SISTEMA AUTO-DUCKING -->
+    <!-- INGENIERÍA DE CALIBRACIÓN DE AUDIO: MONO TRACKS + VOICE BOOST + AMBIENT ATTENUATOR -->
     <script>
         let audioCtx = null;
         let mixerDest = null;
         let videoNode = null;
         let micNode = null;
+        let micGainNode = null; // Nodo amplificador dedicado para tu voz
         let musicGainNode = null;
         let currentMusicType = "none";
         let musicInterval = null;
         
-        // Analizador para detectar la voz en tiempo real
         let audioAnalyser = null;
         let dataArray = null;
 
@@ -182,45 +184,52 @@
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 mixerDest = audioCtx.createMediaStreamDestination();
 
-                // Audio del Video Base
+                // 1. Audio del Video Base
                 videoNode = audioCtx.createMediaElementSource(videoEl);
                 videoNode.connect(audioCtx.destination); 
                 videoNode.connect(mixerDest);            
 
-                // Canal Maestro de Música Instrumental
+                // 2. Canal Maestro de Música (Atenuado logarítmicamente desde el inicio)
                 musicGainNode = audioCtx.createGain();
-                musicGainNode.gain.value = document.getElementById('bgMusicVolume').value / 100;
+                musicGainNode.gain.value = (document.getElementById('bgMusicVolume').value / 100) * 0.2; // Escalamiento real fino
                 musicGainNode.connect(audioCtx.destination);
                 musicGainNode.connect(mixerDest);
+
+                // 3. Nodo de Amplificación Crítica para la Voz (Voice Booster Node)
+                micGainNode = audioCtx.createGain();
+                micGainNode.gain.value = document.getElementById('voiceBoosterVol').value / 100; // Inicia en 3.0 (300%)
+                micGainNode.connect(mixerDest); // Va directo al archivo sin retornar a bocinas para evitar vicio
                 
-                // Iniciar el bucle de monitoreo de voz
                 monitorVoiceLevel();
             }
         }
 
-        // Sistema Inteligente Automatizado para bajar el volumen de la música al hablar (Ducking)
+        function changeVoiceBoost() {
+            if (micGainNode) {
+                micGainNode.gain.value = document.getElementById('voiceBoosterVol').value / 100;
+            }
+        }
+
         function monitorVoiceLevel() {
             setInterval(() => {
                 if (!audioAnalyser || !musicGainNode || currentMusicType === "none") return;
                 
                 audioAnalyser.getByteFrequencyData(dataArray);
                 let sum = 0;
-                for (let i = 0; i < dataArray.length; i++) {
-                    sum += dataArray[i];
-                }
+                for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
                 let averageVolume = sum / dataArray.length;
                 
-                let userMaxVolume = document.getElementById('bgMusicVolume').value / 100;
+                // Nivel base muy bajo configurado por el usuario
+                let userMaxVolume = (document.getElementById('bgMusicVolume').value / 100) * 0.2;
 
-                // Si el promedio de volumen del micrófono supera el umbral (estás hablando)
-                if (averageVolume > 8) { 
-                    // Atenuar la música instantáneamente al 3% para que tu voz quede completamente limpia
-                    musicGainNode.gain.setTargetAtTime(0.03, audioCtx.currentTime, 0.1);
+                if (averageVolume > 5) { 
+                    // Cuando detecta tu voz, baja la música al mínimo absoluto casi inaudible
+                    musicGainNode.gain.setTargetAtTime(0.005, audioCtx.currentTime, 0.05);
                 } else {
-                    // Si estás en silencio, regresar la música al volumen configurado suavemente
-                    musicGainNode.gain.setTargetAtTime(userMaxVolume, audioCtx.currentTime, 0.5);
+                    // Retorna al volumen de fondo sutil configurado
+                    musicGainNode.gain.setTargetAtTime(userMaxVolume, audioCtx.currentTime, 0.4);
                 }
-            }, 100);
+            }, 80);
         }
 
         function playPolifonicTrack(type) {
@@ -241,15 +250,15 @@
                     let osc = audioCtx.createOscillator();
                     let filter = audioCtx.createBiquadFilter();
                     osc.type = "sawtooth";
-                    filter.type = "lowpass"; filter.frequency.value = 500;
+                    filter.type = "lowpass"; filter.frequency.value = 450;
                     let baseNote = (step % 4 === 0) ? notes.C3 : (step % 4 === 2 ? notes.E3 : notes.G3);
                     osc.frequency.setValueAtTime(baseNote, audioCtx.currentTime);
                     osc.connect(filter);
                     filter.connect(musicGainNode);
                     osc.start();
-                    osc.stop(audioCtx.currentTime + 0.2);
+                    osc.stop(audioCtx.currentTime + 0.15);
                 } 
-                else if (type === "m2") { // Synthwave Retro Drive
+                else if (type === "m2") { // Synthwave Drive
                     let osc1 = audioCtx.createOscillator();
                     let osc2 = audioCtx.createOscillator();
                     osc1.type = "triangle"; osc2.type = "sawtooth";
@@ -259,21 +268,21 @@
                     osc1.connect(musicGainNode);
                     osc2.connect(musicGainNode);
                     osc1.start(); osc2.start();
-                    osc1.stop(audioCtx.currentTime + 0.4); osc2.stop(audioCtx.currentTime + 0.4);
+                    osc1.stop(audioCtx.currentTime + 0.3); osc2.stop(audioCtx.currentTime + 0.3);
                 }
-                else if (type === "m3") { // Lo-Fi Piano Chillout
+                else if (type === "m3") { // Lo-Fi Piano
                     let chord = (step % 4 < 2) ? notes.Cmaj : [220, 261, 329];
                     chord.forEach(freq => {
                         let osc = audioCtx.createOscillator();
                         let gain = audioCtx.createGain();
                         osc.type = "sine";
                         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+                        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.005, audioCtx.currentTime + 1.4);
                         osc.connect(gain);
                         gain.connect(musicGainNode);
                         osc.start();
-                        osc.stop(audioCtx.currentTime + 1.3);
+                        osc.stop(audioCtx.currentTime + 1.5);
                     });
                 }
                 else if (type === "m4") { // Deep House
@@ -283,10 +292,10 @@
                     osc.frequency.setValueAtTime(mel[step % 4], audioCtx.currentTime);
                     osc.connect(musicGainNode);
                     osc.start();
-                    osc.stop(audioCtx.currentTime + 0.5);
+                    osc.stop(audioCtx.currentTime + 0.4);
                 }
                 step++;
-            }, type === "m3" ? 1500 : 300);
+            }, type === "m3" ? 1600 : 320);
         }
 
         function changeMusic() {
@@ -298,7 +307,7 @@
 
         function changeVolume() {
             if (musicGainNode) {
-                musicGainNode.gain.value = document.getElementById('bgMusicVolume').value / 100;
+                musicGainNode.gain.value = (document.getElementById('bgMusicVolume').value / 100) * 0.2;
             }
         }
     </script>
@@ -322,9 +331,9 @@
         canvas.width = 854; canvas.height = 480;
         ctx.fillStyle = "#111113"; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "#a855f7"; ctx.font = "bold 16px Inter"; ctx.textAlign = "center";
-        ctx.fillText("ESTUDIO PREMIUM - SISTEMA DE MUDO AMBIENTAL Y VOZ ISOLADA", canvas.width/2, canvas.height/2 - 20);
+        ctx.fillText("ESTUDIO CAPACITIUM - HARDWARE DE AUDIO DE ALTA PRESENCIA", canvas.width/2, canvas.height/2 - 20);
         ctx.fillStyle = "#71717a"; ctx.font = "13px Inter";
-        ctx.fillText("La música ambiental se atenuará por completo al detectar que estás hablando.", canvas.width/2, canvas.height/2 + 10);
+        ctx.fillText("Tu micrófono corre en modo MONO unificado con un amplificador integrado del 300%", canvas.width/2, canvas.height/2 + 10);
 
         function saveState() {
             historyStack.push(JSON.stringify({
@@ -380,13 +389,14 @@
             initAudioEngine();
             const camEl = document.getElementById('hiddenCam');
             if (!isCamActive) {
-                // CONFIGURACIÓN MEJORADA DE FILTRADO: Cancelación de eco activa para limpiar sala, sin auto-ganancia
+                // CONFIGURACIÓN MEJORADA DE HARDWARE: Forzamos captura en MONO puro y apagamos filtros distorsionadores
                 navigator.mediaDevices.getUserMedia({ 
                     video: { width: 640, height: 480 }, 
                     audio: {
-                        echoCancellation: true,
+                        channelCount: 1,           // MONO REAL UNIFICADO: Concentra toda la potencia
+                        echoCancellation: true,    // Limpia ruidos
                         noiseSuppression: true,
-                        autoGainControl: false
+                        autoGainControl: false     // Evita que el volumen de tu cuarto suba solo
                     } 
                 })
                 .then(stream => {
@@ -395,11 +405,11 @@
                     document.getElementById('btnCam').classList.add('primary');
                     document.getElementById('btnCam').innerHTML = "🔴 Apagar Cámara";
 
-                    // Enrutar el micrófono al mezclador de grabación
+                    // Conectar la señal del micrófono al amplificador booster (Gain Node)
                     micNode = audioCtx.createMediaStreamSource(stream);
-                    micNode.connect(mixerDest); 
+                    micNode.connect(micGainNode); 
 
-                    // Conectar el micrófono al analizador de volumen interno para el Auto-Ducking
+                    // Conectar al analizador automático de ducking
                     audioAnalyser = audioCtx.createAnalyser();
                     audioAnalyser.fftSize = 32;
                     dataArray = new Uint8Array(audioAnalyser.frequencyBinCount);
@@ -522,8 +532,8 @@
             return Math.floor(s / 60).toString().padStart(2, '0') + ':' + Math.floor(s % 60).toString().padStart(2, '0');
         }
 
-        function splitVideo() { if (videoEl.src) alert("✂️ Segmento de producción cortado."); }
-        function deleteSegment() { if (videoEl.src) alert("🗑️ Cambios de la pista limpiados."); }
+        function splitVideo() { if (videoEl.src) alert("✂️ Segmento marcado para corte."); }
+        function deleteSegment() { if (videoEl.src) alert("🗑️ Cambios limpiados."); }
 
         function startManualRecord() {
             initAudioEngine();
@@ -575,12 +585,12 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `Master_Voz_Isolated_${Date.now()}.webm`;
+            link.download = `Master_Boosted_Mono_${Date.now()}.webm`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             document.getElementById('btnDownloadRec').style.display = 'none';
-            alert("¡Exportación Completada! Tu video limpio y con atenuación de música automática se ha guardado.");
+            alert("¡Exportación completada! El master se grabó con tu voz amplificada y la música perfectamente controlada de fondo.");
         }
 
         function getPos(e) {
