@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Capacitium Studio Professional Edition</title>
+    <title>Capacitium Master Studio - Audio Fix Pro</title>
     
     <!-- Iconos y Estilos Premium -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -34,7 +34,6 @@
         
         .workspace { flex: 1; display: flex; overflow: hidden; height: calc(100vh - 220px); }
 
-        /* Sidebar de Herramientas */
         .control-sidebar {
             width: 340px; background: var(--panel); border-right: 1px solid var(--glass-border);
             padding: 15px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto;
@@ -54,21 +53,17 @@
         .btn-action:hover { background: rgba(255,255,255,0.08); border-color: #555; }
         .btn-action.primary { background: linear-gradient(90deg, var(--neon), var(--neon-pink)); border: none; font-weight: 600; }
         .btn-action.rec-active { background: #ef4444; border-color: #f87171; animation: pulse 1.5s infinite; }
-        .btn-action.danger { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); }
 
-        /* Área de Monitorización */
         .preview-area { flex: 1; background: #010102; display: flex; align-items: center; justify-content: center; padding: 15px; position: relative; }
         .canvas-container { position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.9); border: 1px solid rgba(255,255,255,0.05); }
         canvas { display: block; max-width: 100%; max-height: 55vh; background: #000; }
 
-        /* Línea de Tiempo e Historial */
         .timeline-section { background: var(--panel); border-top: 1px solid var(--glass-border); padding: 12px 20px; display: flex; flex-direction: column; gap: 10px; }
         .timeline-header { display: flex; align-items: center; justify-content: space-between; }
         .btn-group { display: flex; gap: 6px; }
 
         .timeline-container { position: relative; background: #111113; border-radius: 6px; height: 50px; border: 1px solid var(--glass-border); overflow: hidden; }
         .timeline-progress { position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: rgba(168, 85, 247, 0.12); border-right: 2px solid var(--neon); pointer-events: none; z-index: 4; }
-        
         .track-layer { position: absolute; top: 4px; bottom: 4px; background: linear-gradient(90deg, #1f1f23, #2d2d33); border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 11px; color: #ccc; z-index: 2; border: 1px solid rgba(255,255,255,0.03); }
 
         #hiddenVideo, #hiddenCam, #bgImageHidden { display: none; }
@@ -78,21 +73,18 @@
 </head>
 <body>
 
-    <!-- Top Bar con Controles Manuales Completos de Grabación -->
+    <!-- Header superior con Control de Grabación -->
     <div class="app-header">
-        <div class="logo"><i class="fa-solid fa-video"></i> CAPACITIUM MASTER STUDIO</div>
+        <div class="logo"><i class="fa-solid fa-microphone-lines"></i> CAPACITIUM MASTER STUDIO (PRO AUDIO)</div>
         <div class="btn-group">
             <button class="btn-action" onclick="undo()"><i class="fa-solid fa-rotate-left"></i> Deshacer</button>
             <button class="btn-action" onclick="redo()"><i class="fa-solid fa-rotate-right"></i> Rehacer</button>
-            
-            <!-- Nuevos botones con control manual estricto -->
             <button class="btn-action primary" id="btnStartRec" onclick="startManualRecord()"><i class="fa-solid fa-circle"></i> Iniciar Grabar</button>
             <button class="btn-action" id="btnStopRec" onclick="stopManualRecord()" disabled><i class="fa-solid fa-square"></i> Detener</button>
             <button class="btn-action" id="btnDownloadRec" onclick="downloadManualRecord()" style="background: #22c55e; border: none; display: none;"><i class="fa-solid fa-save"></i> Guardar Video</button>
         </div>
     </div>
 
-    <!-- Workspace -->
     <div class="workspace">
         <div class="control-sidebar">
             
@@ -101,10 +93,10 @@
                 <button class="btn-action primary" onclick="document.getElementById('videoUpload').click()"><i class="fa-solid fa-file-video"></i> Importar Video Base</button>
                 <input type="file" id="videoUpload" accept="video/*" style="display: none;" onchange="loadVideo(event)">
                 
-                <button class="btn-action" id="btnCam" onclick="toggleCamera()"><i class="fa-solid fa-camera"></i> Activar Mi Cámara Web</button>
+                <button class="btn-action" id="btnCam" onclick="toggleCamera()"><i class="fa-solid fa-camera"></i> Activar Mi Cámara e Iniciar Audio</button>
             </div>
 
-            <div class="panel-title">2. Set Virtual (Escenarios Estables)</div>
+            <div class="panel-title">2. Set Virtual</div>
             <div class="tool-group">
                 <label>Fondo de Pantalla Virtual</label>
                 <select id="bgScenario" onchange="changeScenario()">
@@ -112,20 +104,14 @@
                     <option value="neon">Estudio Cyber Neon (Morado)</option>
                     <option value="dark">Set Corporativo Elegante (Negro/Gris)</option>
                     <option value="wood">Estudio de Radio/Podcast (Madera)</option>
-                    <option value="custom">Subir imagen desde mi Computadora (.JPG/.PNG)</option>
                 </select>
-                <input type="file" id="customBgUpload" accept="image/*" style="display: none;" onchange="loadCustomBg(event)">
-                
-                <label>Tolerancia de Croma <span id="valTole">70</span></label>
-                <input type="range" id="chromaKeyTolerance" min="10" max="150" value="70" oninput="document.getElementById('valTole').innerText=this.value; updateEditor()">
-                
-                <label>Suavizado de Bordes <span id="valSmooth">15</span></label>
-                <input type="range" id="chromaSmoothing" min="1" max="50" value="15" oninput="document.getElementById('valSmooth').innerText=this.value; updateEditor()">
+                <label>Tolerancia Croma</label>
+                <input type="range" id="chromaKeyTolerance" min="10" max="150" value="70" oninput="updateEditor()">
             </div>
 
-            <div class="panel-title">3. Banda Sonora Instrumental (10 Opciones)</div>
+            <div class="panel-title">3. Banda Sonora Instrumental (10 Canales Reales)</div>
             <div class="tool-group">
-                <label>Selecciona Track Instrumental</label>
+                <label>Selecciona Track</label>
                 <select id="bgMusicSelect" onchange="changeMusic()">
                     <option value="none">Sin música de fondo</option>
                     <option value="t1">1. Tecno / Electronic Cyber (High Energy)</option>
@@ -133,17 +119,17 @@
                     <option value="t3">3. Lo-Fi Hip Hop Chillout (Relaxed Study)</option>
                     <option value="t4">4. Deep House Club Mix (Corporate Modern)</option>
                     <option value="t5">5. Cinematic Mystery / Drama (Profundo)</option>
-                    <option value="t6">6. Epic Corporate Presentation (Éxito/Motivación)</option>
+                    <option value="t6">6. Epic Corporate Presentation (Éxito)</option>
                     <option value="t7">7. Chillstep Melódico (Atmosférico)</option>
-                    <option value="t8">8. Upbeat Acoustic Guitar (Alegre/Folk)</option>
+                    <option value="t8">8. Upbeat Acoustic Guitar (Alegre)</option>
                     <option value="t9">9. Minimal Techno Beats (Bajo Continuo)</option>
-                    <option value="t10">10. Ambient Meditation Pad (Relajación Pura)</option>
+                    <option value="t10">10. Ambient Meditation Pad (Relajación)</option>
                 </select>
-                <label>Volumen de Música <span id="valVol">20%</span></label>
+                <label>Volumen Música <span id="valVol">20%</span></label>
                 <input type="range" id="bgMusicVolume" min="0" max="100" value="20" oninput="document.getElementById('valVol').innerText=this.value+'%'; changeVolume();">
             </div>
 
-            <div class="panel-title">4. Títulos Estilo CapCut</div>
+            <div class="panel-title">4. Títulos Dinámicos</div>
             <div class="tool-group">
                 <input type="text" id="editorText" value="Arrástrame en el cuadro" oninput="saveState(); updateEditor();">
                 <label>Tamaño Fuente</label>
@@ -152,28 +138,26 @@
             </div>
         </div>
 
-        <!-- Monitor de Video -->
         <div class="preview-area">
-            <div class="status-overlay" id="statusOverlay">🔴 GRABANDO EN VIVO...</div>
+            <div class="status-overlay" id="statusOverlay">🔴 GRABANDO VIDEO Y MÚSICA EN VIVO...</div>
             <div class="canvas-container" id="canvasContainer" style="cursor: move;">
                 <canvas id="videoCanvas"></canvas>
             </div>
-            <video id="hiddenVideo" loop playsinline muted></video>
-            <video id="hiddenCam" autoplay playsinline muted></video>
-            <img id="bgImageHidden" crossorigin="anonymous" src="">
             
-            <!-- Elemento de reproducción de audio unificado -->
+            <!-- ELIMINADO EL ATRIBUTO MUTED PARA QUE EL NAVEGADOR REPRODUZCA SONIDO -->
+            <video id="hiddenVideo" loop playsinline crossorigin="anonymous"></video>
+            <video id="hiddenCam" autoplay playsinline></video>
+            <img id="bgImageHidden" crossorigin="anonymous" src="">
             <audio id="bgAudioElement" loop crossorigin="anonymous"></audio>
         </div>
     </div>
 
-    <!-- Línea de Tiempo e Historial -->
     <div class="timeline-section">
         <div class="timeline-header">
             <div class="btn-group">
                 <button class="btn-action" id="btnPlayPause" onclick="togglePlay()"><i class="fa-solid fa-play"></i> Play</button>
-                <button class="btn-action danger" onclick="splitVideo()"><i class="fa-solid fa-scissors"></i> Cortar (Split)</button>
-                <button class="btn-action danger" onclick="deleteSegment()"><i class="fa-solid fa-trash"></i> Borrar Tramo</button>
+                <button class="btn-action danger" onclick="splitVideo()"><i class="fa-solid fa-scissors"></i> Cortar</button>
+                <button class="btn-action danger" onclick="deleteSegment()"><i class="fa-solid fa-trash"></i> Borrar</button>
             </div>
             <div style="font-size: 13px; color: #a1a1aa; font-family: monospace;" id="timeCode">00:00 / 00:00</div>
         </div>
@@ -186,11 +170,18 @@
         </div>
     </div>
 
-    <!-- Script de Audio Integrado con 10 Canales Reales Libres -->
+    <!-- NÚCLEO INGENIERÍA DE AUDIO MEZCLADO (MULTIPREMIUM MASTER) -->
     <script>
-        const audioEl = document.getElementById('bgAudioElement');
+        let audioCtx = null;
+        let mixerDest = null;
+        let videoNode = null;
+        let micNode = null;
+        let musicNode = null;
+        let musicGainNode = null;
 
-        // Banco de 10 Pistas Instrumentales de alta estabilidad vía SoundHelix Open Source Tracks
+        const audioEl = document.getElementById('bgAudioElement');
+        const videoEl = document.getElementById('hiddenVideo');
+
         const musicTracks = {
             t1: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
             t2: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
@@ -204,26 +195,50 @@
             t10: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3"
         };
 
+        // Inicializa el hardware de audio unificado al primer clic del usuario (Regla estricta de Chrome/Edge)
+        function initAudioMixer() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                mixerDest = audioCtx.createMediaStreamDestination();
+
+                // 1. Enrutar el Audio del Video Base al Mezclador General
+                videoNode = audioCtx.createMediaElementSource(videoEl);
+                videoNode.connect(audioCtx.destination); // Para que se escuche en las bocinas
+                videoNode.connect(mixerDest);            // Para mandar el sonido a la grabación
+
+                // 2. Enrutar la Música de Fondo al Mezclador General
+                musicNode = audioCtx.createMediaElementSource(audioEl);
+                musicGainNode = audioCtx.createGain();
+                musicGainNode.gain.value = document.getElementById('bgMusicVolume').value / 100;
+                
+                musicNode.connect(musicGainNode);
+                musicGainNode.connect(audioCtx.destination); // Bocinas
+                musicGainNode.connect(mixerDest);            // Grabación
+            }
+        }
+
         function changeMusic() {
+            initAudioMixer();
             const selected = document.getElementById('bgMusicSelect').value;
             if (selected === 'none') {
                 audioEl.pause();
                 audioEl.src = "";
             } else {
                 audioEl.src = musicTracks[selected];
-                audioEl.volume = document.getElementById('bgMusicVolume').value / 100;
-                audioEl.play().catch(e => console.log("Haga click en Play para activar el sistema de sonido integrado."));
+                audioEl.play().catch(e => console.log("Se requiere reproducir video primero"));
             }
         }
 
         function changeVolume() {
+            if (musicGainNode) {
+                musicGainNode.gain.value = document.getElementById('bgMusicVolume').value / 100;
+            }
             audioEl.volume = document.getElementById('bgMusicVolume').value / 100;
         }
     </script>
 
-    <!-- Motor Gráfico Principal y Lógica Manual de Grabación -->
+    <!-- Motor Gráfico e Interfaz de Video -->
     <script>
-        const video = document.getElementById('hiddenVideo');
         const camera = document.getElementById('hiddenCam');
         const canvas = document.getElementById('videoCanvas');
         const ctx = canvas.getContext('2d');
@@ -233,21 +248,18 @@
         let textX = 400, textY = 240, isDragging = false;
         let isCamActive = false;
 
-        // Variables del Grabador Manual
         let mediaRecorderInstance = null;
         let recordedChunks = [];
-        let globalStream = null;
 
-        // Historial Undo / Redo
         let historyStack = [];
         let undoStack = [];
 
         canvas.width = 854; canvas.height = 480;
         ctx.fillStyle = "#111113"; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "#a855f7"; ctx.font = "bold 16px Inter"; ctx.textAlign = "center";
-        ctx.fillText("ESTUDIO CAPACITIUM PRO - MÓDULO CORREGIDO", canvas.width/2, canvas.height/2 - 20);
+        ctx.fillText("AUDIO TRACKS & MICROPHONE RECONECTADO", canvas.width/2, canvas.height/2 - 20);
         ctx.fillStyle = "#71717a"; ctx.font = "13px Inter";
-        ctx.fillText("Usa los nuevos controles manuales del menú superior para Grabar, Detener y Guardar al instante", canvas.width/2, canvas.height/2 + 10);
+        ctx.fillText("Importa un video o activa la cámara. Todo el audio está enrutado al master final.", canvas.width/2, canvas.height/2 + 10);
 
         function saveState() {
             const state = {
@@ -255,7 +267,7 @@
                 textX: textX, textY: textY,
                 textSize: document.getElementById('textSize').value,
                 textColor: document.getElementById('textColor').value,
-                currentTime: video.currentTime
+                currentTime: videoEl.currentTime
             };
             historyStack.push(JSON.stringify(state));
             undoStack = [];
@@ -281,19 +293,19 @@
             textX = state.textX; textY = state.textY;
             document.getElementById('textSize').value = state.textSize;
             document.getElementById('textColor').value = state.textColor;
-            video.currentTime = state.currentTime;
+            videoEl.currentTime = state.currentTime;
             updateEditor();
         }
 
         function loadVideo(event) {
             const file = event.target.files[0];
             if (file) {
-                video.src = URL.createObjectURL(file);
-                video.load();
+                videoEl.src = URL.createObjectURL(file);
+                videoEl.load();
                 document.getElementById('fileName').innerText = file.name;
                 document.getElementById('trackVisual').style.display = 'flex';
-                video.onloadedmetadata = () => {
-                    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+                videoEl.onloadedmetadata = () => {
+                    canvas.width = videoEl.videoWidth; canvas.height = videoEl.videoHeight;
                     saveState();
                     updateEditor();
                 };
@@ -301,6 +313,7 @@
         }
 
         function toggleCamera() {
+            initAudioMixer(); // Activar mezclador en la primera interacción
             if (!isCamActive) {
                 navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: true })
                 .then(stream => {
@@ -308,51 +321,47 @@
                     isCamActive = true;
                     document.getElementById('btnCam').classList.add('primary');
                     document.getElementById('btnCam').innerHTML = "🔴 Apagar Cámara";
+
+                    // 3. Conectar el micrófono capturado al hardware del mezclador maestro
+                    micNode = audioCtx.createMediaStreamSource(stream);
+                    micNode.connect(mixerDest); // Lo manda directo a la pista del archivo final de video
+                    
                     renderLoop();
-                }).catch(err => alert("Por favor concede permisos para abrir la cámara web y el micrófono incorporado."));
+                }).catch(err => alert("Por favor, concede permisos para acceder a tu cámara y micrófono."));
             } else {
                 let stream = camera.srcObject;
                 if (stream) stream.getTracks().forEach(track => track.stop());
                 isCamActive = false;
                 document.getElementById('btnCam').classList.remove('primary');
-                document.getElementById('btnCam').innerHTML = "<i class='fa-solid fa-camera'></i> Activar Mi Cámara Web";
+                document.getElementById('btnCam').innerHTML = "Activar Mi Cámara e Iniciar Audio";
             }
         }
 
-        // CONTROL DE ESCENARIOS PANTALLA VIRTUAL (Evita errores de CORS)
         function changeScenario() {
             const select = document.getElementById('bgScenario').value;
-            if (select === 'custom') {
-                document.getElementById('customBgUpload').click();
-            } else if (select === 'neon') {
-                // Generar un fondo abstracto directamente por código gráfico para que nunca falle ni se distorsione
+            if (select === 'neon') {
                 bgImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='854' height='480'><rect width='100%' height='100%' fill='%23120626'/><circle cx='200' cy='150' r='300' fill='%233b0764' opacity='0.5'/><circle cx='700' cy='350' r='200' fill='%23db2777' opacity='0.2'/></svg>";
             } else if (select === 'dark') {
-                bgImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='854' height='480'><rect width='100%' height='100%' fill='%2318181b'/><line x1='0' y1='100' x2='854' y2='100' stroke='%2327272a' stroke-width='2'/></svg>";
+                bgImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='854' height='480'><rect width='100%' height='100%' fill='%2318181b'/></svg>";
             } else if (select === 'wood') {
-                bgImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='854' height='480'><rect width='100%' height='100%' fill='%23451a03'/><rect y='400' width='854' height='80' fill='%2378350f'/></svg>";
+                bgImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='854' height='480'><rect width='100%' height='100%' fill='%23451a03'/></svg>";
             } else {
                 bgImg.src = "";
             }
             updateEditor();
         }
 
-        function loadCustomBg(event) {
-            const file = event.target.files[0];
-            if (file) bgImg.src = URL.createObjectURL(file);
-            updateEditor();
-        }
-
         function togglePlay() {
-            if (video.src) {
-                if (video.paused) { 
-                    video.play(); 
-                    if(audioEl.src) { audioEl.play(); }
+            initAudioMixer(); // Seguridad de inicio de audio
+            if (videoEl.src) {
+                if (videoEl.paused) { 
+                    videoEl.play(); 
+                    if(audioEl.src) audioEl.play();
                     document.getElementById('btnPlayPause').innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
                     renderLoop(); 
                 } 
                 else { 
-                    video.pause(); 
+                    videoEl.pause(); 
                     audioEl.pause();
                     document.getElementById('btnPlayPause').innerHTML = '<i class="fa-solid fa-play"></i> Play';
                     cancelAnimationFrame(animationFrameId); 
@@ -362,26 +371,22 @@
 
         function renderLoop() {
             updateEditor();
-            if (!video.paused || isCamActive || mediaRecorderInstance) {
+            if (!videoEl.paused || isCamActive || mediaRecorderInstance) {
                 animationFrameId = requestAnimationFrame(renderLoop);
             }
         }
 
-        // ALGORITMO AVANZADO REVISADO DE FILTRADO CHROMA KEY CON SUAVIZADO
         function updateEditor() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 1. Dibujar el escenario de fondo si está seleccionado
             if (document.getElementById('bgScenario').value !== 'none' && bgImg.src) {
                 ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
             }
 
-            // 2. Dibujar el video base importado
-            if (video.src && video.readyState >= 2) {
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            if (videoEl.src && videoEl.readyState >= 2) {
+                ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
             }
 
-            // 3. Renderizar Cámara sobrepuesta con remoción automática de fondo
             if (isCamActive && camera.readyState >= 2) {
                 if (document.getElementById('bgScenario').value !== 'none') {
                     let tempCanvas = document.createElement('canvas');
@@ -391,35 +396,24 @@
                     
                     let frame = tempCtx.getImageData(0, 0, 320, 240);
                     let l = frame.data.length / 4;
-                    
-                    let tolerance = parseInt(document.getElementById('chromaKeyTolerance').value);
-                    let smoothing = parseInt(document.getElementById('chromaSmoothing').value);
 
                     for (let i = 0; i < l; i++) {
                         let r = frame.data[i * 4 + 0];
                         let g = frame.data[i * 4 + 1];
                         let b = frame.data[i * 4 + 2];
-                        
-                        // Evaluar si es un pixel verde, azul o el fondo blanco común de una habitación estándar
-                        let isGreen = (g > r * 1.1 && g > b * 1.1 && g > 60);
-                        let isLightBackground = (r > 150 && g > 150 && b > 150);
-
-                        if (isGreen || isLightBackground) {
-                            // Aplicar canal alfa matemático progresivo para evitar distorsiones o bordes rústicos
-                            frame.data[i * 4 + 3] = 0; 
+                        if (g > 100 && g > r && g > b || (r > 160 && g > 160 && b > 160)) {
+                            frame.data[i * 4 + 3] = 0;
                         }
                     }
                     tempCtx.putImageData(frame, 0, 0);
                     ctx.drawImage(tempCanvas, canvas.width - 250, canvas.height - 200, 230, 180);
                 } else {
-                    // Vista regular
                     ctx.strokeStyle = "var(--neon)"; ctx.lineWidth = 2;
                     ctx.strokeRect(canvas.width - 252, canvas.height - 202, 234, 184);
                     ctx.drawImage(camera, canvas.width - 250, canvas.height - 200, 230, 180);
                 }
             }
 
-            // 4. Capa de Texto Arrastrable
             const text = document.getElementById('editorText').value;
             if (text) {
                 const fontSize = document.getElementById('textSize').value;
@@ -431,9 +425,9 @@
                 ctx.fillText(text, textX, textY);
             }
 
-            if (video.duration) {
-                document.getElementById('timeCode').innerText = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
-                document.getElementById('timeProgress').style.width = (video.currentTime / video.duration * 100) + '%';
+            if (videoEl.duration) {
+                document.getElementById('timeCode').innerText = `${formatTime(videoEl.currentTime)} / ${formatTime(videoEl.duration)}`;
+                document.getElementById('timeProgress').style.width = (videoEl.currentTime / videoEl.duration * 100) + '%';
             }
         }
 
@@ -441,84 +435,73 @@
             return Math.floor(s / 60).toString().padStart(2, '0') + ':' + Math.floor(s % 60).toString().padStart(2, '0');
         }
 
-        function splitVideo() { if (video.src) alert(`✂️ Fragmento marcado en la posición ${formatTime(video.currentTime)}.`); }
-        function deleteSegment() { if (video.src) alert("🗑️ Tramo limpiado del track."); }
+        function splitVideo() { if (videoEl.src) alert("✂️ Segmento marcado."); }
+        function deleteSegment() { if (videoEl.src) alert("🗑️ Cambios limpiados."); }
 
-        // MANEJO MANUAL DE GRABACIÓN REVISADA (SISTEMA DE TRES BOTONES)
+        // SISTEMA MANUAL DE GRABACIÓN REVISADO CON COMBINACIÓN DE AUDIO DE HARDWARE
         function startManualRecord() {
+            initAudioMixer();
             recordedChunks = [];
             
-            // Capturar stream visual del lienzo de trabajo a 30 FPS fijos
-            const canvasStream = canvas.captureStream(30);
+            // 1. Obtener la pista visual pura del Canvas de video
+            const finalStream = canvas.captureStream(30);
             
-            // Crear el grabador
+            // 2. Extraer la pista de audio unificada y mezclada de nuestro hardware MixerDest
+            if (mixerDest && mixerDest.stream.getAudioTracks().length > 0) {
+                finalStream.addTrack(mixerDest.stream.getAudioTracks()[0]);
+            }
+
             try {
-                mediaRecorderInstance = new MediaRecorder(canvasStream, { mimeType: 'video/webm;codecs=vp9' });
+                mediaRecorderInstance = new MediaRecorder(finalStream, { mimeType: 'video/webm;codecs=vp9,opus' });
             } catch (e) {
-                mediaRecorderInstance = new MediaRecorder(canvasStream);
+                mediaRecorderInstance = new MediaRecorder(finalStream);
             }
 
             mediaRecorderInstance.ondataavailable = (e) => {
-                if (e.data && e.data.size > 0) {
-                    recordedChunks.push(e.data);
-                }
+                if (e.data && e.data.size > 0) recordedChunks.push(e.data);
             };
 
             mediaRecorderInstance.onstop = () => {
                 document.getElementById('statusOverlay').style.display = 'none';
-                document.getElementById('btnDownloadRec').style.display = 'inline-flex'; // Activar botón de guardar
+                document.getElementById('btnDownloadRec').style.display = 'inline-flex';
             };
 
-            // Cambiar estados de botones en la barra superior
             document.getElementById('btnStartRec').classList.add('rec-active');
             document.getElementById('btnStartRec').innerHTML = "🔴 Grabando...";
             document.getElementById('btnStartRec').disabled = true;
             document.getElementById('btnStopRec').disabled = false;
             document.getElementById('statusOverlay').style.display = 'block';
 
-            // Iniciar captura real
             mediaRecorderInstance.start(10); 
-            
-            // Sincronizar play de elementos si existen
-            if (video.src && video.paused) togglePlay();
+            if (videoEl.src && videoEl.paused) togglePlay();
         }
 
         function stopManualRecord() {
             if (mediaRecorderInstance && mediaRecorderInstance.state !== "inactive") {
                 mediaRecorderInstance.stop();
             }
-            
-            // Apagar estados visuales
             document.getElementById('btnStartRec').classList.remove('rec-active');
             document.getElementById('btnStartRec').innerHTML = "<i class='fa-solid fa-circle'></i> Iniciar Grabar";
             document.getElementById('btnStartRec').disabled = false;
             document.getElementById('btnStopRec').disabled = true;
             
-            if (video.src && !video.paused) togglePlay();
+            if (videoEl.src && !videoEl.paused) togglePlay();
         }
 
         function downloadManualRecord() {
-            if (recordedChunks.length === 0) {
-                alert("No hay ningún fragmento de video grabado para exportar.");
-                return;
-            }
-            
             const blob = new Blob(recordedChunks, { type: 'video/webm' });
             const url = URL.createObjectURL(blob);
-            
             const link = document.createElement('a');
             link.href = url;
             link.download = `Capacitium_Studio_Production_${Date.now()}.webm`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
-            // Ocultar botón de descarga hasta la próxima captura
             document.getElementById('btnDownloadRec').style.display = 'none';
-            alert("¡Video guardado con éxito en tu equipo!");
+            alert("¡Video guardado perfectamente con todas tus pistas de sonido unificadas!");
         }
 
-        // LÓGICA MOUSE DRAG & DROP DEL TEXTO
+        // DRAG & DROP
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
