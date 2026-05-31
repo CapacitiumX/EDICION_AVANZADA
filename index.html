@@ -3,482 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CapacitiumX Studio Mobile</title>
-    
+    <title>CapacitiumX Studio Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --glass: rgba(255, 255, 255, 0.04);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --neon: #a855f7;
-            --neon-pink: #ec4899;
-            --bg: #070709;
-            --panel: #0e0e12;
+            --glass: rgba(255, 255, 255, 0.05);
+            --neon: #3b82f6; /* Azul corporativo */
+            --bg: #09090b;
+            --panel: #18181b;
+            --track-bg: #27272a;
         }
 
-        body {
-            margin: 0; font-family: 'Inter', system-ui, sans-serif;
-            background: var(--bg); color: white; height: 100vh;
-            display: flex; flex-direction: column; overflow: hidden;
-            position: fixed; width: 100%;
-        }
+        body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; position: fixed; width: 100%; }
 
-        /* Top Bar Compacta */
-        .app-header {
-            background: var(--panel); padding: 12px 16px;
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--glass-border);
-        }
-        .logo { font-size: 14px; font-weight: 900; background: linear-gradient(90deg, #a855f7, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 0.5px; }
+        /* Header */
+        .app-header { background: var(--panel); padding: 12px 16px; display: flex; justify-content: space-between; border-bottom: 1px solid #333; font-weight: 600; font-size: 14px; }
         
-        .mobile-layout { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .preview-area { background: #000; display: flex; justify-content: center; padding: 10px; height: 30vh; border-bottom: 1px solid #333; position: relative; }
+        canvas { max-width: 100%; max-height: 100%; border-radius: 8px; background: #111; }
 
-        /* MONITOR DE PREVISUALIZACIÓN */
-        .preview-area {
-            background: #000; display: flex; align-items: center; justify-content: center;
-            padding: 10px; position: relative; min-height: 30vh; max-height: 35vh; border-bottom: 1px solid var(--glass-border);
-        }
-        .canvas-container { position: relative; width: 100%; display: flex; justify-content: center; align-items: center; }
-        canvas { display: block; max-width: 100%; max-height: 33vh; border-radius: 8px; background: #050505; }
-
-        /* CARRUSEL DE MEDIOS (EL "CARACOL") */
-        .media-carousel {
-            display: flex; gap: 8px; padding: 10px; background: #0a0a0d;
-            overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--glass-border);
-        }
-        .media-carousel::-webkit-scrollbar { display: none; }
-        .media-item {
-            min-width: 60px; height: 60px; background: #1a1a24; border-radius: 8px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-size: 10px; color: #a1a1aa; border: 1px solid var(--glass-border); flex-shrink: 0;
-            overflow: hidden; position: relative;
-        }
-        .media-item img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
-
-        /* LÍNEA DE TIEMPO TÁCTIL Y MEDICIÓN */
-        .timeline-section { background: var(--panel); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-        .timeline-header { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+        /* LÍNEA DE TIEMPO ESTILO CAPCUT */
+        .timeline-editor { background: var(--panel); display: flex; flex-direction: column; height: 25vh; border-bottom: 1px solid #333; }
+        .timeline-toolbar { display: flex; gap: 10px; padding: 8px 12px; background: #111; font-size: 12px; }
+        .timeline-toolbar i { cursor: pointer; color: #a1a1aa; padding: 5px; }
+        .timeline-toolbar i:hover { color: white; }
         
-        .timeline-container { position: relative; background: #141418; border-radius: 6px; height: 45px; border: 1px solid var(--glass-border); overflow: hidden; }
-        /* Regla de medición en segundos */
-        .timeline-ruler {
-            position: absolute; top: 0; left: 0; width: 100%; height: 10px;
-            background: repeating-linear-gradient(90deg, transparent, transparent 19px, #555 19px, #555 20px);
-            border-bottom: 1px solid #333; pointer-events: none;
-        }
-        .timeline-progress { position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: rgba(168, 85, 247, 0.15); border-right: 2px solid var(--neon); pointer-events: none; z-index: 2; }
-        .track-layer { position: absolute; top: 12px; bottom: 3px; left: 4px; right: 4px; background: linear-gradient(90deg, #222, #333); border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 10px; color: #aaa; }
-
-        /* PANEL DE CONTROLES DESLIZABLE */
-        .control-panel { flex: 1; background: #0a0a0d; display: flex; flex-direction: column; overflow: hidden; }
+        .tracks-container { flex: 1; padding: 10px; overflow-x: auto; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; position: relative; }
+        .track { height: 40px; background: var(--track-bg); border-radius: 6px; display: flex; position: relative; min-width: 150vw; } /* Ancho extendido para deslizar */
+        .track-label { position: sticky; left: 0; background: #111; padding: 0 10px; display: flex; align-items: center; font-size: 10px; z-index: 10; border-right: 1px solid #444; }
         
-        .tab-menu { display: flex; background: var(--panel); border-bottom: 1px solid var(--glass-border); overflow-x: auto; scrollbar-width: none; }
-        .tab-menu::-webkit-scrollbar { display: none; }
-        .tab-btn { padding: 12px 18px; font-size: 12px; font-weight: bold; color: #71717a; border-bottom: 2px solid transparent; white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-        .tab-btn.active { color: white; border-bottom-color: var(--neon); background: rgba(168, 85, 247, 0.02); }
-
-        .tab-content { flex: 1; padding: 14px; overflow-y: auto; display: none; flex-direction: column; gap: 12px; }
+        /* Clips movibles */
+        .clip-block { position: absolute; height: 100%; background: #3b82f6; border-radius: 4px; display: flex; align-items: center; padding: 0 5px; font-size: 10px; border: 1px solid #60a5fa; cursor: pointer; opacity: 0.9; }
+        .clip-block.audio { background: #10b981; border-color: #34d399; }
+        .clip-block.text { background: #f59e0b; border-color: #fbbf24; }
+        
+        /* Panel de Controles Inferior */
+        .control-panel { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
+        .tab-menu { display: flex; background: var(--panel); overflow-x: auto; border-bottom: 1px solid #333; }
+        .tab-btn { padding: 12px 16px; font-size: 12px; color: #a1a1aa; cursor: pointer; white-space: nowrap; }
+        .tab-btn.active { color: white; border-bottom: 2px solid var(--neon); }
+        .tab-content { flex: 1; padding: 15px; display: none; flex-direction: column; gap: 10px; overflow-y: auto; }
         .tab-content.active { display: flex; }
 
-        .tool-group { background: var(--glass); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; }
-        label { font-size: 11px; color: #a1a1aa; display: flex; justify-content: space-between; }
+        .btn { background: var(--glass); border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-size: 12px; text-align: center; cursor: pointer; }
+        .btn.primary { background: var(--neon); border: none; }
+        .btn.danger { background: #ef4444; border: none; }
         
-        input[type="range"] { width: 100%; accent-color: var(--neon); background: #222; height: 6px; border-radius: 4px; appearance: none; margin: 6px 0; }
-        input[type="text"], select { background: #131317; border: 1px solid var(--glass-border); color: white; padding: 10px; border-radius: 8px; outline: none; font-size: 13px; -webkit-appearance: none; }
-
-        .btn-action { background: var(--glass); border: 1px solid var(--glass-border); color: white; padding: 10px 14px; border-radius: 8px; font-weight: 600; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; cursor: pointer;}
-        .btn-action.primary { background: linear-gradient(90deg, var(--neon), var(--neon-pink)); border: none; }
-        .btn-action.rec-active { background: #ef4444; border-color: #f87171; animation: pulse 1.5s infinite; }
-        .btn-grid-mobile { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
-        .status-overlay { position: absolute; top: 10px; right: 10px; background: #ef4444; color: white; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; display: none; z-index: 6; }
-        #hiddenVideo, #hiddenCam { display: none; }
-        @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
+        input, select { background: #111; border: 1px solid #333; color: white; padding: 8px; border-radius: 6px; font-size: 12px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
     <div class="app-header">
-        <div class="logo"><i class="fa-solid fa-mobile-screen"></i> CAPACITIUMX STUDIO</div>
-        <button class="btn-action" id="btnDownloadRec" onclick="downloadManualRecord()" style="background: #22c55e; border: none; padding: 6px 12px; display: none; font-size: 11px;"><i class="fa-solid fa-save"></i> GUARDAR</button>
+        <span><i class="fa-solid fa-film"></i> CapacitiumX NLE</span>
+        <span style="color: #10b981;"><i class="fa-solid fa-check"></i> Listo</span>
     </div>
 
-    <div class="mobile-layout">
-        
-        <div class="preview-area">
-            <div class="status-overlay" id="statusOverlay">REC</div>
-            <div class="canvas-container" id="canvasContainer">
-                <canvas id="videoCanvas"></canvas>
-            </div>
-            <video id="hiddenVideo" loop playsinline crossorigin="anonymous"></video>
-            <video id="hiddenCam" autoplay playsinline></video>
-        </div>
+    <div class="preview-area">
+        <canvas id="mainCanvas"></canvas>
+        <video id="hiddenCam" autoplay playsinline style="display:none;"></video>
+    </div>
 
-        <div class="media-carousel" id="mediaCarousel">
-            <div class="media-item" onclick="document.getElementById('videoUpload').click()">
-                <i class="fa-solid fa-plus" style="font-size: 16px; margin-bottom: 4px;"></i>
-                <span>Añadir</span>
-            </div>
+    <div class="timeline-editor">
+        <div class="timeline-toolbar">
+            <i class="fa-solid fa-scissors" title="Cortar"></i>
+            <i class="fa-solid fa-trash" title="Borrar"></i>
+            <i class="fa-solid fa-wand-magic-sparkles" title="Transición"></i>
+            <span style="margin-left: auto; font-family: monospace;">00:00:00</span>
         </div>
-
-        <div class="timeline-section">
-            <div class="timeline-header">
-                <div style="font-family: monospace;" id="timeCode">00:00 / 00:00</div>
-                <div class="btn-group" style="display:flex; gap:6px;">
-                    <button class="btn-action" onclick="undo()" style="padding:4px 8px;"><i class="fa-solid fa-rotate-left"></i></button>
-                    <button class="btn-action" onclick="redo()" style="padding:4px 8px;"><i class="fa-solid fa-rotate-right"></i></button>
-                </div>
+        <div class="tracks-container" id="timelineScroll">
+            <div class="track" id="videoTrack">
+                <div class="track-label"><i class="fa-solid fa-video"></i></div>
             </div>
-            <div class="timeline-container" id="timelineWrapper">
-                <div class="timeline-ruler"></div>
-                <div class="timeline-progress" id="timeProgress"></div>
-                <div class="track-layer" id="trackVisual" style="display: none;">
-                    <i class="fa-solid fa-video"></i> &nbsp;<span id="fileName">Clip_Base</span>
-                </div>
+            <div class="track" id="audioTrack">
+                <div class="track-label"><i class="fa-solid fa-microphone"></i></div>
+            </div>
+            <div class="track" id="textTrack">
+                <div class="track-label"><i class="fa-solid fa-t"></i></div>
             </div>
         </div>
+    </div>
 
-        <div class="control-panel">
-            <div class="tab-menu">
-                <div class="tab-btn active" onclick="switchTab('media-tab', this)"><i class="fa-solid fa-folder-open"></i> Medios</div>
-                <div class="tab-btn" onclick="switchTab('studio-tab', this)"><i class="fa-solid fa-microphone-lines"></i> Grabación y Voz</div>
-                <div class="tab-btn" onclick="switchTab('bg-tab', this)"><i class="fa-solid fa-wand-magic-sparkles"></i> Chroma Key</div>
-                <div class="tab-btn" onclick="switchTab('audio-tab', this)"><i class="fa-solid fa-music"></i> Audio</div>
-                <div class="tab-btn" onclick="switchTab('text-tab', this)"><i class="fa-solid fa-font"></i> Texto</div>
-            </div>
+    <div class="control-panel">
+        <div class="tab-menu">
+            <div class="tab-btn active" onclick="switchTab('media')">Agregar Medios</div>
+            <div class="tab-btn" onclick="switchTab('audio')">Voz Podcast</div>
+            <div class="tab-btn" onclick="switchTab('tts')">IA de Voz</div>
+        </div>
 
-            <div id="media-tab" class="tab-content active">
-                <div class="tool-group">
-                    <button class="btn-action primary" onclick="document.getElementById('videoUpload').click()"><i class="fa-solid fa-upload"></i> Subir Video o Imagen al Caracol</button>
-                    <input type="file" id="videoUpload" accept="video/*,image/*" style="display: none;" onchange="loadMediaToCarousel(event)">
-                </div>
-                <button class="btn-action" id="btnPlayPause" onclick="togglePlay()" style="width:100%; padding:12px;"><i class="fa-solid fa-play"></i> Reproducir Línea de Tiempo</button>
-            </div>
+        <div id="media" class="tab-content active">
+            <div class="btn primary" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-plus"></i> Importar Archivo (Foto/Video)</div>
+            <input type="file" id="fileUpload" accept="image/*,video/*" style="display:none;" onchange="addMediaToTimeline(event)">
+            <p style="font-size: 10px; color: #888;">Nota: Los clips importados aparecerán en la línea de tiempo. Tócalos para seleccionarlos.</p>
+        </div>
 
-            <div id="studio-tab" class="tab-content">
-                <div class="tool-group">
-                    <label>Efecto Distorsión de Voz (Micrófono)</label>
-                    <select id="voiceEffect" onchange="changeVoiceEffect()">
-                        <option value="normal">Voz Normal</option>
-                        <option value="anonymous">Voz Anónima (Faceless - Grave)</option>
-                        <option value="radio">Radio Interferencia (Agudo)</option>
-                    </select>
-                </div>
-                <button class="btn-action" id="btnCamMobile" onclick="toggleCamera()" style="width:100%; margin-bottom: 8px;"><i class="fa-solid fa-camera"></i> Activar Cámara Frontal</button>
-                <div class="btn-grid-mobile">
-                    <button class="btn-action primary" id="btnStartRec" onclick="startManualRecord()"><i class="fa-solid fa-circle"></i> Iniciar Grabar</button>
-                    <button class="btn-action" id="btnStopRec" onclick="stopManualRecord()" disabled><i class="fa-solid fa-square"></i> Detener</button>
-                </div>
+        <div id="audio" class="tab-content">
+            <label style="font-size: 11px;">Filtro de Voz</label>
+            <select id="micFilter">
+                <option value="podcast">Micrófono Podcast (Compresión + Limpieza)</option>
+                <option value="raw">Crudo (Sin filtro)</option>
+            </select>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                <div class="btn primary" onclick="startPodcastMic()"><i class="fa-solid fa-microphone"></i> Grabar Voz</div>
+                <div class="btn danger" onclick="stopPodcastMic()"><i class="fa-solid fa-stop"></i> Detener</div>
             </div>
+        </div>
 
-            <div id="bg-tab" class="tab-content">
-                <div class="tool-group">
-                    <label>Fondo de Cámara</label>
-                    <select id="bgScenario" onchange="updateEditor()">
-                        <option value="none">Sin fondo (Cámara Normal)</option>
-                        <option value="neon">Estudio Cyber Neon</option>
-                        <option value="dark">Set Premium Ejecutivo</option>
-                        <option value="wood">Estudio Acústico Podcast</option>
-                    </select>
-                    <label>Tolerancia Croma Key</label>
-                    <input type="range" id="chromaKeyTolerance" min="10" max="150" value="70" oninput="updateEditor()">
-                </div>
-            </div>
-
-            <div id="audio-tab" class="tab-content">
-                <div class="tool-group">
-                    <label>Pistas Ambientales</label>
-                    <select id="bgMusicSelect" onchange="changeMusic()">
-                        <option value="none">Sin música de fondo</option>
-                        <option value="m1">1. Tecno Melódico (Base Rítmica)</option>
-                        <option value="m2">2. Synthwave Drive (Armonía 80s)</option>
-                        <option value="m3">3. Lo-Fi Chillout (Relajante)</option>
-                    </select>
-                    <label>Volumen Fondo</label>
-                    <input type="range" id="bgMusicVolume" min="0" max="25" value="4" oninput="changeVolume()">
-                </div>
-            </div>
-
-            <div id="text-tab" class="tab-content">
-                <div class="tool-group">
-                    <label>Texto en Pantalla</label>
-                    <input type="text" id="editorText" value="Arrástrame con tu dedo" oninput="saveState(); updateEditor();">
-                    <label>Tamaño</label>
-                    <input type="range" id="textSize" min="16" max="60" value="26" oninput="updateEditor()">
-                    <label>Color</label>
-                    <input type="color" id="textColor" value="#ffffff" onchange="updateEditor()" style="width:100%; height:35px; border:none; border-radius:6px;">
-                </div>
-            </div>
+        <div id="tts" class="tab-content">
+            <label style="font-size: 11px;">Texto a Voz (Generador)</label>
+            <textarea id="ttsText" rows="3" style="background:#111; color:white; border:1px solid #333; width:100%; border-radius:6px; padding:8px;" placeholder="Escribe el guion aquí..."></textarea>
+            <div class="btn primary" onclick="generateVoice()" style="margin-top: 10px;"><i class="fa-solid fa-robot"></i> Generar Audio</div>
+            <p style="font-size: 10px; color: #888;">* Utiliza el motor nativo del dispositivo. Para clonar tu voz se requiere integrar la API de ElevenLabs en el backend.</p>
         </div>
     </div>
 
     <script>
-        const camera = document.getElementById('hiddenCam');
-        const canvas = document.getElementById('videoCanvas');
+        const canvas = document.getElementById('mainCanvas');
         const ctx = canvas.getContext('2d');
-        const videoEl = document.getElementById('hiddenVideo');
+        canvas.width = 1280; canvas.height = 720; // Resolución HD
         
-        let audioCtx = null; let mixerDest = null; let videoNode = null;
-        let micNode = null; let micGainNode = null; let musicGainNode = null;
-        let distortionFilter = null; let biquadFilter = null;
-        
-        let currentMusicType = "none"; let musicInterval = null;
-        let animationFrameId; let mediaRecorderInstance = null; let recordedChunks = [];
-        let historyStack = []; let undoStack = [];
-        let textX = 180, textY = 180, isDragging = false;
-        let isCamActive = false;
-        
-        // Setup Inicial del Canvas
-        canvas.width = 640; canvas.height = 480;
-        ctx.fillStyle = "#111115"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.font = "14px sans-serif"; ctx.textAlign = "center";
-        ctx.fillText("Importa medios en el carrusel para comenzar", canvas.width/2, canvas.height/2);
+        ctx.fillStyle = "#18181b"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "white"; ctx.font = "30px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("CapacitiumX Pro - Lienzo", canvas.width/2, canvas.height/2);
 
-        function switchTab(tabId, el) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            el.classList.add('active');
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
         }
 
-        // --- SISTEMA DE MEDIOS (CARACOL) ---
-        function loadMediaToCarousel(event) {
+        // --- GESTIÓN DE LÍNEA DE TIEMPO ---
+        let clipOffset = 50; // Posición inicial X para nuevos clips
+
+        function addMediaToTimeline(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            const url = URL.createObjectURL(file);
-            const isVideo = file.type.startsWith('video/');
+            // Crear el bloque visual en la pista de video
+            const clip = document.createElement('div');
+            clip.className = 'clip-block';
+            clip.style.left = clipOffset + 'px';
+            clip.style.width = '100px'; // Longitud simulada
+            clip.innerHTML = `<i class="fa-solid fa-file-video"></i> &nbsp;${file.name.substring(0,8)}`;
             
-            // Crear miniatura para el carrusel
-            const item = document.createElement('div');
-            item.className = 'media-item';
-            
-            if (isVideo) {
-                item.innerHTML = `<video src="${url}#t=1" style="width:100%; height:100%; object-fit:cover;"></video><i class="fa-solid fa-film" style="position:absolute; bottom:4px; right:4px;"></i>`;
-            } else {
-                item.innerHTML = `<img src="${url}"><i class="fa-solid fa-image" style="position:absolute; bottom:4px; right:4px;"></i>`;
-            }
+            // Hacerlo movible horizontalmente (Simulación básica NLE)
+            clip.addEventListener('touchstart', dragStart);
+            clip.addEventListener('touchmove', dragMove);
 
-            // Al hacer clic en el carrusel, mandarlo a la línea de tiempo principal
-            item.onclick = () => {
-                if (isVideo) {
-                    videoEl.src = url; videoEl.load();
-                    document.getElementById('fileName').innerText = file.name.substring(0, 10);
-                    document.getElementById('trackVisual').style.display = 'flex';
-                    videoEl.onloadedmetadata = () => { updateEditor(); saveState(); };
+            document.getElementById('videoTrack').appendChild(clip);
+            clipOffset += 110; // Mover el cursor para el siguiente clip
+
+            // Renderizar en Canvas si es imagen
+            if(file.type.startsWith('image/')) {
+                const img = new Image();
+                img.onload = () => { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); };
+                img.src = URL.createObjectURL(file);
+            }
+        }
+
+        // Lógica simple para mover clips en el "caracol"
+        let activeClip = null, startX = 0, currentX = 0;
+        function dragStart(e) { activeClip = e.target; startX = e.touches[0].clientX - activeClip.offsetLeft; }
+        function dragMove(e) { 
+            if(!activeClip) return; 
+            currentX = e.touches[0].clientX - startX; 
+            activeClip.style.left = Math.max(40, currentX) + 'px'; // No rebasar la etiqueta
+        }
+
+        // --- AUDIO: ESTUDIO PODCAST ---
+        let audioCtx, micStream, podcastNode;
+        async function startPodcastMic() {
+            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false } });
+                const source = audioCtx.createMediaStreamSource(micStream);
+                
+                // Configuración de Compresor (Voz de Locutor/Podcast)
+                podcastNode = audioCtx.createDynamicsCompressor();
+                podcastNode.threshold.setValueAtTime(-50, audioCtx.currentTime); // Atrapa sonidos bajos
+                podcastNode.knee.setValueAtTime(40, audioCtx.currentTime);
+                podcastNode.ratio.setValueAtTime(12, audioCtx.currentTime); // Comprime fuerte
+                podcastNode.attack.setValueAtTime(0, audioCtx.currentTime);
+                podcastNode.release.setValueAtTime(0.25, audioCtx.currentTime);
+
+                // Ecualizador (Dar presencia/brillo)
+                const eq = audioCtx.createBiquadFilter();
+                eq.type = "peaking"; eq.frequency.value = 3000; eq.gain.value = 4;
+
+                if (document.getElementById('micFilter').value === 'podcast') {
+                    source.connect(podcastNode).connect(eq).connect(audioCtx.destination);
                 } else {
-                    // Si es imagen, la dibujamos como fondo estático
-                    let img = new Image();
-                    img.onload = () => {
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    };
-                    img.src = url;
+                    source.connect(audioCtx.destination);
                 }
-            };
-            
-            document.getElementById('mediaCarousel').appendChild(item);
-        }
-
-        // --- SISTEMA DE AUDIO Y DISTORSIÓN ---
-        function initAudioEngine() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                mixerDest = audioCtx.createMediaStreamDestination();
-
-                // Nodos de efecto
-                distortionFilter = audioCtx.createWaveShaper();
-                biquadFilter = audioCtx.createBiquadFilter();
-
-                videoNode = audioCtx.createMediaElementSource(videoEl);
-                videoNode.connect(audioCtx.destination); videoNode.connect(mixerDest);            
-
-                musicGainNode = audioCtx.createGain();
-                musicGainNode.gain.value = (document.getElementById('bgMusicVolume').value / 100) * 0.15; 
-                musicGainNode.connect(audioCtx.destination); musicGainNode.connect(mixerDest);
-
-                micGainNode = audioCtx.createGain();
-                micGainNode.gain.value = 1.5; // Boost natural
-                micGainNode.connect(mixerDest); 
-            }
-        }
-
-        function makeDistortionCurve(amount) {
-            let k = typeof amount === 'number' ? amount : 50,
-                n_samples = 44100, curve = new Float32Array(n_samples), deg = Math.PI / 180, x;
-            for (let i = 0; i < n_samples; ++i ) {
-                x = i * 2 / n_samples - 1;
-                curve[i] = ( 3 + k ) * x * 20 * deg / ( Math.PI + k * Math.abs(x) );
-            }
-            return curve;
-        }
-
-        function changeVoiceEffect() {
-            const effect = document.getElementById('voiceEffect').value;
-            if (!micNode) return;
-
-            micNode.disconnect();
-            biquadFilter.disconnect();
-            distortionFilter.disconnect();
-
-            if (effect === "normal") {
-                micNode.connect(micGainNode);
-            } else if (effect === "anonymous") {
-                // Filtro paso bajo + distorsión ligera = Voz anónima oscura
-                biquadFilter.type = "lowpass";
-                biquadFilter.frequency.value = 800;
-                distortionFilter.curve = makeDistortionCurve(100);
                 
-                micNode.connect(biquadFilter);
-                biquadFilter.connect(distortionFilter);
-                distortionFilter.connect(micGainNode);
-            } else if (effect === "radio") {
-                // Filtro paso alto + mucha distorsión = Radio/Walkie-Talkie
-                biquadFilter.type = "bandpass";
-                biquadFilter.frequency.value = 1500;
-                distortionFilter.curve = makeDistortionCurve(400);
-                
-                micNode.connect(biquadFilter);
-                biquadFilter.connect(distortionFilter);
-                distortionFilter.connect(micGainNode);
-            }
+                // Añadir bloque a línea de tiempo
+                const clip = document.createElement('div');
+                clip.className = 'clip-block audio'; clip.style.left = '50px'; clip.style.width = '150px';
+                clip.innerHTML = `<i class="fa-solid fa-microphone"></i> Voz Rec`;
+                document.getElementById('audioTrack').appendChild(clip);
+
+            } catch (err) { alert("Error accediendo al micrófono."); }
         }
 
-        // --- CÁMARA Y GRABACIÓN ---
-        function toggleCamera() {
-            initAudioEngine();
-            if (!isCamActive) {
-                navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user", width: 400, height: 300 }, 
-                    audio: { echoCancellation: true, noiseSuppression: true } 
-                }).then(stream => {
-                    camera.srcObject = stream; isCamActive = true;
-                    document.getElementById('btnCamMobile').classList.add('primary');
-                    
-                    micNode = audioCtx.createMediaStreamSource(stream); 
-                    changeVoiceEffect(); // Aplicar filtro seleccionado
-                    renderLoop();
-                }).catch(err => alert("Permite el acceso a la cámara y micrófono."));
-            } else {
-                let stream = camera.srcObject; if (stream) stream.getTracks().forEach(t => t.stop());
-                isCamActive = false; document.getElementById('btnCamMobile').classList.remove('primary');
-            }
+        function stopPodcastMic() {
+            if(micStream) micStream.getTracks().forEach(track => track.stop());
         }
 
-        function startManualRecord() {
-            initAudioEngine(); recordedChunks = [];
-            const finalStream = canvas.captureStream(30); 
-            if (mixerDest && mixerDest.stream.getAudioTracks().length > 0) finalStream.addTrack(mixerDest.stream.getAudioTracks()[0]);
-
-            try { mediaRecorderInstance = new MediaRecorder(finalStream, { mimeType: 'video/webm;codecs=vp9,opus' }); } 
-            catch (e) { mediaRecorderInstance = new MediaRecorder(finalStream); }
-
-            mediaRecorderInstance.ondataavailable = (e) => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
-            mediaRecorderInstance.onstop = () => { document.getElementById('statusOverlay').style.display = 'none'; document.getElementById('btnDownloadRec').style.display = 'inline-flex'; };
-
-            document.getElementById('btnStartRec').classList.add('rec-active'); document.getElementById('btnStartRec').innerHTML = "Grabando...";
-            document.getElementById('btnStartRec').disabled = true; document.getElementById('btnStopRec').disabled = false;
-            document.getElementById('statusOverlay').style.display = 'block';
+        // --- IA: TEXTO A VOZ (Nativo) ---
+        function generateVoice() {
+            const text = document.getElementById('ttsText').value;
+            if(!text) return;
             
-            mediaRecorderInstance.start(10); if (videoEl.src && videoEl.paused) togglePlay();
-        }
-
-        function stopManualRecord() {
-            if (mediaRecorderInstance && mediaRecorderInstance.state !== "inactive") mediaRecorderInstance.stop();
-            document.getElementById('btnStartRec').classList.remove('rec-active'); document.getElementById('btnStartRec').innerHTML = "Iniciar Grabar";
-            document.getElementById('btnStartRec').disabled = false; document.getElementById('btnStopRec').disabled = true;
-            if (videoEl.src && !videoEl.paused) togglePlay();
-        }
-
-        function downloadManualRecord() {
-            const blob = new Blob(recordedChunks, { type: 'video/webm' });
-            const url = URL.createObjectURL(blob); const link = document.createElement('a');
-            link.href = url; link.download = `Edicion_CapacitiumX_${Date.now()}.webm`;
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
-            document.getElementById('btnDownloadRec').style.display = 'none';
-        }
-
-        // --- RENDER Y TEXTO TÁCTIL ---
-        function renderLoop() { updateEditor(); if (!videoEl.paused || isCamActive || mediaRecorderInstance) animationFrameId = requestAnimationFrame(renderLoop); }
-
-        function togglePlay() {
-            initAudioEngine();
-            if (videoEl.src) {
-                if (videoEl.paused) { videoEl.play(); document.getElementById('btnPlayPause').innerHTML = '<i class="fa-solid fa-pause"></i> Pausar'; renderLoop(); } 
-                else { videoEl.pause(); document.getElementById('btnPlayPause').innerHTML = '<i class="fa-solid fa-play"></i> Reproducir Línea de Tiempo'; }
-            }
-        }
-
-        function drawNativeScenario(type) {
-            if (type === "neon") {
-                let gradient = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 50, canvas.width/2, canvas.height/2, canvas.width);
-                gradient.addColorStop(0, '#16092b'); gradient.addColorStop(1, '#020007'); ctx.fillStyle = gradient; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            } else if (type === "dark") {
-                ctx.fillStyle = '#141416'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            } else if (type === "wood") {
-                ctx.fillStyle = "#2b1407"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-        }
-
-        function updateEditor() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const selectScenario = document.getElementById('bgScenario').value;
-            if (selectScenario !== "none") drawNativeScenario(selectScenario);
+            const synth = window.speechSynthesis;
+            const utterThis = new SpeechSynthesisUtterance(text);
             
-            if (videoEl.src && videoEl.readyState >= 2) ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+            // Buscar una voz en español
+            const voices = synth.getVoices();
+            const esVoice = voices.find(v => v.lang.includes('es'));
+            if(esVoice) utterThis.voice = esVoice;
+            
+            synth.speak(utterThis);
 
-            // Chroma Key (Verde -> Transparente)
-            if (isCamActive && camera.readyState >= 2) {
-                let tempCanvas = document.createElement('canvas'); tempCanvas.width = 200; tempCanvas.height = 150;
-                let tempCtx = tempCanvas.getContext('2d'); tempCtx.drawImage(camera, 0, 0, 200, 150);
-                if (selectScenario !== "none") {
-                    let frame = tempCtx.getImageData(0, 0, 200, 150);
-                    let tol = parseInt(document.getElementById('chromaKeyTolerance').value);
-                    for (let i = 0; i < frame.data.length / 4; i++) {
-                        // Detección simple de rango verde
-                        if (frame.data[i*4+1] > tol && frame.data[i*4+1] > frame.data[i*4] && frame.data[i*4+1] > frame.data[i*4+2]) frame.data[i*4+3] = 0;
-                    }
-                    tempCtx.putImageData(frame, 0, 0);
-                }
-                ctx.drawImage(tempCanvas, canvas.width - 210, canvas.height - 160, 200, 150);
-            }
-
-            const text = document.getElementById('editorText').value;
-            if (text) {
-                const fontSize = document.getElementById('textSize').value;
-                ctx.font = `bold ${fontSize}px system-ui`; ctx.textAlign = 'center';
-                ctx.strokeStyle = '#000000'; ctx.lineWidth = 4; ctx.strokeText(text, textX, textY);
-                ctx.fillStyle = document.getElementById('textColor').value; ctx.fillText(text, textX, textY);
-            }
-
-            // Actualizar Regla de Medición
-            if (videoEl.duration) {
-                document.getElementById('timeCode').innerText = `${formatTime(videoEl.currentTime)} / ${formatTime(videoEl.duration)}`;
-                document.getElementById('timeProgress').style.width = (videoEl.currentTime / videoEl.duration * 100) + '%';
-            }
+            // Añadir bloque de texto a la línea de tiempo
+            const clip = document.createElement('div');
+            clip.className = 'clip-block text'; clip.style.left = '50px'; clip.style.width = '120px';
+            clip.innerHTML = `<i class="fa-solid fa-font"></i> Guion IA`;
+            document.getElementById('textTrack').appendChild(clip);
         }
-
-        function formatTime(s) { return Math.floor(s / 60).toString().padStart(2, '0') + ':' + Math.floor(s % 60).toString().padStart(2, '0'); }
-
-        // Gestos táctiles
-        function getTouchPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const touch = e.touches ? e.touches[0] : e;
-            return { x: (touch.clientX - rect.left) * (canvas.width / rect.width), y: (touch.clientY - rect.top) * (canvas.height / rect.height) };
-        }
-        document.getElementById('canvasContainer').addEventListener('touchstart', (e) => { const pos = getTouchPos(e); if (Math.abs(pos.x - textX) < 90 && Math.abs(pos.y - textY) < 50) isDragging = true; }, {passive: true});
-        document.getElementById('canvasContainer').addEventListener('touchmove', (e) => { if (!isDragging) return; const pos = getTouchPos(e); textX = pos.x; textY = pos.y; updateEditor(); }, {passive: true});
-        document.getElementById('canvasContainer').addEventListener('touchend', () => { isDragging = false; });
-        
-        // Ratón (por si se usa en PC)
-        document.getElementById('canvasContainer').addEventListener('mousedown', (e) => { const pos = getTouchPos(e); if (Math.abs(pos.x - textX) < 90 && Math.abs(pos.y - textY) < 50) isDragging = true; });
-        document.getElementById('canvasContainer').addEventListener('mousemove', (e) => { if (!isDragging) return; const pos = getTouchPos(e); textX = pos.x; textY = pos.y; updateEditor(); });
-        document.getElementById('canvasContainer').addEventListener('mouseup', () => { isDragging = false; });
-
-        // Historia Simple (Deshacer)
-        function saveState() { historyStack.push(JSON.stringify({ text: document.getElementById('editorText').value, textX: textX, textY: textY })); undoStack = []; }
-        function undo() { if(historyStack.length>0){ undoStack.push(historyStack.pop()); let s = historyStack[historyStack.length-1]; if(s) applyState(JSON.parse(s));} }
-        function redo() { if(undoStack.length>0){ let s = undoStack.pop(); historyStack.push(s); applyState(JSON.parse(s));} }
-        function applyState(s) { document.getElementById('editorText').value = s.text; textX = s.textX; textY = s.textY; updateEditor(); }
     </script>
 </body>
 </html>
