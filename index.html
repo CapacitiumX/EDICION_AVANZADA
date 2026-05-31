@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CapacitiumX Pro Editor V8</title>
+    <title>CapacitiumX Pro Editor V9</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --neon: #3b82f6; --bg: #09090b; --panel: #18181b; --track-bg: #27272a; }
@@ -12,9 +12,8 @@
         .app-header { background: var(--panel); padding: 12px 16px; display: flex; justify-content: space-between; border-bottom: 1px solid #333; font-weight: 600; font-size: 14px; align-items: center; }
         .btn-save { background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 12px; }
         
-        /* ÁREA DE PREVISUALIZACIÓN */
+        /* PREVISUALIZACIÓN */
         .preview-area { background: #000; display: flex; justify-content: center; padding: 10px; height: 30vh; border-bottom: 1px solid #333; position: relative; }
-        /* El canvas captura eventos táctiles para mover stickers/texto */
         canvas { max-width: 100%; max-height: 100%; border-radius: 8px; background: #111; object-fit: contain; cursor: crosshair; }
         .status-rec { position: absolute; top: 15px; right: 20px; background: #ef4444; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: none; animation: pulse 1.5s infinite; z-index: 50; }
 
@@ -33,16 +32,18 @@
         .playhead-line { position: absolute; left: 10px; width: 2px; height: 100%; background: #ef4444; pointer-events: none; }
         .playhead-head { position: absolute; left: 5px; top: 0; width: 12px; height: 12px; background: #ef4444; clip-path: polygon(0 0, 100% 0, 50% 100%); pointer-events: none; }
 
+        /* CLIPS */
         .clip-block { position: absolute; height: 90%; top: 5%; background: #3b82f6; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; font-size: 10px; font-weight: bold; opacity: 0.9; overflow: hidden; white-space: nowrap; border: 1px solid #60a5fa; box-shadow: 0 2px 5px rgba(0,0,0,0.5); z-index: 20; }
         .clip-block.image { background: #f59e0b; border-color: #fbbf24; }
         .clip-block.audio { background: #10b981; border-color: #34d399; }
+        .clip-block.text { background: #8b5cf6; border-color: #a78bfa; } /* Color Morado para Textos */
         .clip-block.selected { border: 2px solid white; opacity: 1; z-index: 25; }
         
         .resize-handle { position: absolute; right: 0; top: 0; bottom: 0; width: 15px; background: rgba(255,255,255,0.2); cursor: ew-resize; z-index: 30; border-left: 1px solid rgba(255,255,255,0.5); border-radius: 0 4px 4px 0; }
         .drag-area { flex: 1; height: 100%; display: flex; align-items: center; cursor: grab; }
         .drag-area:active { cursor: grabbing; }
 
-        /* PANELES DE HERRAMIENTAS INFERIORES */
+        /* PANELES INFERIORES */
         .control-panel { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
         .tab-menu { display: flex; background: var(--panel); overflow-x: auto; border-bottom: 1px solid #333; }
         .tab-btn { padding: 12px 16px; font-size: 12px; color: #a1a1aa; cursor: pointer; white-space: nowrap; }
@@ -64,13 +65,12 @@
 <body>
 
     <div class="app-header">
-        <span><i class="fa-solid fa-film"></i> Estudio Pro V8</span>
+        <span><i class="fa-solid fa-film"></i> Estudio Pro V9</span>
         <button class="btn-save" id="btnExport" onclick="exportVideo()"><i class="fa-solid fa-download"></i> EXPORTAR</button>
     </div>
 
     <div class="preview-area">
         <div class="status-rec" id="recBadge">GRABANDO</div>
-        <!-- El lienzo principal donde ocurren los filtros, superposiciones y arrastres -->
         <canvas id="mainCanvas"></canvas>
         <video id="hiddenCam" autoplay playsinline style="display:none;" muted></video>
         <div id="hidden-media-container"></div>
@@ -81,7 +81,9 @@
             <i class="fa-solid fa-play action-btn" id="btnPlay" onclick="togglePlayback()" title="Reproducir"></i>
             <i class="fa-solid fa-backward action-btn" onclick="resetPlayhead()" title="Al inicio"></i>
             <div style="width: 1px; height: 15px; background: #555; margin: 0 10px;"></div>
-            <i class="fa-solid fa-trash action-btn" onclick="deleteSelectedClip()" title="Borrar Clip"></i>
+            <!-- Nuevo botón para duplicar -->
+            <i class="fa-solid fa-copy action-btn" onclick="duplicateSelectedClip()" title="Duplicar Seleccionado"></i>
+            <i class="fa-solid fa-trash action-btn" onclick="deleteSelectedClip()" title="Borrar Seleccionado"></i>
             <span id="timecode" style="margin-left: auto; font-family: monospace; color: #10b981;">00:00.0</span>
         </div>
         
@@ -97,6 +99,10 @@
             <div class="track" id="imageTrack">
                 <div class="track-label"><i class="fa-solid fa-image"></i> Img</div>
             </div>
+            <!-- NUEVA PISTA PARA TEXTOS Y STICKERS -->
+            <div class="track" id="textTrack">
+                <div class="track-label"><i class="fa-solid fa-font"></i> Txt</div>
+            </div>
             <div class="track" id="audioTrack">
                 <div class="track-label"><i class="fa-solid fa-microphone"></i> Voz</div>
             </div>
@@ -106,7 +112,7 @@
     <div class="control-panel">
         <div class="tab-menu">
             <div class="tab-btn active" onclick="switchTab('media')"><i class="fa-solid fa-folder-open"></i> Medios</div>
-            <div class="tab-btn" onclick="switchTab('fx')"><i class="fa-solid fa-wand-magic-sparkles"></i> FX y Elementos</div>
+            <div class="tab-btn" onclick="switchTab('fx')"><i class="fa-solid fa-font"></i> Textos y FX</div>
             <div class="tab-btn" onclick="switchTab('voice')"><i class="fa-solid fa-microphone"></i> Voz off</div>
             <div class="tab-btn" onclick="switchTab('camera')"><i class="fa-solid fa-camera"></i> PiP</div>
         </div>
@@ -115,10 +121,9 @@
         <div id="media" class="tab-content active">
             <div class="btn primary" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-plus"></i> Importar Foto / Video Base</div>
             <input type="file" id="fileUpload" accept="image/*,video/*" style="display:none;" onchange="addMediaToTimeline(event)">
-            <p style="font-size: 11px; color: #888; text-align: center;">Toca un clip en el centro para moverlo. Arrastra la orilla para estirarlo.</p>
         </div>
 
-        <!-- 2. NUEVO: EFECTOS, TEXTO Y STICKERS (ESTILO WHATSAPP) -->
+        <!-- 2. TEXTOS, STICKERS Y FILTROS -->
         <div id="fx" class="tab-content">
             <div class="grid-2">
                 <div>
@@ -132,25 +137,23 @@
                     </select>
                 </div>
                 <div>
-                    <label style="font-size: 11px; color: #aaa;">Ajustar tamaño de elemento seleccionado</label>
+                    <label style="font-size: 11px; color: #aaa;">Tamaño (Texto/Sticker selec.)</label>
                     <input type="range" id="elementSize" min="10" max="400" value="60" oninput="updateSelectedOverlaySize()">
                 </div>
             </div>
             
             <div style="background: #111; padding: 10px; border-radius: 6px; border: 1px solid #333;">
-                <label style="font-size: 11px; color: #aaa;">Añadir Texto a la pantalla</label>
+                <label style="font-size: 11px; color: #aaa;">Añadir Texto a la Línea de Tiempo</label>
                 <div style="display: flex; gap: 5px; margin-top: 5px;">
                     <input type="text" id="overlayText" placeholder="Escribe aquí..." style="flex: 1;">
                     <input type="color" id="overlayColor" value="#ffffff" style="width: 40px; padding: 2px;">
-                    <button class="btn primary" onclick="addTextOverlay()" style="padding: 10px;"><i class="fa-solid fa-check"></i></button>
+                    <button class="btn primary" onclick="addTextToTimeline()" style="padding: 10px;"><i class="fa-solid fa-plus"></i></button>
                 </div>
+                <p style="font-size: 10px; color: #888; margin-top: 5px;">* Se añadirá un bloque morado en la pista "Txt". Usa el botón "Copiar" arriba para duplicarlo.</p>
             </div>
 
             <div class="btn primary" onclick="document.getElementById('stickerUpload').click()"><i class="fa-solid fa-face-smile"></i> Añadir Foto superpuesta (Sticker)</div>
-            <input type="file" id="stickerUpload" accept="image/*" style="display:none;" onchange="addStickerOverlay(event)">
-            
-            <div class="btn danger" onclick="deleteSelectedOverlay()" style="padding: 8px;"><i class="fa-solid fa-trash"></i> Borrar Elemento Seleccionado en Pantalla</div>
-            <p style="font-size: 10px; color: #888; text-align: center;">Toca y arrastra los textos o fotos directamente en la pantalla negra de arriba para acomodarlos.</p>
+            <input type="file" id="stickerUpload" accept="image/*" style="display:none;" onchange="addStickerToTimeline(event)">
         </div>
 
         <!-- 3. VOZ EN OFF -->
@@ -196,106 +199,159 @@
             if (audioCtx.state === 'suspended') audioCtx.resume();
         }
 
-        // --- GESTIÓN DE ELEMENTOS SUPERPUESTOS EN PANTALLA (TEXTO/STICKERS) ---
-        let canvasOverlays = []; // Lista de textos e imágenes extra
-        let selectedOverlay = null; // Elemento activo para mover/redimensionar
-
-        function addTextOverlay() {
-            const text = document.getElementById('overlayText').value;
-            if (!text) return;
-            const color = document.getElementById('overlayColor').value;
-            canvasOverlays.push({
-                id: Date.now(), type: 'text', content: text, color: color,
-                x: 640, y: 360, size: 60 // Centrado por defecto
-            });
-            document.getElementById('overlayText').value = '';
-            selectedOverlay = canvasOverlays[canvasOverlays.length - 1];
-            document.getElementById('elementSize').value = selectedOverlay.size;
-        }
-
-        function addStickerOverlay(event) {
-            const file = event.target.files[0]; if (!file) return;
-            const img = new Image();
-            img.onload = () => {
-                // Mantener proporción inicial
-                let ratio = img.height / img.width;
-                canvasOverlays.push({
-                    id: Date.now(), type: 'image', imgObj: img, ratio: ratio,
-                    x: 640, y: 360, size: 200 // size controla el ancho, el alto se calcula con el ratio
-                });
-                selectedOverlay = canvasOverlays[canvasOverlays.length - 1];
-                document.getElementById('elementSize').value = selectedOverlay.size;
-            };
-            img.src = URL.createObjectURL(file);
-        }
-
-        function deleteSelectedOverlay() {
-            if (selectedOverlay) {
-                canvasOverlays = canvasOverlays.filter(o => o.id !== selectedOverlay.id);
-                selectedOverlay = null;
-            }
-        }
-
-        function updateSelectedOverlaySize() {
-            if (selectedOverlay) {
-                selectedOverlay.size = parseInt(document.getElementById('elementSize').value);
-            }
-        }
-
-        // --- INTERACTIVIDAD TÁCTIL SOBRE EL CANVAS ---
         const canvas = document.getElementById('mainCanvas'); 
         const ctx = canvas.getContext('2d');
         canvas.width = 1280; canvas.height = 720;
         
-        let isDraggingOverlay = false;
+        const hiddenCam = document.getElementById('hiddenCam');
+        const mediaContainer = document.getElementById('hidden-media-container');
         
+        let projectClips = []; // Base de datos maestra
+        let selectedClipEl = null; 
+        let isCamActive = false;
+        let isDraggingOverlay = false;
+
+        // --- SISTEMA NLE: TEXTOS Y STICKERS COMO CLIPS ---
+
+        function addTextToTimeline() {
+            const text = document.getElementById('overlayText').value;
+            if (!text) return;
+            const color = document.getElementById('overlayColor').value;
+            const clipId = Date.now();
+
+            const clipUi = document.createElement('div');
+            clipUi.className = 'clip-block text';
+            clipUi.style.left = playheadX + 'px'; clipUi.style.width = '150px';
+            clipUi.setAttribute('data-id', clipId);
+            clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-font"></i> &nbsp;${text.substring(0,6)}...</div>`;
+            
+            makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId);
+            clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true});
+            document.getElementById('textTrack').appendChild(clipUi);
+
+            projectClips.push({
+                id: clipId, type: 'text', content: text, color: color,
+                x: 640, y: 360, size: 60, startPx: playheadX, widthPx: 150
+            });
+
+            document.getElementById('overlayText').value = '';
+            playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px';
+            updateTimecode();
+        }
+
+        function addStickerToTimeline(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const img = new Image();
+            img.onload = () => {
+                const clipId = Date.now();
+                const clipUi = document.createElement('div');
+                clipUi.className = 'clip-block image'; // Naranja
+                clipUi.style.left = playheadX + 'px'; clipUi.style.width = '100px';
+                clipUi.setAttribute('data-id', clipId);
+                clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-face-smile"></i> &nbsp;Sticker</div>`;
+                
+                makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId);
+                clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true});
+                document.getElementById('textTrack').appendChild(clipUi); // Lo ponemos en la pista de textos para sobreponer
+                
+                projectClips.push({
+                    id: clipId, type: 'sticker', imgObj: img, ratio: img.height / img.width,
+                    x: 640, y: 360, size: 200, startPx: playheadX, widthPx: 100
+                });
+                
+                playheadX += 110; document.getElementById('playhead').style.left = playheadX + 'px';
+                updateTimecode();
+            };
+            img.src = URL.createObjectURL(file);
+        }
+
+        function duplicateSelectedClip() {
+            if (!selectedClipEl) return;
+            const id = selectedClipEl.getAttribute('data-id');
+            const original = projectClips.find(c => c.id == id);
+            
+            if (original && (original.type === 'text' || original.type === 'sticker')) {
+                const newId = Date.now();
+                const clipUi = document.createElement('div');
+                clipUi.className = selectedClipEl.className;
+                clipUi.style.left = playheadX + 'px';
+                clipUi.style.width = original.widthPx + 'px';
+                clipUi.setAttribute('data-id', newId);
+                clipUi.innerHTML = selectedClipEl.innerHTML;
+
+                makeDraggable(clipUi, false, newId); makeResizable(clipUi, newId);
+                clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true});
+                selectedClipEl.parentElement.appendChild(clipUi);
+
+                // Clonamos el objeto con nueva ID, posición NLE en el cabezal y ligeramente desplazado visualmente en pantalla
+                let newClip = {...original, id: newId, startPx: playheadX, y: original.y + 40}; 
+                projectClips.push(newClip);
+                
+                playheadX += original.widthPx + 10; document.getElementById('playhead').style.left = playheadX + 'px';
+            } else {
+                alert("Selecciona un bloque de Texto o Sticker para duplicarlo.");
+            }
+        }
+
+        function updateSelectedOverlaySize() {
+            if (selectedClipEl) {
+                const id = selectedClipEl.getAttribute('data-id');
+                let clipObj = projectClips.find(c => c.id == id);
+                if (clipObj && (clipObj.type === 'text' || clipObj.type === 'sticker')) {
+                    clipObj.size = parseInt(document.getElementById('elementSize').value);
+                }
+            }
+        }
+
+        // --- INTERACTIVIDAD TÁCTIL SOBRE LA PANTALLA (CANVAS) ---
         function getCanvasPos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: (clientX - rect.left) * (canvas.width / rect.width),
-                y: (clientY - rect.top) * (canvas.height / rect.height)
-            };
+            return { x: (clientX - rect.left) * (canvas.width / rect.width), y: (clientY - rect.top) * (canvas.height / rect.height) };
         }
 
         function handleCanvasStart(e) {
             const pos = getCanvasPos(e);
             let found = null;
-            // Buscar del último al primero (el que está más arriba visualmente)
-            for (let i = canvasOverlays.length - 1; i >= 0; i--) {
-                let o = canvasOverlays[i];
-                // Lógica de colisión aproximada para facilitar toque en móviles
-                if (o.type === 'text') {
-                    ctx.font = `bold ${o.size}px sans-serif`;
-                    let metrics = ctx.measureText(o.content);
-                    let w = metrics.width; let h = o.size;
-                    // Coordenadas de texto suelen basarse en la línea base (bottom-center aproximado en nuestro renderizado)
-                    if (pos.x >= o.x - w/2 - 20 && pos.x <= o.x + w/2 + 20 && pos.y >= o.y - h - 20 && pos.y <= o.y + 20) {
-                        found = o; break;
-                    }
-                } else if (o.type === 'image') {
-                    let w = o.size; let h = o.size * o.ratio;
-                    if (pos.x >= o.x - w/2 - 20 && pos.x <= o.x + w/2 + 20 && pos.y >= o.y - h/2 - 20 && pos.y <= o.y + h/2 + 20) {
-                        found = o; break;
+            
+            // Buscar textos/stickers que estén ACTIVOS en el segundo actual
+            for (let i = projectClips.length - 1; i >= 0; i--) {
+                let o = projectClips[i];
+                if ((o.type === 'text' || o.type === 'sticker') && playheadX >= o.startPx && playheadX <= o.startPx + o.widthPx) {
+                    if (o.type === 'text') {
+                        ctx.font = `bold ${o.size}px sans-serif`;
+                        let w = ctx.measureText(o.content).width; let h = o.size;
+                        if (pos.x >= o.x - w/2 - 30 && pos.x <= o.x + w/2 + 30 && pos.y >= o.y - h - 30 && pos.y <= o.y + 30) { found = o; break; }
+                    } else if (o.type === 'sticker') {
+                        let w = o.size; let h = o.size * o.ratio;
+                        if (pos.x >= o.x - w/2 - 30 && pos.x <= o.x + w/2 + 30 && pos.y >= o.y - h/2 - 30 && pos.y <= o.y + h/2 + 30) { found = o; break; }
                     }
                 }
             }
             
-            selectedOverlay = found;
-            if (selectedOverlay) {
+            if (found) {
                 isDraggingOverlay = true;
-                document.getElementById('elementSize').value = selectedOverlay.size;
-                e.preventDefault(); // Evitar scroll de pantalla al arrastrar sticker
+                // Vincular visualmente el click del canvas con la línea de tiempo
+                let clipDom = document.querySelector(`.clip-block[data-id="${found.id}"]`);
+                if (clipDom) {
+                    if(selectedClipEl) selectedClipEl.classList.remove('selected');
+                    selectedClipEl = clipDom; selectedClipEl.classList.add('selected');
+                }
+                document.getElementById('elementSize').value = found.size;
+                e.preventDefault();
             }
         }
 
         function handleCanvasMove(e) {
-            if (!isDraggingOverlay || !selectedOverlay) return;
+            if (!isDraggingOverlay || !selectedClipEl) return;
             e.preventDefault();
             const pos = getCanvasPos(e);
-            selectedOverlay.x = pos.x;
-            selectedOverlay.y = pos.y;
+            const id = selectedClipEl.getAttribute('data-id');
+            let clipObj = projectClips.find(c => c.id == id);
+            if(clipObj && (clipObj.type === 'text' || clipObj.type === 'sticker')) {
+                clipObj.x = pos.x; clipObj.y = pos.y;
+            }
         }
 
         function handleCanvasEnd(e) { isDraggingOverlay = false; }
@@ -304,18 +360,11 @@
         canvas.addEventListener('mousemove', handleCanvasMove);  canvas.addEventListener('touchmove', handleCanvasMove, {passive: false});
         window.addEventListener('mouseup', handleCanvasEnd);     window.addEventListener('touchend', handleCanvasEnd);
 
-
-        // --- MOTOR DE RENDERIZADO PRINCIPAL (CANVAS LOOP) ---
-        const hiddenCam = document.getElementById('hiddenCam');
-        const mediaContainer = document.getElementById('hidden-media-container');
-        let projectClips = []; 
-        let isCamActive = false;
-
+        // --- MOTOR DE RENDERIZADO PRINCIPAL ---
         function renderLoop() {
-            ctx.fillStyle = "#111115"; 
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#111115"; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 1. Detección NLE: Medio Base
+            // 1. MEDIO BASE (VIDEO O IMAGEN)
             let activeVisualClip = null;
             for (let i = projectClips.length - 1; i >= 0; i--) {
                 const clip = projectClips[i];
@@ -335,8 +384,7 @@
                 }
             });
 
-            // 2. DIBUJAR MEDIO BASE CON FILTROS APLICADOS
-            ctx.filter = document.getElementById('videoFilter').value; // Aplicar efecto visual (Sepia, Oscuro, etc)
+            ctx.filter = document.getElementById('videoFilter').value; 
             
             if (activeVisualClip && activeVisualClip.domElement) {
                 if(activeVisualClip.type === 'video' && activeVisualClip.domElement.readyState >= 2) {
@@ -346,30 +394,26 @@
                 }
             } else {
                 ctx.fillStyle = "#ffffff"; ctx.font = "bold 28px sans-serif"; ctx.textAlign = "center";
-                ctx.fillText("Sin imagen/video en este segundo", canvas.width/2, canvas.height/2);
+                ctx.fillText("Lienzo CapacitiumX", canvas.width/2, canvas.height/2);
             }
             
-            ctx.filter = 'none'; // RESETEAR FILTRO para que las siguientes cosas (Cámara y Textos) no se manchen
+            ctx.filter = 'none'; // RESET FILTRO
 
-            // 3. DIBUJAR CÁMARA (PiP / Chroma Key)
+            // 2. CÁMARA (PiP)
             if (isCamActive && hiddenCam.readyState >= 2) {
                 const mode = document.getElementById('camMode').value;
                 const bg = document.getElementById('camBg').value;
                 
                 if (mode !== 'none') {
-                    let camW = mode === 'full' ? canvas.width : 400;
-                    let camH = mode === 'full' ? canvas.height : 300;
-                    let camX = mode === 'full' ? 0 : canvas.width - camW - 20;
-                    let camY = mode === 'full' ? 0 : canvas.height - camH - 20;
+                    let camW = mode === 'full' ? canvas.width : 400; let camH = mode === 'full' ? canvas.height : 300;
+                    let camX = mode === 'full' ? 0 : canvas.width - camW - 20; let camY = mode === 'full' ? 0 : canvas.height - camH - 20;
 
                     if(mode === 'full' && bg !== 'none') {
                         if (bg === 'neon') {
                             let grd = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 50, canvas.width/2, canvas.height/2, canvas.width);
                             grd.addColorStop(0, '#16092b'); grd.addColorStop(1, '#020007');
                             ctx.fillStyle = grd; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                        } else if (bg === 'dark') {
-                            ctx.fillStyle = '#141416'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                        }
+                        } else if (bg === 'dark') { ctx.fillStyle = '#141416'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
                     }
 
                     if (bg !== 'none') {
@@ -377,46 +421,41 @@
                         let tCtx = tempCanvas.getContext('2d'); tCtx.drawImage(hiddenCam, 0, 0, camW, camH);
                         let frame = tCtx.getImageData(0, 0, camW, camH);
                         let tol = parseInt(document.getElementById('chromaTol').value);
-                        
                         for (let i = 0; i < frame.data.length / 4; i++) {
                             let r = frame.data[i * 4]; let g = frame.data[i * 4 + 1]; let b = frame.data[i * 4 + 2];
                             if (g > tol && g > r * 1.1 && g > b * 1.1) frame.data[i * 4 + 3] = 0; 
                         }
                         tCtx.putImageData(frame, 0, 0); ctx.drawImage(tempCanvas, camX, camY);
-                    } else {
-                        ctx.drawImage(hiddenCam, camX, camY, camW, camH);
-                    }
+                    } else { ctx.drawImage(hiddenCam, camX, camY, camW, camH); }
                 }
             }
 
-            // 4. DIBUJAR OVERLAYS (TEXTOS Y STICKERS)
-            canvasOverlays.forEach(o => {
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                if (o.type === 'text') {
-                    ctx.font = `bold ${o.size}px sans-serif`;
-                    // Borde negro para legibilidad
-                    ctx.strokeStyle = '#000000'; ctx.lineWidth = o.size / 8;
-                    ctx.strokeText(o.content, o.x, o.y);
-                    // Relleno de color
-                    ctx.fillStyle = o.color;
-                    ctx.fillText(o.content, o.x, o.y);
-                } else if (o.type === 'image') {
-                    let w = o.size; let h = o.size * o.ratio;
-                    ctx.drawImage(o.imgObj, o.x - w/2, o.y - h/2, w, h);
-                }
-                
-                // Dibujar marco de selección si es el activo
-                if (selectedOverlay && selectedOverlay.id === o.id) {
-                    ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 3; ctx.setLineDash([10, 10]);
+            // 3. TEXTOS Y STICKERS
+            projectClips.forEach(o => {
+                if ((o.type === 'text' || o.type === 'sticker') && playheadX >= o.startPx && playheadX <= o.startPx + o.widthPx) {
+                    ctx.textAlign = "center"; ctx.textBaseline = "middle";
                     if (o.type === 'text') {
-                        let w = ctx.measureText(o.content).width; let h = o.size;
-                        ctx.strokeRect(o.x - w/2 - 10, o.y - h/2 - 10, w + 20, h + 20);
-                    } else if (o.type === 'image') {
+                        ctx.font = `bold ${o.size}px sans-serif`;
+                        ctx.strokeStyle = '#000000'; ctx.lineWidth = o.size / 8;
+                        ctx.strokeText(o.content, o.x, o.y);
+                        ctx.fillStyle = o.color; ctx.fillText(o.content, o.x, o.y);
+                    } else if (o.type === 'sticker') {
                         let w = o.size; let h = o.size * o.ratio;
-                        ctx.strokeRect(o.x - w/2 - 5, o.y - h/2 - 5, w + 10, h + 10);
+                        ctx.drawImage(o.imgObj, o.x - w/2, o.y - h/2, w, h);
                     }
-                    ctx.setLineDash([]); // Reset
+                    
+                    // Selección visual
+                    if (selectedClipEl && selectedClipEl.getAttribute('data-id') == o.id) {
+                        ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 3; ctx.setLineDash([10, 10]);
+                        if (o.type === 'text') {
+                            let w = ctx.measureText(o.content).width; let h = o.size;
+                            ctx.strokeRect(o.x - w/2 - 10, o.y - h/2 - 10, w + 20, h + 20);
+                        } else if (o.type === 'sticker') {
+                            let w = o.size; let h = o.size * o.ratio;
+                            ctx.strokeRect(o.x - w/2 - 5, o.y - h/2 - 5, w + 10, h + 10);
+                        }
+                        ctx.setLineDash([]);
+                    }
                 }
             });
 
@@ -424,8 +463,8 @@
         }
         renderLoop();
 
-        // --- SISTEMA NLE, TIMELINE Y ARRASTRES (Se mantiene igual a V7) ---
-        let selectedClipEl = null; let globalTime = 0; let isPlaying = false; let playInterval;
+        // --- SISTEMA GENERAL (TIEMPOS Y EVENTOS) ---
+        let globalTime = 0; let isPlaying = false; let playInterval;
         let playheadX = 45; const pixelsPerSecond = 20; 
 
         function updateTimecode() { 
@@ -442,7 +481,6 @@
             } else {
                 isPlaying = true;
                 btn.classList.remove('fa-play'); btn.classList.add('fa-pause', 'active-play');
-                
                 playInterval = setInterval(() => {
                     globalTime++; playheadX = 45 + (globalTime * (pixelsPerSecond/10));
                     document.getElementById('playhead').style.left = playheadX + 'px';
@@ -459,6 +497,17 @@
             projectClips.forEach(clip => { if((clip.type === 'video' || clip.type === 'audio') && clip.domElement) clip.domElement.currentTime = 0; });
         }
 
+        function selectClip(e) {
+            if(selectedClipEl) selectedClipEl.classList.remove('selected');
+            selectedClipEl = e.currentTarget; selectedClipEl.classList.add('selected');
+            // Si es texto o sticker, actualizar el slider de tamaño
+            const id = selectedClipEl.getAttribute('data-id');
+            const c = projectClips.find(clip => clip.id == id);
+            if(c && (c.type === 'text' || c.type === 'sticker')) {
+                document.getElementById('elementSize').value = c.size;
+            }
+        }
+
         function deleteSelectedClip() {
             if(selectedClipEl) { 
                 const id = selectedClipEl.getAttribute('data-id');
@@ -470,10 +519,8 @@
         }
 
         function addMediaToTimeline(event) {
-            initAudio();
-            const file = event.target.files[0]; if (!file) return;
-            const isVideo = file.type.startsWith('video/');
-            const url = URL.createObjectURL(file);
+            initAudio(); const file = event.target.files[0]; if (!file) return;
+            const isVideo = file.type.startsWith('video/'); const url = URL.createObjectURL(file);
             const clipId = Date.now();
             
             const clipUi = document.createElement('div');
@@ -483,10 +530,7 @@
             clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${isVideo ? 'film' : 'image'}"></i> &nbsp;${file.name.substring(0,8)}</div>`;
             
             makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId);
-            clipUi.addEventListener('mousedown', (e) => {
-                if(selectedClipEl) selectedClipEl.classList.remove('selected');
-                selectedClipEl = e.currentTarget; selectedClipEl.classList.add('selected');
-            });
+            clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true});
             document.getElementById(isVideo ? 'videoTrack' : 'imageTrack').appendChild(clipUi);
 
             let mediaElement;
@@ -506,7 +550,7 @@
             } else { mediaElement = new Image(); mediaElement.src = url; }
 
             projectClips.push({ id: clipId, type: isVideo ? 'video' : 'image', startPx: playheadX, widthPx: 150, domElement: mediaElement });
-            playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px';
+            playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
         }
 
         function makeDraggable(element, isPlayhead = false, clipId = null) {
@@ -588,7 +632,7 @@
                         clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-microphone"></i> &nbsp;Voz_Off</div>`;
                         
                         makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); 
-                        clipUi.addEventListener('mousedown', (e) => { if(selectedClipEl) selectedClipEl.classList.remove('selected'); selectedClipEl = e.currentTarget; selectedClipEl.classList.add('selected'); });
+                        clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true});
                         document.getElementById('audioTrack').appendChild(clipUi);
                         
                         const blob = new Blob(voiceChunks, { type: 'audio/webm' });
@@ -636,7 +680,7 @@
         let mainRecorder; let exportChunks = [];
         function exportVideo() {
             initAudio();
-            selectedOverlay = null; // Quitar líneas punteadas de selección antes de grabar
+            if(selectedClipEl) selectedClipEl.classList.remove('selected'); selectedClipEl = null; 
             if(exportChunks.length > 0) exportChunks = [];
             
             const finalStream = canvas.captureStream(30);
