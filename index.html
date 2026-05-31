@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CapacitiumX Pro Editor V5</title>
+    <title>CapacitiumX Pro Editor V6</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --neon: #3b82f6; --bg: #09090b; --panel: #18181b; --track-bg: #27272a; }
@@ -25,7 +25,7 @@
 
         /* PISTAS DE EDICIÓN */
         .tracks-container { flex: 1; padding: 10px 0; overflow-x: auto; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; position: relative; }
-        .track { height: 40px; background: var(--track-bg); display: flex; position: relative; min-width: 300vw; border-bottom: 1px solid #333; }
+        .track { height: 45px; background: var(--track-bg); display: flex; position: relative; min-width: 300vw; border-bottom: 1px solid #333; }
         .track-label { position: sticky; left: 0; background: #111; width: 45px; display: flex; justify-content: center; align-items: center; font-size: 10px; z-index: 30; border-right: 1px solid #555; flex-direction: column; color: #aaa; }
         
         /* CABEZAL ROJO */
@@ -53,22 +53,24 @@
         .btn.danger { background: #ef4444; border: none; }
         select, input[type="range"] { background: #111; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-size: 12px; width: 100%; box-sizing: border-box; }
         
+        #hidden-media-container { display: none; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <div class="app-header">
-        <span><i class="fa-solid fa-film"></i> Estudio Pro V5</span>
-        <button class="btn-save" onclick="exportVideo()"><i class="fa-solid fa-download"></i> EXPORTAR</button>
+        <span><i class="fa-solid fa-film"></i> Estudio Pro V6</span>
+        <button class="btn-save" id="btnExport" onclick="exportVideo()"><i class="fa-solid fa-download"></i> EXPORTAR</button>
     </div>
 
     <!-- MONITOR DE VIDEO -->
     <div class="preview-area">
-        <div class="status-rec" id="recBadge">GRABANDO VOZ</div>
+        <div class="status-rec" id="recBadge">GRABANDO</div>
         <canvas id="mainCanvas"></canvas>
         <video id="hiddenCam" autoplay playsinline style="display:none;" muted></video>
-        <video id="hiddenVideo" playsinline crossorigin="anonymous" style="display:none;"></video>
+        <!-- Contenedor para almacenar múltiples archivos reales -->
+        <div id="hidden-media-container"></div>
     </div>
 
     <!-- LÍNEA DE TIEMPO -->
@@ -107,21 +109,18 @@
             <div class="tab-btn" onclick="switchTab('camera')"><i class="fa-solid fa-camera"></i> Cámara (PiP)</div>
         </div>
 
-        <!-- PESTAÑA 1: MEDIOS (IMAGEN/VIDEO) -->
         <div id="media" class="tab-content active">
             <div class="btn primary" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-plus"></i> Importar Foto / Video</div>
             <input type="file" id="fileUpload" accept="image/*,video/*" style="display:none;" onchange="addMediaToTimeline(event)">
-            <p style="font-size: 11px; color: #888; text-align: center;">Toca un clip para seleccionarlo. Arrástralo para ajustar los tiempos.</p>
+            <p style="font-size: 11px; color: #888; text-align: center;">El lienzo solo mostrará el video o imagen que esté tocando la línea roja. Ajusta los clips para que no se empalmen.</p>
         </div>
 
-        <!-- PESTAÑA 2: VOZ EN OFF INDEPENDIENTE -->
         <div id="voice" class="tab-content">
             <label style="font-size: 11px; color: #aaa; text-align: center;">Micrófono Podcast (Aislamiento de fondo activado)</label>
             <div class="btn primary" id="btnRecVoice" onclick="toggleVoiceRecord()" style="padding: 16px;"><i class="fa-solid fa-microphone"></i> Iniciar Grabación de Voz</div>
             <p style="font-size: 10px; color: #10b981; text-align: center;">* El audio grabado se añadirá automáticamente a la pista "Voz".</p>
         </div>
 
-        <!-- PESTAÑA 3: CÁMARA PIP Y FONDO VIRTUAL -->
         <div id="camera" class="tab-content">
             <div class="btn primary" id="btnToggleCam" onclick="toggleCamera()"><i class="fa-solid fa-video"></i> Activar Cámara (Sin Audio)</div>
             
@@ -143,40 +142,71 @@
                     </select>
                 </div>
             </div>
-            <label style="font-size: 11px; color: #aaa; margin-top: 5px;">Recorte de Chroma Key (Mueve esto si usas Fondo Virtual)</label>
+            <label style="font-size: 11px; color: #aaa; margin-top: 5px;">Recorte de Chroma Key</label>
             <input type="range" id="chromaTol" min="0" max="150" value="60">
         </div>
     </div>
 
     <script>
-        // --- 1. MOTOR GRÁFICO (CANVAS Y SOLUCIÓN BUG IMAGEN) ---
+        // --- 1. MOTOR GRÁFICO (SISTEMA NLE REAL PARA EVITAR EMPALMES) ---
         const canvas = document.getElementById('mainCanvas'); 
         const ctx = canvas.getContext('2d');
         canvas.width = 1280; canvas.height = 720;
         
         const hiddenCam = document.getElementById('hiddenCam');
-        const hiddenVideo = document.getElementById('hiddenVideo');
-        hiddenVideo.volume = 1.0; // Asegurar que el video suene
+        const mediaContainer = document.getElementById('hidden-media-container');
         
-        let currentImage = null;
+        let projectClips = []; // Base de datos maestra de los clips en la línea de tiempo
         let isCamActive = false;
+
+        // Variables de ruteo de Audio (Para exportación final)
+        let audioCtx; let audioMixer; 
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                audioMixer = audioCtx.createMediaStreamDestination();
+            }
+        }
 
         function renderLoop() {
             ctx.fillStyle = "#18181b"; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // CORRECCIÓN: Si hay video, dibujarlo siempre que esté cargado (incluso pausado).
-            // Si no hay video, pero hay imagen, dibujar imagen.
-            if (hiddenVideo.src && hiddenVideo.readyState >= 2) {
-                ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
-            } else if (currentImage) {
-                ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
-            } else {
-                ctx.fillStyle = "white"; ctx.font = "24px sans-serif"; ctx.textAlign = "center";
-                ctx.fillText("Importa una Foto o Video", canvas.width/2, canvas.height/2);
+            // 1. Detección Inteligente de Clip Activo (La solución al empalme)
+            // Busca qué clip de video o imagen está debajo del playheadX
+            let activeVisualClip = null;
+            for (let i = projectClips.length - 1; i >= 0; i--) {
+                const clip = projectClips[i];
+                if ((clip.type === 'video' || clip.type === 'image') && playheadX >= clip.startPx && playheadX <= clip.startPx + clip.widthPx) {
+                    activeVisualClip = clip;
+                    break; // Toma el primero que encuentre (el de más arriba)
+                }
             }
 
-            // DIBUJAR CÁMARA Y FONDO VIRTUAL (CHROMA KEY)
+            // Pausar todos los videos que NO son el activo, reproducir el activo si el NLE está en play
+            projectClips.forEach(clip => {
+                if (clip.type === 'video' && clip.domElement) {
+                    if (clip === activeVisualClip && isPlaying) {
+                        if (clip.domElement.paused) clip.domElement.play();
+                    } else {
+                        if (!clip.domElement.paused) clip.domElement.pause();
+                    }
+                }
+            });
+
+            // 2. Dibujar el Clip Activo
+            if (activeVisualClip && activeVisualClip.domElement) {
+                if(activeVisualClip.type === 'video' && activeVisualClip.domElement.readyState >= 2) {
+                    ctx.drawImage(activeVisualClip.domElement, 0, 0, canvas.width, canvas.height);
+                } else if (activeVisualClip.type === 'image') {
+                    ctx.drawImage(activeVisualClip.domElement, 0, 0, canvas.width, canvas.height);
+                }
+            } else {
+                ctx.fillStyle = "white"; ctx.font = "24px sans-serif"; ctx.textAlign = "center";
+                ctx.fillText("CapacitiumX - Sin Medios en este tiempo", canvas.width/2, canvas.height/2);
+            }
+
+            // 3. Dibujar Cámara y Chroma Key
             if (isCamActive && hiddenCam.readyState >= 2) {
                 const mode = document.getElementById('camMode').value;
                 const bg = document.getElementById('camBg').value;
@@ -198,24 +228,16 @@
                     }
 
                     if (bg !== 'none') {
-                        let tempCanvas = document.createElement('canvas');
-                        tempCanvas.width = camW; tempCanvas.height = camH;
-                        let tCtx = tempCanvas.getContext('2d');
-                        tCtx.drawImage(hiddenCam, 0, 0, camW, camH);
-                        
+                        let tempCanvas = document.createElement('canvas'); tempCanvas.width = camW; tempCanvas.height = camH;
+                        let tCtx = tempCanvas.getContext('2d'); tCtx.drawImage(hiddenCam, 0, 0, camW, camH);
                         let frame = tCtx.getImageData(0, 0, camW, camH);
                         let tol = parseInt(document.getElementById('chromaTol').value);
                         
                         for (let i = 0; i < frame.data.length / 4; i++) {
-                            let r = frame.data[i * 4];
-                            let g = frame.data[i * 4 + 1];
-                            let b = frame.data[i * 4 + 2];
-                            if (g > tol && g > r * 1.1 && g > b * 1.1) {
-                                frame.data[i * 4 + 3] = 0; 
-                            }
+                            let r = frame.data[i * 4]; let g = frame.data[i * 4 + 1]; let b = frame.data[i * 4 + 2];
+                            if (g > tol && g > r * 1.1 && g > b * 1.1) frame.data[i * 4 + 3] = 0; 
                         }
-                        tCtx.putImageData(frame, 0, 0);
-                        ctx.drawImage(tempCanvas, camX, camY);
+                        tCtx.putImageData(frame, 0, 0); ctx.drawImage(tempCanvas, camX, camY);
                     } else {
                         ctx.drawImage(hiddenCam, camX, camY, camW, camH);
                     }
@@ -225,26 +247,25 @@
         }
         renderLoop();
 
-        // --- 2. LÍNEA DE TIEMPO Y REPRODUCCIÓN (PLAY/PAUSA) ---
+        // --- 2. LÍNEA DE TIEMPO Y REPRODUCCIÓN ---
         let selectedClipEl = null; let globalTime = 0; let isPlaying = false; let playInterval;
         let playheadX = 45; const pixelsPerSecond = 20; 
 
         function updateTimecode() { 
-            let secs = Math.floor(globalTime / 10);
-            let decs = globalTime % 10;
+            let secs = Math.floor(globalTime / 10); let decs = globalTime % 10;
             document.getElementById('timecode').innerText = `00:${secs.toString().padStart(2,'0')}.${decs}`; 
         }
 
         function togglePlayback() {
+            initAudio();
             const btn = document.getElementById('btnPlay');
             if (isPlaying) {
                 clearInterval(playInterval); isPlaying = false;
                 btn.classList.remove('fa-pause', 'active-play'); btn.classList.add('fa-play');
-                if (hiddenVideo.src) hiddenVideo.pause();
+                // Al pausar, renderLoop se encarga de pausar los videos.
             } else {
                 isPlaying = true;
                 btn.classList.remove('fa-play'); btn.classList.add('fa-pause', 'active-play');
-                if (hiddenVideo.src && hiddenVideo.readyState >= 2) hiddenVideo.play(); // Asegurar reproducción de audio de video
                 
                 playInterval = setInterval(() => {
                     globalTime++; playheadX = 45 + (globalTime * (pixelsPerSecond/10));
@@ -259,44 +280,78 @@
             globalTime = 0; playheadX = 45; 
             document.getElementById('playhead').style.left = '45px'; 
             updateTimecode(); document.getElementById('timelineScroll').scrollLeft = 0; 
-            if(hiddenVideo.src) hiddenVideo.currentTime = 0;
-        }
-
-        function selectClip(e) {
-            if(selectedClipEl) selectedClipEl.classList.remove('selected');
-            selectedClipEl = e.currentTarget; selectedClipEl.classList.add('selected');
+            // Resetear todos los videos al inicio
+            projectClips.forEach(clip => { if(clip.type === 'video' && clip.domElement) clip.domElement.currentTime = 0; });
         }
 
         function deleteSelectedClip() {
             if(selectedClipEl) { 
+                const id = selectedClipEl.getAttribute('data-id');
+                // Remover de los datos
+                projectClips = projectClips.filter(c => c.id != id);
+                // Remover del DOM
                 selectedClipEl.remove(); selectedClipEl = null; 
-                currentImage = null; hiddenVideo.src = "";
             }
         }
 
         function addMediaToTimeline(event) {
+            initAudio();
             const file = event.target.files[0]; if (!file) return;
             const isVideo = file.type.startsWith('video/');
             const url = URL.createObjectURL(file);
+            const clipId = Date.now();
             
-            const clip = document.createElement('div');
-            clip.className = `clip-block ${isVideo ? '' : 'image'}`;
-            clip.style.left = playheadX + 'px'; clip.style.width = '150px';
-            clip.innerHTML = `<i class="fa-solid fa-${isVideo ? 'film' : 'image'}"></i> &nbsp;${file.name.substring(0,10)}`;
+            // 1. Crear elemento DOM Visual en la línea de tiempo
+            const clipUi = document.createElement('div');
+            clipUi.className = `clip-block ${isVideo ? '' : 'image'}`;
+            clipUi.style.left = playheadX + 'px'; clipUi.style.width = '150px'; // 150px = ~7.5 segundos por defecto
+            clipUi.setAttribute('data-id', clipId);
+            clipUi.innerHTML = `<i class="fa-solid fa-${isVideo ? 'film' : 'image'}"></i> &nbsp;${file.name.substring(0,8)}`;
             
-            makeDraggable(clip);
-            clip.addEventListener('mousedown', selectClip); clip.addEventListener('touchstart', selectClip, {passive: true});
+            makeDraggable(clipUi, false, clipId);
+            clipUi.addEventListener('mousedown', (e) => {
+                if(selectedClipEl) selectedClipEl.classList.remove('selected');
+                selectedClipEl = e.currentTarget; selectedClipEl.classList.add('selected');
+            });
 
-            document.getElementById(isVideo ? 'videoTrack' : 'imageTrack').appendChild(clip);
+            document.getElementById(isVideo ? 'videoTrack' : 'imageTrack').appendChild(clipUi);
 
+            // 2. Crear elemento de fondo (HTML real) y conectar Audio
+            let mediaElement;
             if(isVideo) {
-                hiddenVideo.src = url; hiddenVideo.load(); currentImage = null;
+                mediaElement = document.createElement('video');
+                mediaElement.src = url; mediaElement.playsInline = true; mediaElement.crossOrigin = "anonymous";
+                mediaElement.volume = 1.0; 
+                mediaContainer.appendChild(mediaElement);
+                
+                // Conectar audio del video al mezclador maestro
+                mediaElement.oncanplay = () => {
+                    if (!mediaElement.hasAudioConnected) {
+                        try {
+                            const source = audioCtx.createMediaElementSource(mediaElement);
+                            source.connect(audioCtx.destination); // Escuchar en bocinas
+                            source.connect(audioMixer); // Mandar a exportación
+                            mediaElement.hasAudioConnected = true;
+                        } catch(e) {} // Evitar error si ya se conectó
+                    }
+                };
             } else {
-                currentImage = new Image(); currentImage.src = url; hiddenVideo.src = "";
+                mediaElement = new Image(); mediaElement.src = url;
             }
+
+            // 3. Registrar en la base de datos maestra
+            projectClips.push({
+                id: clipId, type: isVideo ? 'video' : 'image',
+                startPx: playheadX, widthPx: 150,
+                domElement: mediaElement
+            });
+            
+            // Avanzar el cabezal para el próximo archivo
+            playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px';
         }
 
-        function makeDraggable(element, isPlayhead = false) {
+        // --- ARRASTRE DE CLIPS Y LÍNEA ROJA ---
+        function makeDraggable(element, isPlayhead = false, clipId = null) {
             let startX = 0, currentLeft = 0;
             function dragStart(e) {
                 if(isPlaying) togglePlayback(); 
@@ -315,7 +370,17 @@
 
                 if(isPlayhead) {
                     playheadX = newLeft; globalTime = Math.floor((newLeft - 45) / (pixelsPerSecond/10)); updateTimecode();
-                    if(hiddenVideo.src && hiddenVideo.duration) hiddenVideo.currentTime = globalTime / 10;
+                    // Sincronizar todos los videos con el nuevo tiempo NLE
+                    projectClips.forEach(c => {
+                        if(c.type === 'video' && c.domElement && newLeft >= c.startPx && newLeft <= c.startPx + c.widthPx) {
+                            let videoTime = (newLeft - c.startPx) / pixelsPerSecond;
+                            if(videoTime >= 0) c.domElement.currentTime = videoTime;
+                        }
+                    });
+                } else if (clipId) {
+                    // Actualizar el startPx en la base de datos para corregir empalmes
+                    let clipObj = projectClips.find(c => c.id == clipId);
+                    if(clipObj) clipObj.startPx = newLeft;
                 }
             }
             function dragEnd(e) {
@@ -326,87 +391,119 @@
         }
         makeDraggable(document.getElementById('playhead'), true);
 
-
-        // --- 3. GRABADORA DE VOZ INDEPENDIENTE (NUEVO) ---
-        let isRecordingVoice = false;
-        let voiceStream; let voiceRecorder; let voiceChunks = [];
+        // --- 3. GRABACIÓN DE VOZ EN OFF (PODCAST) ---
+        let isRecordingVoice = false; let voiceStream; let voiceRecorder; let voiceChunks = [];
 
         async function toggleVoiceRecord() {
+            initAudio();
             const btn = document.getElementById('btnRecVoice');
             const badge = document.getElementById('recBadge');
             
             if (!isRecordingVoice) {
                 try {
-                    // Pide SOLO el micrófono, con máxima limpieza de ruido
-                    voiceStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false } });
+                    voiceStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
                     voiceChunks = [];
                     voiceRecorder = new MediaRecorder(voiceStream);
                     
                     voiceRecorder.ondataavailable = e => { if (e.data.size > 0) voiceChunks.push(e.data); };
                     voiceRecorder.onstop = () => {
-                        // Crear clip en pista de audio
-                        const clip = document.createElement('div');
-                        clip.className = 'clip-block audio';
-                        clip.style.left = playheadX + 'px'; clip.style.width = '120px';
-                        clip.innerHTML = `<i class="fa-solid fa-microphone"></i> &nbsp;Voz_Off`;
+                        // Crear clip visual de audio
+                        const clipId = Date.now();
+                        const clipUi = document.createElement('div');
+                        clipUi.className = 'clip-block audio'; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '120px';
+                        clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<i class="fa-solid fa-microphone"></i> &nbsp;Voz_Off`;
                         
-                        makeDraggable(clip);
-                        clip.addEventListener('mousedown', selectClip); clip.addEventListener('touchstart', selectClip, {passive: true});
-                        document.getElementById('audioTrack').appendChild(clip);
+                        makeDraggable(clipUi, false, clipId);
+                        document.getElementById('audioTrack').appendChild(clipUi);
                         
-                        // Apagar micrófono
+                        // Generar audio real
+                        const blob = new Blob(voiceChunks, { type: 'audio/webm' });
+                        const audioUrl = URL.createObjectURL(blob);
+                        const audioEl = document.createElement('audio'); audioEl.src = audioUrl;
+                        mediaContainer.appendChild(audioEl);
+
+                        // Conectar audio al mezclador general
+                        const source = audioCtx.createMediaElementSource(audioEl);
+                        source.connect(audioCtx.destination); source.connect(audioMixer);
+                        
+                        projectClips.push({ id: clipId, type: 'video', startPx: playheadX, widthPx: 120, domElement: audioEl }); // Tratado como video para el play/pause
                         voiceStream.getTracks().forEach(t => t.stop());
                     };
 
-                    voiceRecorder.start();
-                    isRecordingVoice = true;
-                    btn.classList.add('danger');
-                    btn.innerHTML = '<i class="fa-solid fa-stop"></i> Detener Grabación de Voz';
+                    voiceRecorder.start(); isRecordingVoice = true;
+                    btn.classList.add('danger'); btn.innerHTML = '<i class="fa-solid fa-stop"></i> Detener Grabación';
                     badge.innerHTML = 'GRABANDO VOZ'; badge.style.display = 'block';
-                    
-                    // Si el video está cargado, reproducirlo mientras grabas para que puedas narrarlo
-                    if(!isPlaying) togglePlayback();
+                    if(!isPlaying) togglePlayback(); // Reproducir línea de tiempo para narrar encima
 
-                } catch(e) { alert("Otorga permisos de micrófono para narrar."); }
+                } catch(e) { alert("Permite acceso al micrófono."); }
             } else {
-                voiceRecorder.stop();
-                isRecordingVoice = false;
+                voiceRecorder.stop(); isRecordingVoice = false;
                 if(isPlaying) togglePlayback();
-                btn.classList.remove('danger');
-                btn.innerHTML = '<i class="fa-solid fa-microphone"></i> Iniciar Grabación de Voz';
+                btn.classList.remove('danger'); btn.innerHTML = '<i class="fa-solid fa-microphone"></i> Iniciar Grabación';
                 badge.style.display = 'none';
             }
         }
 
-
-        // --- 4. CÁMARA WEB (PIP/FONDO VIRTUAL) ---
+        // --- 4. CÁMARA WEB ---
         async function toggleCamera() {
             if(!isCamActive) {
                 try {
-                    // Pide SOLO cámara de video (sin audio, porque la voz va por el botón separado)
                     const stream = await navigator.mediaDevices.getUserMedia({ video: {facingMode: "user"}, audio: false });
                     hiddenCam.srcObject = stream; isCamActive = true;
-                    
                     document.getElementById('btnToggleCam').classList.add('danger');
                     document.getElementById('btnToggleCam').innerHTML = '<i class="fa-solid fa-video-slash"></i> Apagar Cámara';
                     document.getElementById('camMode').value = "pip"; 
-                } catch(e) { alert("Otorga permisos de cámara."); }
+                } catch(e) { alert("Permite acceso a cámara."); }
             } else {
-                let stream = hiddenCam.srcObject;
-                if(stream) stream.getTracks().forEach(t => t.stop());
+                let stream = hiddenCam.srcObject; if(stream) stream.getTracks().forEach(t => t.stop());
                 isCamActive = false;
                 document.getElementById('btnToggleCam').classList.remove('danger');
                 document.getElementById('btnToggleCam').innerHTML = '<i class="fa-solid fa-video"></i> Activar Cámara (Sin Audio)';
                 document.getElementById('camMode').value = "none";
             }
         }
-
         function updateCamSettings() { if(document.getElementById('camMode').value !== 'none' && !isCamActive) toggleCamera(); }
 
-        // --- EXPORTAR ---
+        // --- 5. EXPORTACIÓN REAL (MEDIA RECORDER RESTAURADO) ---
+        let mainRecorder; let exportChunks = [];
         function exportVideo() {
-            alert("Para exportar, la herramienta debe grabar el lienzo. Usa capturadora de pantalla del celular o deja que el motor procese los gráficos.");
-            // Lógica de MediaRecorder general iría aquí (similar a V4).
+            initAudio();
+            if(exportChunks.length > 0) exportChunks = [];
+            
+            // 1. Capturar Video del Lienzo a 30 FPS
+            const finalStream = canvas.captureStream(30);
+            
+            // 2. Mezclar el audio de los videos insertados y grabaciones
+            if (audioMixer && audioMixer.stream.getAudioTracks().length > 0) {
+                finalStream.addTrack(audioMixer.stream.getAudioTracks()[0]);
+            }
+
+            try { mainRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm;codecs=vp9,opus' }); } 
+            catch (e) { mainRecorder = new MediaRecorder(finalStream); }
+
+            mainRecorder.ondataavailable = e => { if (e.data.size > 0) exportChunks.push(e.data); };
+            mainRecorder.onstop = () => {
+                const blob = new Blob(exportChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.style.display = 'none';
+                a.href = url; a.download = `CapacitiumX_Produccion_${Date.now()}.webm`;
+                document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
+                document.getElementById('recBadge').style.display = 'none';
+                document.getElementById('btnExport').innerHTML = '<i class="fa-solid fa-download"></i> EXPORTAR';
+                alert("¡Exportación completada con éxito!");
+            };
+
+            // Iniciar proceso: volver a cero, grabar y dar Play.
+            resetPlayhead();
+            document.getElementById('recBadge').innerHTML = "EXPORTANDO..."; 
+            document.getElementById('recBadge').style.display = 'block';
+            document.getElementById('btnExport').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...';
+            
+            mainRecorder.start(); 
+            togglePlayback(); 
+            
+            // Exportar 10 segundos por defecto (o puedes pausar manualmente la app y se guardará lo que lleves)
+            setTimeout(() => { if(mainRecorder.state === 'recording') { mainRecorder.stop(); togglePlayback(); } }, 15000);
         }
 
         function switchTab(tabId) {
