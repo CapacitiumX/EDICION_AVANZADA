@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CapacitiumX Pro Editor v3</title>
+    <title>CapacitiumX Pro Editor V4</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --neon: #3b82f6; --bg: #09090b; --panel: #18181b; --track-bg: #27272a; }
@@ -17,24 +17,25 @@
         .status-rec { position: absolute; top: 15px; right: 20px; background: #ef4444; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: none; animation: pulse 1.5s infinite; }
 
         /* TOOLBAR Y REPRODUCTOR */
-        .timeline-editor { background: var(--panel); display: flex; flex-direction: column; height: 30vh; border-bottom: 1px solid #333; }
+        .timeline-editor { background: var(--panel); display: flex; flex-direction: column; height: 35vh; border-bottom: 1px solid #333; }
         .timeline-toolbar { display: flex; gap: 15px; padding: 10px 12px; background: #000; font-size: 14px; align-items: center; }
         .action-btn { cursor: pointer; color: #a1a1aa; padding: 5px; transition: 0.2s; }
         .action-btn:hover { color: white; }
         .action-btn.active-play { color: #10b981; }
 
-        /* PISTAS */
-        .tracks-container { flex: 1; padding: 10px 0; overflow-x: auto; overflow-y: hidden; display: flex; flex-direction: column; gap: 8px; position: relative; }
-        .track { height: 45px; background: var(--track-bg); display: flex; position: relative; min-width: 300vw; border-bottom: 1px solid #333; }
-        .track-label { position: sticky; left: 0; background: #111; width: 30px; display: flex; justify-content: center; align-items: center; font-size: 12px; z-index: 30; border-right: 1px solid #555; }
+        /* PISTAS DE EDICIÓN */
+        .tracks-container { flex: 1; padding: 10px 0; overflow-x: auto; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; position: relative; }
+        .track { height: 40px; background: var(--track-bg); display: flex; position: relative; min-width: 300vw; border-bottom: 1px solid #333; }
+        .track-label { position: sticky; left: 0; background: #111; width: 40px; display: flex; justify-content: center; align-items: center; font-size: 10px; z-index: 30; border-right: 1px solid #555; flex-direction: column; color: #aaa; }
         
-        /* CABEZAL DE REPRODUCCIÓN (LÍNEA ROJA ARRASTRABLE) */
-        .playhead-container { position: absolute; top: 0; bottom: 0; left: 30px; width: 20px; z-index: 40; transform: translateX(-10px); cursor: ew-resize; }
+        /* CABEZAL ROJO */
+        .playhead-container { position: absolute; top: 0; bottom: 0; left: 40px; width: 20px; z-index: 40; transform: translateX(-10px); cursor: ew-resize; }
         .playhead-line { position: absolute; left: 10px; width: 2px; height: 100%; background: #ef4444; pointer-events: none; }
         .playhead-head { position: absolute; left: 5px; top: 0; width: 12px; height: 12px; background: #ef4444; clip-path: polygon(0 0, 100% 0, 50% 100%); pointer-events: none; }
 
         /* CLIPS ARRASTRABLES */
-        .clip-block { position: absolute; height: 90%; top: 5%; background: #3b82f6; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; font-size: 11px; font-weight: bold; cursor: grab; opacity: 0.9; overflow: hidden; white-space: nowrap; border: 1px solid #60a5fa; box-shadow: 0 2px 5px rgba(0,0,0,0.5); z-index: 20; }
+        .clip-block { position: absolute; height: 90%; top: 5%; background: #3b82f6; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; font-size: 10px; font-weight: bold; cursor: grab; opacity: 0.9; overflow: hidden; white-space: nowrap; border: 1px solid #60a5fa; box-shadow: 0 2px 5px rgba(0,0,0,0.5); z-index: 20; }
+        .clip-block.image { background: #f59e0b; border-color: #fbbf24; }
         .clip-block.audio { background: #10b981; border-color: #34d399; }
         .clip-block.selected { border: 2px solid white; opacity: 1; z-index: 25; }
         .clip-block:active { cursor: grabbing; }
@@ -50,7 +51,7 @@
         .btn { background: #27272a; border: 1px solid #444; color: white; padding: 12px; border-radius: 6px; font-size: 12px; text-align: center; cursor: pointer; font-weight: bold; }
         .btn.primary { background: var(--neon); border: none; }
         .btn.danger { background: #ef4444; border: none; }
-        select { background: #111; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-size: 12px; width: 100%; }
+        select, input[type="range"] { background: #111; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-size: 12px; width: 100%; box-sizing: border-box; }
         
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
@@ -58,15 +59,15 @@
 <body>
 
     <div class="app-header">
-        <span><i class="fa-solid fa-film"></i> Estudio Pro</span>
-        <button class="btn-save" onclick="exportVideo()"><i class="fa-solid fa-download"></i> GUARDAR</button>
+        <span><i class="fa-solid fa-film"></i> Estudio Pro V4</span>
+        <button class="btn-save" onclick="exportVideo()"><i class="fa-solid fa-download"></i> EXPORTAR</button>
     </div>
 
     <div class="preview-area">
         <div class="status-rec" id="recBadge">REC</div>
         <canvas id="mainCanvas"></canvas>
-        <video id="hiddenCam" autoplay playsinline style="display:none;"></video>
-        <video id="hiddenVideo" playsinline style="display:none;"></video>
+        <video id="hiddenCam" autoplay playsinline style="display:none;" muted></video>
+        <video id="hiddenVideo" playsinline crossorigin="anonymous" style="display:none;"></video>
     </div>
 
     <div class="timeline-editor">
@@ -85,47 +86,58 @@
             </div>
             
             <div class="track" id="videoTrack">
-                <div class="track-label"><i class="fa-solid fa-video"></i></div>
+                <div class="track-label"><i class="fa-solid fa-video"></i> Video</div>
+            </div>
+            <div class="track" id="imageTrack">
+                <div class="track-label"><i class="fa-solid fa-image"></i> Imagen</div>
             </div>
             <div class="track" id="audioTrack">
-                <div class="track-label"><i class="fa-solid fa-microphone"></i></div>
+                <div class="track-label"><i class="fa-solid fa-microphone"></i> Audio</div>
             </div>
         </div>
     </div>
 
     <div class="control-panel">
         <div class="tab-menu">
-            <div class="tab-btn active" onclick="switchTab('media')"><i class="fa-solid fa-folder-open"></i> Medios</div>
-            <div class="tab-btn" onclick="switchTab('camera')"><i class="fa-solid fa-camera"></i> Cámara y Fondo</div>
+            <div class="tab-btn active" onclick="switchTab('media')"><i class="fa-solid fa-folder-open"></i> Importar Medios</div>
+            <div class="tab-btn" onclick="switchTab('camera')"><i class="fa-solid fa-camera"></i> Cámara y Filtro</div>
         </div>
 
         <div id="media" class="tab-content active">
-            <div class="btn primary" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-plus"></i> Añadir Foto / Video</div>
+            <div class="btn primary" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-plus"></i> Importar Foto / Video</div>
             <input type="file" id="fileUpload" accept="image/*,video/*" style="display:none;" onchange="addMediaToTimeline(event)">
-            <p style="font-size: 11px; color: #888;">Toca un clip y arrástralo para moverlo. Arrastra la línea roja para cambiar el tiempo.</p>
+            <p style="font-size: 11px; color: #888;">Toca un clip para seleccionarlo. Arrástralo a la izquierda o derecha para ajustar el tiempo.</p>
         </div>
 
         <div id="camera" class="tab-content">
-            <label style="font-size: 11px; color: #aaa;">Modo de Cámara</label>
-            <select id="camMode" onchange="updateCamSettings()">
-                <option value="none">Apagada</option>
-                <option value="pip">Miniatura (Esquina Inferior)</option>
-                <option value="full">Pantalla Completa</option>
-            </select>
+            <div class="btn primary" id="btnToggleCam" onclick="toggleCamera()"><i class="fa-solid fa-video"></i> Activar Cámara y Micrófono Limpio</div>
             
-            <label style="font-size: 11px; color: #aaa; margin-top: 10px;">Fondo Virtual (Chroma Key)</label>
-            <select id="camBg" onchange="updateCamSettings()">
-                <option value="transparent">Sin Fondo (Mostrar Medios atrás)</option>
-                <option value="neon">Estudio Neon</option>
-                <option value="dark">Set Premium</option>
-            </select>
-
-            <div class="btn primary" id="btnToggleCam" onclick="toggleCamera()" style="margin-top: 10px;"><i class="fa-solid fa-video"></i> Activar Cámara / Micrófono</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                <div>
+                    <label style="font-size: 11px; color: #aaa;">Ubicación Cámara</label>
+                    <select id="camMode" onchange="updateCamSettings()">
+                        <option value="none">Oculta (Solo Voz)</option>
+                        <option value="pip">Miniatura PiP</option>
+                        <option value="full">Pantalla Completa</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: #aaa;">Fondo Virtual</label>
+                    <select id="camBg" onchange="updateCamSettings()">
+                        <option value="none">Mi fondo real</option>
+                        <option value="neon">Estudio Cyber Neon</option>
+                        <option value="dark">Set Premium Ejecutivo</option>
+                    </select>
+                </div>
+            </div>
+            <label style="font-size: 11px; color: #aaa; margin-top: 5px;">Ajuste de Chroma Key (Recorte de silueta)</label>
+            <input type="range" id="chromaTol" min="0" max="150" value="60" title="Ajusta esto según la iluminación de tu fondo">
+            <p style="font-size: 10px; color: #ef4444; margin-top: 5px;">* Nota: El micrófono entra con supresor de ruido acústico activado automáticamente.</p>
         </div>
     </div>
 
     <script>
-        // --- MOTOR GRÁFICO (CANVAS) ---
+        // --- MOTOR GRÁFICO (CANVAS) Y CHROMA KEY ---
         const canvas = document.getElementById('mainCanvas'); 
         const ctx = canvas.getContext('2d');
         canvas.width = 1280; canvas.height = 720;
@@ -135,34 +147,34 @@
         
         let currentImage = null;
         let isCamActive = false;
-        let renderFrameId;
 
         function renderLoop() {
             ctx.fillStyle = "#18181b"; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 1. Dibujar Fondo de Medios (Imagen o Video)
-            if (hiddenVideo.src && !hiddenVideo.paused) {
+            // 1. DIBUJAR MEDIOS (Fondo base)
+            if (hiddenVideo.src && !hiddenVideo.paused && hiddenVideo.readyState >= 2) {
                 ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
             } else if (currentImage) {
                 ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
             } else {
                 ctx.fillStyle = "white"; ctx.font = "24px sans-serif"; ctx.textAlign = "center";
-                ctx.fillText("Lienzo de CapacitiumX", canvas.width/2, canvas.height/2);
+                ctx.fillText("Importa medios o enciende la cámara", canvas.width/2, canvas.height/2);
             }
 
-            // 2. Dibujar Cámara con Fondo Virtual
+            // 2. DIBUJAR CÁMARA Y FONDO VIRTUAL (CHROMA KEY REAL)
             if (isCamActive && hiddenCam.readyState >= 2) {
                 const mode = document.getElementById('camMode').value;
                 const bg = document.getElementById('camBg').value;
+                if(mode === 'none') { requestAnimationFrame(renderLoop); return; }
                 
-                let camW = mode === 'full' ? canvas.width : 320;
-                let camH = mode === 'full' ? canvas.height : 240;
+                let camW = mode === 'full' ? canvas.width : 400;
+                let camH = mode === 'full' ? canvas.height : 300;
                 let camX = mode === 'full' ? 0 : canvas.width - camW - 20;
                 let camY = mode === 'full' ? 0 : canvas.height - camH - 20;
 
-                // Si hay fondo virtual seleccionado, dibujar fondo antes de la cámara
-                if(mode === 'full') {
+                // Si se pide fondo virtual, dibujarlo primero (si es full screen)
+                if(mode === 'full' && bg !== 'none') {
                     if (bg === 'neon') {
                         let grd = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 50, canvas.width/2, canvas.height/2, canvas.width);
                         grd.addColorStop(0, '#16092b'); grd.addColorStop(1, '#020007');
@@ -172,20 +184,42 @@
                     }
                 }
 
-                ctx.drawImage(hiddenCam, camX, camY, camW, camH);
+                // Procesamiento de Píxeles para Chroma Key (Recortar a la persona)
+                if (bg !== 'none') {
+                    let tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = camW; tempCanvas.height = camH;
+                    let tCtx = tempCanvas.getContext('2d');
+                    tCtx.drawImage(hiddenCam, 0, 0, camW, camH);
+                    
+                    let frame = tCtx.getImageData(0, 0, camW, camH);
+                    let l = frame.data.length / 4;
+                    let tol = document.getElementById('chromaTol').value;
+                    
+                    for (let i = 0; i < l; i++) {
+                        let r = frame.data[i * 4];
+                        let g = frame.data[i * 4 + 1];
+                        let b = frame.data[i * 4 + 2];
+                        
+                        // Algoritmo básico de pantalla verde/clara. 
+                        // Si el verde predomina sobre el rojo y azul, lo hace transparente.
+                        if (g > tol && g > r * 1.1 && g > b * 1.1) {
+                            frame.data[i * 4 + 3] = 0; // Alpha = 0 (Transparente)
+                        }
+                    }
+                    tCtx.putImageData(frame, 0, 0);
+                    ctx.drawImage(tempCanvas, camX, camY);
+                } else {
+                    // Sin fondo virtual, dibujar cámara normal
+                    ctx.drawImage(hiddenCam, camX, camY, camW, camH);
+                }
             }
-
-            renderFrameId = requestAnimationFrame(renderLoop);
+            requestAnimationFrame(renderLoop);
         }
-        renderLoop(); // Iniciar motor gráfico
+        renderLoop();
 
-        // --- SISTEMA NLE (LÍNEA DE TIEMPO Y ARRASTRE) ---
-        let selectedClipEl = null;
-        let globalTime = 0; // en décimas de segundo (10 = 1 seg)
-        let isPlaying = false;
-        let playInterval;
-        let playheadX = 30; // Posición X en pixeles
-        const pixelsPerSecond = 20; 
+        // --- SISTEMA NLE (LÍNEA DE TIEMPO) ---
+        let selectedClipEl = null; let globalTime = 0; let isPlaying = false; let playInterval;
+        let playheadX = 40; const pixelsPerSecond = 20; 
 
         function updateTimecode() { 
             let secs = Math.floor(globalTime / 10);
@@ -202,11 +236,10 @@
             } else {
                 isPlaying = true;
                 btn.classList.remove('fa-play'); btn.classList.add('fa-pause', 'active-play');
-                if(hiddenVideo.src) hiddenVideo.play();
+                if(hiddenVideo.src && hiddenVideo.readyState >= 2) hiddenVideo.play();
                 
                 playInterval = setInterval(() => {
-                    globalTime++; 
-                    playheadX = 30 + (globalTime * (pixelsPerSecond/10));
+                    globalTime++; playheadX = 40 + (globalTime * (pixelsPerSecond/10));
                     document.getElementById('playhead').style.left = playheadX + 'px';
                     updateTimecode();
                     document.getElementById('timelineScroll').scrollLeft = playheadX - 100;
@@ -215,22 +248,21 @@
         }
 
         function resetPlayhead() { 
-            globalTime = 0; playheadX = 30; 
-            document.getElementById('playhead').style.left = '30px'; 
+            globalTime = 0; playheadX = 40; 
+            document.getElementById('playhead').style.left = '40px'; 
             updateTimecode(); document.getElementById('timelineScroll').scrollLeft = 0; 
             if(hiddenVideo.src) hiddenVideo.currentTime = 0;
         }
 
         function selectClip(e) {
             if(selectedClipEl) selectedClipEl.classList.remove('selected');
-            selectedClipEl = e.currentTarget;
-            selectedClipEl.classList.add('selected');
+            selectedClipEl = e.currentTarget; selectedClipEl.classList.add('selected');
         }
 
         function deleteSelectedClip() {
             if(selectedClipEl) { 
                 selectedClipEl.remove(); selectedClipEl = null; 
-                currentImage = null; hiddenVideo.src = ""; // Limpiar visuales
+                currentImage = null; hiddenVideo.src = "";
             }
         }
 
@@ -240,90 +272,87 @@
             const url = URL.createObjectURL(file);
             
             const clip = document.createElement('div');
-            clip.className = 'clip-block'; clip.style.left = playheadX + 'px'; clip.style.width = '150px';
+            clip.className = `clip-block ${isVideo ? '' : 'image'}`;
+            clip.style.left = playheadX + 'px'; clip.style.width = '150px';
             clip.innerHTML = `<i class="fa-solid fa-${isVideo ? 'film' : 'image'}"></i> &nbsp;${file.name.substring(0,10)}`;
             
-            // Eventos para arrastrar el clip
             makeDraggable(clip);
-            clip.addEventListener('mousedown', selectClip);
-            clip.addEventListener('touchstart', selectClip, {passive: true});
+            clip.addEventListener('mousedown', selectClip); clip.addEventListener('touchstart', selectClip, {passive: true});
 
-            document.getElementById('videoTrack').appendChild(clip);
+            // Enviar a la pista correcta
+            document.getElementById(isVideo ? 'videoTrack' : 'imageTrack').appendChild(clip);
 
-            // Cargar en el lienzo
             if(isVideo) {
-                hiddenVideo.src = url; hiddenVideo.load();
-                currentImage = null;
+                hiddenVideo.src = url; hiddenVideo.load(); currentImage = null;
             } else {
-                currentImage = new Image(); currentImage.src = url;
-                hiddenVideo.src = "";
+                currentImage = new Image(); currentImage.src = url; hiddenVideo.src = "";
             }
         }
 
-        // --- LÓGICA DE ARRASTRE UNIVERSAL (CLIPS Y LÍNEA ROJA) ---
+        // --- ARRASTRE ---
         function makeDraggable(element, isPlayhead = false) {
             let startX = 0, currentLeft = 0;
-
             function dragStart(e) {
-                if(isPlaying) togglePlayback(); // Pausar al arrastrar
+                if(isPlaying) togglePlayback(); 
                 e.preventDefault();
                 startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-                currentLeft = parseInt(element.style.left || 30);
-                
+                currentLeft = parseInt(element.style.left || 40);
                 document.addEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', dragMove, {passive: false});
                 document.addEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', dragEnd);
             }
-
             function dragMove(e) {
                 e.preventDefault();
                 let x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-                let delta = x - startX;
-                let newLeft = currentLeft + delta;
-                
-                if(newLeft < 30) newLeft = 30; // Limite izquierdo
+                let newLeft = currentLeft + (x - startX);
+                if(newLeft < 40) newLeft = 40; 
                 element.style.left = newLeft + 'px';
 
                 if(isPlayhead) {
-                    playheadX = newLeft;
-                    globalTime = Math.floor((newLeft - 30) / (pixelsPerSecond/10));
-                    updateTimecode();
-                    if(hiddenVideo.src && hiddenVideo.duration) {
-                        hiddenVideo.currentTime = globalTime / 10;
-                    }
+                    playheadX = newLeft; globalTime = Math.floor((newLeft - 40) / (pixelsPerSecond/10)); updateTimecode();
+                    if(hiddenVideo.src && hiddenVideo.duration) hiddenVideo.currentTime = globalTime / 10;
                 }
             }
-
             function dragEnd(e) {
                 document.removeEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', dragMove);
                 document.removeEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', dragEnd);
             }
-
-            element.addEventListener('mousedown', dragStart);
-            element.addEventListener('touchstart', dragStart, {passive: false});
+            element.addEventListener('mousedown', dragStart); element.addEventListener('touchstart', dragStart, {passive: false});
         }
-
-        // Aplicar arrastre a la línea roja
         makeDraggable(document.getElementById('playhead'), true);
 
 
-        // --- CÁMARA Y GUARDADO DE VIDEO ---
-        let mediaRecorder; let recordedChunks = []; let audioCtx; let mixerDest;
+        // --- AUDIO ENGINE AISLADO (SIN RUIDO AMBIENTE) & CÁMARA ---
+        let audioCtx; let mixerDest; let mediaRecorder; let recordedChunks = [];
 
         async function toggleCamera() {
             if(!isCamActive) {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: {facingMode: "user"}, audio: { echoCancellation: true, noiseSuppression: true } });
-                    hiddenCam.srcObject = stream;
-                    isCamActive = true;
+                    // Pedimos audio con máxima supresión de ruido nativa
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: {facingMode: "user"}, 
+                        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false } 
+                    });
+                    
+                    hiddenCam.srcObject = stream; isCamActive = true;
                     document.getElementById('btnToggleCam').classList.add('danger');
                     document.getElementById('btnToggleCam').innerHTML = '<i class="fa-solid fa-video-slash"></i> Apagar Cámara';
-                    document.getElementById('camMode').value = "pip"; // Auto-encender PiP
+                    document.getElementById('camMode').value = "pip"; 
                     
-                    // Configurar Audio para grabación final
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    // -- PIPELINE DE AUDIO PROFESIONAL --
+                    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     mixerDest = audioCtx.createMediaStreamDestination();
                     const micSource = audioCtx.createMediaStreamSource(stream);
-                    micSource.connect(mixerDest);
+                    
+                    // 1. Cortar frecuencias bajas (zumbidos, motores)
+                    const highPass = audioCtx.createBiquadFilter();
+                    highPass.type = 'highpass'; highPass.frequency.value = 90; 
+                    
+                    // 2. Compresor para nivelar la voz y matar el fondo
+                    const compressor = audioCtx.createDynamicsCompressor();
+                    compressor.threshold.value = -40; compressor.ratio.value = 12;
+
+                    // Conectar: Mic -> Filtro -> Compresor -> Salida Master
+                    micSource.connect(highPass).connect(compressor).connect(mixerDest);
 
                 } catch(e) { alert("Otorga permisos de cámara/micrófono."); }
             } else {
@@ -331,37 +360,29 @@
                 if(stream) stream.getTracks().forEach(t => t.stop());
                 isCamActive = false;
                 document.getElementById('btnToggleCam').classList.remove('danger');
-                document.getElementById('btnToggleCam').innerHTML = '<i class="fa-solid fa-video"></i> Activar Cámara';
+                document.getElementById('btnToggleCam').innerHTML = '<i class="fa-solid fa-video"></i> Activar Cámara y Filtro';
                 document.getElementById('camMode').value = "none";
             }
         }
 
-        function updateCamSettings() {
-            if(document.getElementById('camMode').value !== 'none' && !isCamActive) {
-                toggleCamera();
-            }
-        }
+        function updateCamSettings() { if(document.getElementById('camMode').value !== 'none' && !isCamActive) toggleCamera(); }
 
         function exportVideo() {
             if(recordedChunks.length > 0) recordedChunks = [];
-            
-            // Capturar el stream del Canvas a 30fps
             const canvasStream = canvas.captureStream(30);
             
-            // Añadir audio si la cámara está activa
+            // Unir el audio limpio al video
             if(mixerDest) {
                 canvasStream.addTrack(mixerDest.stream.getAudioTracks()[0]);
             } else if (hiddenVideo.src) {
-                // Si hay video subido, intentar capturar su audio (requiere crossOrigin)
                 if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 mixerDest = audioCtx.createMediaStreamDestination();
                 const vidSource = audioCtx.createMediaElementSource(hiddenVideo);
-                vidSource.connect(audioCtx.destination);
-                vidSource.connect(mixerDest);
+                vidSource.connect(audioCtx.destination); vidSource.connect(mixerDest);
                 canvasStream.addTrack(mixerDest.stream.getAudioTracks()[0]);
             }
 
-            try { mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm;codecs=vp9' }); } 
+            try { mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm;codecs=vp9,opus' }); } 
             catch (e) { mediaRecorder = new MediaRecorder(canvasStream); }
 
             mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
@@ -369,26 +390,23 @@
                 const blob = new Blob(recordedChunks, { type: 'video/webm' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a'); a.style.display = 'none';
-                a.href = url; a.download = `Produccion_CapacitiumX_${Date.now()}.webm`;
+                a.href = url; a.download = `CapacitiumX_Final_${Date.now()}.webm`;
                 document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
                 document.getElementById('recBadge').style.display = 'none';
-                alert("¡Video guardado en tus descargas!");
+                alert("¡Video procesado y descargado!");
             };
 
-            // Iniciar grabación de lo que pase en el lienzo
             resetPlayhead();
             document.getElementById('recBadge').style.display = 'block';
-            mediaRecorder.start();
-            togglePlayback(); // Reproducir línea de tiempo automáticamente
+            mediaRecorder.start(); togglePlayback(); 
             
-            // Detener grabación a los 10 segundos por defecto (o puedes detenerla manual si haces un botón)
-            setTimeout(() => { if(mediaRecorder.state === 'recording') mediaRecorder.stop(); togglePlayback(); }, 10000);
+            // Graba 10 segundos por defecto para pruebas
+            setTimeout(() => { if(mediaRecorder.state === 'recording') { mediaRecorder.stop(); togglePlayback(); } }, 10000);
         }
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active'); event.currentTarget.classList.add('active');
         }
     </script>
 </body>
