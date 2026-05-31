@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CapacitiumX Pro Editor V7</title>
+    <title>CapacitiumX Pro Editor V8</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --neon: #3b82f6; --bg: #09090b; --panel: #18181b; --track-bg: #27272a; }
@@ -12,39 +12,37 @@
         .app-header { background: var(--panel); padding: 12px 16px; display: flex; justify-content: space-between; border-bottom: 1px solid #333; font-weight: 600; font-size: 14px; align-items: center; }
         .btn-save { background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 12px; }
         
+        /* ÁREA DE PREVISUALIZACIÓN */
         .preview-area { background: #000; display: flex; justify-content: center; padding: 10px; height: 30vh; border-bottom: 1px solid #333; position: relative; }
-        canvas { max-width: 100%; max-height: 100%; border-radius: 8px; background: #111; object-fit: contain; }
+        /* El canvas captura eventos táctiles para mover stickers/texto */
+        canvas { max-width: 100%; max-height: 100%; border-radius: 8px; background: #111; object-fit: contain; cursor: crosshair; }
         .status-rec { position: absolute; top: 15px; right: 20px; background: #ef4444; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: none; animation: pulse 1.5s infinite; z-index: 50; }
 
-        /* TOOLBAR Y REPRODUCTOR */
-        .timeline-editor { background: var(--panel); display: flex; flex-direction: column; height: 35vh; border-bottom: 1px solid #333; }
+        /* LÍNEA DE TIEMPO */
+        .timeline-editor { background: var(--panel); display: flex; flex-direction: column; height: 32vh; border-bottom: 1px solid #333; }
         .timeline-toolbar { display: flex; gap: 15px; padding: 10px 12px; background: #000; font-size: 14px; align-items: center; }
         .action-btn { cursor: pointer; color: #a1a1aa; padding: 5px; transition: 0.2s; }
         .action-btn:hover { color: white; }
         .action-btn.active-play { color: #10b981; }
 
-        /* PISTAS DE EDICIÓN */
         .tracks-container { flex: 1; padding: 10px 0; overflow-x: auto; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; position: relative; }
-        .track { height: 45px; background: var(--track-bg); display: flex; position: relative; min-width: 300vw; border-bottom: 1px solid #333; }
+        .track { height: 40px; background: var(--track-bg); display: flex; position: relative; min-width: 300vw; border-bottom: 1px solid #333; }
         .track-label { position: sticky; left: 0; background: #111; width: 45px; display: flex; justify-content: center; align-items: center; font-size: 10px; z-index: 30; border-right: 1px solid #555; flex-direction: column; color: #aaa; }
         
-        /* CABEZAL ROJO */
         .playhead-container { position: absolute; top: 0; bottom: 0; left: 45px; width: 20px; z-index: 40; transform: translateX(-10px); cursor: ew-resize; }
         .playhead-line { position: absolute; left: 10px; width: 2px; height: 100%; background: #ef4444; pointer-events: none; }
         .playhead-head { position: absolute; left: 5px; top: 0; width: 12px; height: 12px; background: #ef4444; clip-path: polygon(0 0, 100% 0, 50% 100%); pointer-events: none; }
 
-        /* CLIPS ARRASTRABLES Y ESTIRABLES */
         .clip-block { position: absolute; height: 90%; top: 5%; background: #3b82f6; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; font-size: 10px; font-weight: bold; opacity: 0.9; overflow: hidden; white-space: nowrap; border: 1px solid #60a5fa; box-shadow: 0 2px 5px rgba(0,0,0,0.5); z-index: 20; }
         .clip-block.image { background: #f59e0b; border-color: #fbbf24; }
         .clip-block.audio { background: #10b981; border-color: #34d399; }
         .clip-block.selected { border: 2px solid white; opacity: 1; z-index: 25; }
         
-        /* MANIJA PARA ESTIRAR EL CLIP */
         .resize-handle { position: absolute; right: 0; top: 0; bottom: 0; width: 15px; background: rgba(255,255,255,0.2); cursor: ew-resize; z-index: 30; border-left: 1px solid rgba(255,255,255,0.5); border-radius: 0 4px 4px 0; }
         .drag-area { flex: 1; height: 100%; display: flex; align-items: center; cursor: grab; }
         .drag-area:active { cursor: grabbing; }
 
-        /* PANELES INFERIORES */
+        /* PANELES DE HERRAMIENTAS INFERIORES */
         .control-panel { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
         .tab-menu { display: flex; background: var(--panel); overflow-x: auto; border-bottom: 1px solid #333; }
         .tab-btn { padding: 12px 16px; font-size: 12px; color: #a1a1aa; cursor: pointer; white-space: nowrap; }
@@ -55,8 +53,10 @@
         .btn { background: #27272a; border: 1px solid #444; color: white; padding: 12px; border-radius: 6px; font-size: 12px; text-align: center; cursor: pointer; font-weight: bold; }
         .btn.primary { background: var(--neon); border: none; }
         .btn.danger { background: #ef4444; border: none; }
-        select, input[type="range"] { background: #111; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-size: 12px; width: 100%; box-sizing: border-box; }
+        select, input[type="text"], input[type="color"] { background: #111; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-size: 12px; width: 100%; box-sizing: border-box; outline: none; }
+        input[type="range"] { width: 100%; accent-color: var(--neon); }
         
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         #hidden-media-container { display: none; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
@@ -64,26 +64,24 @@
 <body>
 
     <div class="app-header">
-        <span><i class="fa-solid fa-film"></i> Estudio Pro V7</span>
+        <span><i class="fa-solid fa-film"></i> Estudio Pro V8</span>
         <button class="btn-save" id="btnExport" onclick="exportVideo()"><i class="fa-solid fa-download"></i> EXPORTAR</button>
     </div>
 
-    <!-- MONITOR DE VIDEO -->
     <div class="preview-area">
         <div class="status-rec" id="recBadge">GRABANDO</div>
+        <!-- El lienzo principal donde ocurren los filtros, superposiciones y arrastres -->
         <canvas id="mainCanvas"></canvas>
         <video id="hiddenCam" autoplay playsinline style="display:none;" muted></video>
-        <!-- Contenedor de archivos reales -->
         <div id="hidden-media-container"></div>
     </div>
 
-    <!-- LÍNEA DE TIEMPO -->
     <div class="timeline-editor">
         <div class="timeline-toolbar">
             <i class="fa-solid fa-play action-btn" id="btnPlay" onclick="togglePlayback()" title="Reproducir"></i>
             <i class="fa-solid fa-backward action-btn" onclick="resetPlayhead()" title="Al inicio"></i>
             <div style="width: 1px; height: 15px; background: #555; margin: 0 10px;"></div>
-            <i class="fa-solid fa-trash action-btn" onclick="deleteSelectedClip()" title="Borrar Seleccionado"></i>
+            <i class="fa-solid fa-trash action-btn" onclick="deleteSelectedClip()" title="Borrar Clip"></i>
             <span id="timecode" style="margin-left: auto; font-family: monospace; color: #10b981;">00:00.0</span>
         </div>
         
@@ -105,30 +103,66 @@
         </div>
     </div>
 
-    <!-- CONSOLA DE HERRAMIENTAS -->
     <div class="control-panel">
         <div class="tab-menu">
             <div class="tab-btn active" onclick="switchTab('media')"><i class="fa-solid fa-folder-open"></i> Medios</div>
-            <div class="tab-btn" onclick="switchTab('voice')"><i class="fa-solid fa-microphone"></i> Voz en Off</div>
-            <div class="tab-btn" onclick="switchTab('camera')"><i class="fa-solid fa-camera"></i> Cámara (PiP)</div>
+            <div class="tab-btn" onclick="switchTab('fx')"><i class="fa-solid fa-wand-magic-sparkles"></i> FX y Elementos</div>
+            <div class="tab-btn" onclick="switchTab('voice')"><i class="fa-solid fa-microphone"></i> Voz off</div>
+            <div class="tab-btn" onclick="switchTab('camera')"><i class="fa-solid fa-camera"></i> PiP</div>
         </div>
 
+        <!-- 1. MEDIOS BASE -->
         <div id="media" class="tab-content active">
-            <div class="btn primary" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-plus"></i> Importar Foto / Video</div>
+            <div class="btn primary" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-plus"></i> Importar Foto / Video Base</div>
             <input type="file" id="fileUpload" accept="image/*,video/*" style="display:none;" onchange="addMediaToTimeline(event)">
-            <p style="font-size: 11px; color: #888; text-align: center;">Toca un clip en el centro para <b>moverlo</b>. Arrastra la orilla derecha clara para <b>estirarlo</b>.</p>
+            <p style="font-size: 11px; color: #888; text-align: center;">Toca un clip en el centro para moverlo. Arrastra la orilla para estirarlo.</p>
         </div>
 
+        <!-- 2. NUEVO: EFECTOS, TEXTO Y STICKERS (ESTILO WHATSAPP) -->
+        <div id="fx" class="tab-content">
+            <div class="grid-2">
+                <div>
+                    <label style="font-size: 11px; color: #aaa;">Filtro de Video/Imagen</label>
+                    <select id="videoFilter">
+                        <option value="none">Normal</option>
+                        <option value="sepia(100%)">Retro (Sepia)</option>
+                        <option value="grayscale(100%)">Blanco y Negro</option>
+                        <option value="brightness(60%) contrast(120%)">Cine Oscuro</option>
+                        <option value="saturate(200%)">Colores Vivos</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: #aaa;">Ajustar tamaño de elemento seleccionado</label>
+                    <input type="range" id="elementSize" min="10" max="400" value="60" oninput="updateSelectedOverlaySize()">
+                </div>
+            </div>
+            
+            <div style="background: #111; padding: 10px; border-radius: 6px; border: 1px solid #333;">
+                <label style="font-size: 11px; color: #aaa;">Añadir Texto a la pantalla</label>
+                <div style="display: flex; gap: 5px; margin-top: 5px;">
+                    <input type="text" id="overlayText" placeholder="Escribe aquí..." style="flex: 1;">
+                    <input type="color" id="overlayColor" value="#ffffff" style="width: 40px; padding: 2px;">
+                    <button class="btn primary" onclick="addTextOverlay()" style="padding: 10px;"><i class="fa-solid fa-check"></i></button>
+                </div>
+            </div>
+
+            <div class="btn primary" onclick="document.getElementById('stickerUpload').click()"><i class="fa-solid fa-face-smile"></i> Añadir Foto superpuesta (Sticker)</div>
+            <input type="file" id="stickerUpload" accept="image/*" style="display:none;" onchange="addStickerOverlay(event)">
+            
+            <div class="btn danger" onclick="deleteSelectedOverlay()" style="padding: 8px;"><i class="fa-solid fa-trash"></i> Borrar Elemento Seleccionado en Pantalla</div>
+            <p style="font-size: 10px; color: #888; text-align: center;">Toca y arrastra los textos o fotos directamente en la pantalla negra de arriba para acomodarlos.</p>
+        </div>
+
+        <!-- 3. VOZ EN OFF -->
         <div id="voice" class="tab-content">
             <label style="font-size: 11px; color: #aaa; text-align: center;">Micrófono Podcast (Aislamiento de fondo activado)</label>
             <div class="btn primary" id="btnRecVoice" onclick="toggleVoiceRecord()" style="padding: 16px;"><i class="fa-solid fa-microphone"></i> Iniciar Grabación de Voz</div>
-            <p style="font-size: 10px; color: #10b981; text-align: center;">* El audio grabado se añadirá automáticamente a la pista "Voz".</p>
         </div>
 
+        <!-- 4. CÁMARA PIP -->
         <div id="camera" class="tab-content">
             <div class="btn primary" id="btnToggleCam" onclick="toggleCamera()"><i class="fa-solid fa-video"></i> Activar Cámara (Sin Audio)</div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+            <div class="grid-2" style="margin-top: 10px;">
                 <div>
                     <label style="font-size: 11px; color: #aaa;">Ubicación</label>
                     <select id="camMode" onchange="updateCamSettings()">
@@ -152,57 +186,158 @@
     </div>
 
     <script>
-        // --- 1. CONFIGURACIÓN DE AUDIO NATIVA PARA VIDEOS ---
+        // --- MOTOR DE AUDIO ---
         let audioCtx; let audioMixer; 
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 audioMixer = audioCtx.createMediaStreamDestination();
             }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        // --- GESTIÓN DE ELEMENTOS SUPERPUESTOS EN PANTALLA (TEXTO/STICKERS) ---
+        let canvasOverlays = []; // Lista de textos e imágenes extra
+        let selectedOverlay = null; // Elemento activo para mover/redimensionar
+
+        function addTextOverlay() {
+            const text = document.getElementById('overlayText').value;
+            if (!text) return;
+            const color = document.getElementById('overlayColor').value;
+            canvasOverlays.push({
+                id: Date.now(), type: 'text', content: text, color: color,
+                x: 640, y: 360, size: 60 // Centrado por defecto
+            });
+            document.getElementById('overlayText').value = '';
+            selectedOverlay = canvasOverlays[canvasOverlays.length - 1];
+            document.getElementById('elementSize').value = selectedOverlay.size;
+        }
+
+        function addStickerOverlay(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const img = new Image();
+            img.onload = () => {
+                // Mantener proporción inicial
+                let ratio = img.height / img.width;
+                canvasOverlays.push({
+                    id: Date.now(), type: 'image', imgObj: img, ratio: ratio,
+                    x: 640, y: 360, size: 200 // size controla el ancho, el alto se calcula con el ratio
+                });
+                selectedOverlay = canvasOverlays[canvasOverlays.length - 1];
+                document.getElementById('elementSize').value = selectedOverlay.size;
+            };
+            img.src = URL.createObjectURL(file);
+        }
+
+        function deleteSelectedOverlay() {
+            if (selectedOverlay) {
+                canvasOverlays = canvasOverlays.filter(o => o.id !== selectedOverlay.id);
+                selectedOverlay = null;
             }
         }
 
-        // --- 2. MOTOR GRÁFICO (EVITAR PANTALLA NEGRA) ---
+        function updateSelectedOverlaySize() {
+            if (selectedOverlay) {
+                selectedOverlay.size = parseInt(document.getElementById('elementSize').value);
+            }
+        }
+
+        // --- INTERACTIVIDAD TÁCTIL SOBRE EL CANVAS ---
         const canvas = document.getElementById('mainCanvas'); 
         const ctx = canvas.getContext('2d');
         canvas.width = 1280; canvas.height = 720;
         
+        let isDraggingOverlay = false;
+        
+        function getCanvasPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: (clientX - rect.left) * (canvas.width / rect.width),
+                y: (clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        function handleCanvasStart(e) {
+            const pos = getCanvasPos(e);
+            let found = null;
+            // Buscar del último al primero (el que está más arriba visualmente)
+            for (let i = canvasOverlays.length - 1; i >= 0; i--) {
+                let o = canvasOverlays[i];
+                // Lógica de colisión aproximada para facilitar toque en móviles
+                if (o.type === 'text') {
+                    ctx.font = `bold ${o.size}px sans-serif`;
+                    let metrics = ctx.measureText(o.content);
+                    let w = metrics.width; let h = o.size;
+                    // Coordenadas de texto suelen basarse en la línea base (bottom-center aproximado en nuestro renderizado)
+                    if (pos.x >= o.x - w/2 - 20 && pos.x <= o.x + w/2 + 20 && pos.y >= o.y - h - 20 && pos.y <= o.y + 20) {
+                        found = o; break;
+                    }
+                } else if (o.type === 'image') {
+                    let w = o.size; let h = o.size * o.ratio;
+                    if (pos.x >= o.x - w/2 - 20 && pos.x <= o.x + w/2 + 20 && pos.y >= o.y - h/2 - 20 && pos.y <= o.y + h/2 + 20) {
+                        found = o; break;
+                    }
+                }
+            }
+            
+            selectedOverlay = found;
+            if (selectedOverlay) {
+                isDraggingOverlay = true;
+                document.getElementById('elementSize').value = selectedOverlay.size;
+                e.preventDefault(); // Evitar scroll de pantalla al arrastrar sticker
+            }
+        }
+
+        function handleCanvasMove(e) {
+            if (!isDraggingOverlay || !selectedOverlay) return;
+            e.preventDefault();
+            const pos = getCanvasPos(e);
+            selectedOverlay.x = pos.x;
+            selectedOverlay.y = pos.y;
+        }
+
+        function handleCanvasEnd(e) { isDraggingOverlay = false; }
+
+        canvas.addEventListener('mousedown', handleCanvasStart); canvas.addEventListener('touchstart', handleCanvasStart, {passive: false});
+        canvas.addEventListener('mousemove', handleCanvasMove);  canvas.addEventListener('touchmove', handleCanvasMove, {passive: false});
+        window.addEventListener('mouseup', handleCanvasEnd);     window.addEventListener('touchend', handleCanvasEnd);
+
+
+        // --- MOTOR DE RENDERIZADO PRINCIPAL (CANVAS LOOP) ---
         const hiddenCam = document.getElementById('hiddenCam');
         const mediaContainer = document.getElementById('hidden-media-container');
-        
         let projectClips = []; 
         let isCamActive = false;
 
         function renderLoop() {
-            // Fondo base gris oscuro para cuando no hay medios
             ctx.fillStyle = "#111115"; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Detección NLE: Buscar clip de imagen o video bajo la línea roja
+            // 1. Detección NLE: Medio Base
             let activeVisualClip = null;
             for (let i = projectClips.length - 1; i >= 0; i--) {
                 const clip = projectClips[i];
                 if ((clip.type === 'video' || clip.type === 'image') && playheadX >= clip.startPx && playheadX <= clip.startPx + clip.widthPx) {
-                    activeVisualClip = clip;
-                    break;
+                    activeVisualClip = clip; break;
                 }
             }
 
-            // Reproducir/Pausar audios y videos según la línea roja
             projectClips.forEach(clip => {
                 if (clip.domElement && (clip.type === 'video' || clip.type === 'audio')) {
                     let isUnderPlayhead = (playheadX >= clip.startPx && playheadX <= clip.startPx + clip.widthPx);
                     if (isUnderPlayhead && isPlaying) {
-                        if (clip.domElement.paused) clip.domElement.play().catch(e => console.log("AutoPlay bloqueado", e));
+                        if (clip.domElement.paused) clip.domElement.play().catch(e => {});
                     } else {
                         if (!clip.domElement.paused) clip.domElement.pause();
                     }
                 }
             });
 
-            // Dibujar el Medio
+            // 2. DIBUJAR MEDIO BASE CON FILTROS APLICADOS
+            ctx.filter = document.getElementById('videoFilter').value; // Aplicar efecto visual (Sepia, Oscuro, etc)
+            
             if (activeVisualClip && activeVisualClip.domElement) {
                 if(activeVisualClip.type === 'video' && activeVisualClip.domElement.readyState >= 2) {
                     ctx.drawImage(activeVisualClip.domElement, 0, 0, canvas.width, canvas.height);
@@ -210,14 +345,13 @@
                     ctx.drawImage(activeVisualClip.domElement, 0, 0, canvas.width, canvas.height);
                 }
             } else {
-                // Si no hay imágenes ni video, mostramos el mensaje de aviso para no tener pantalla negra
                 ctx.fillStyle = "#ffffff"; ctx.font = "bold 28px sans-serif"; ctx.textAlign = "center";
-                ctx.fillText("Sin imagen/video en este segundo.", canvas.width/2, canvas.height/2 - 20);
-                ctx.font = "18px sans-serif"; ctx.fillStyle = "#888";
-                ctx.fillText("Estira tus clips para que cubran todo el audio.", canvas.width/2, canvas.height/2 + 20);
+                ctx.fillText("Sin imagen/video en este segundo", canvas.width/2, canvas.height/2);
             }
+            
+            ctx.filter = 'none'; // RESETEAR FILTRO para que las siguientes cosas (Cámara y Textos) no se manchen
 
-            // Dibujar Cámara y Chroma Key
+            // 3. DIBUJAR CÁMARA (PiP / Chroma Key)
             if (isCamActive && hiddenCam.readyState >= 2) {
                 const mode = document.getElementById('camMode').value;
                 const bg = document.getElementById('camBg').value;
@@ -254,11 +388,43 @@
                     }
                 }
             }
+
+            // 4. DIBUJAR OVERLAYS (TEXTOS Y STICKERS)
+            canvasOverlays.forEach(o => {
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                if (o.type === 'text') {
+                    ctx.font = `bold ${o.size}px sans-serif`;
+                    // Borde negro para legibilidad
+                    ctx.strokeStyle = '#000000'; ctx.lineWidth = o.size / 8;
+                    ctx.strokeText(o.content, o.x, o.y);
+                    // Relleno de color
+                    ctx.fillStyle = o.color;
+                    ctx.fillText(o.content, o.x, o.y);
+                } else if (o.type === 'image') {
+                    let w = o.size; let h = o.size * o.ratio;
+                    ctx.drawImage(o.imgObj, o.x - w/2, o.y - h/2, w, h);
+                }
+                
+                // Dibujar marco de selección si es el activo
+                if (selectedOverlay && selectedOverlay.id === o.id) {
+                    ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 3; ctx.setLineDash([10, 10]);
+                    if (o.type === 'text') {
+                        let w = ctx.measureText(o.content).width; let h = o.size;
+                        ctx.strokeRect(o.x - w/2 - 10, o.y - h/2 - 10, w + 20, h + 20);
+                    } else if (o.type === 'image') {
+                        let w = o.size; let h = o.size * o.ratio;
+                        ctx.strokeRect(o.x - w/2 - 5, o.y - h/2 - 5, w + 10, h + 10);
+                    }
+                    ctx.setLineDash([]); // Reset
+                }
+            });
+
             requestAnimationFrame(renderLoop);
         }
         renderLoop();
 
-        // --- 3. LÍNEA DE TIEMPO Y REPRODUCCIÓN ---
+        // --- SISTEMA NLE, TIMELINE Y ARRASTRES (Se mantiene igual a V7) ---
         let selectedClipEl = null; let globalTime = 0; let isPlaying = false; let playInterval;
         let playheadX = 45; const pixelsPerSecond = 20; 
 
@@ -268,7 +434,7 @@
         }
 
         function togglePlayback() {
-            initAudio(); // Reactiva el motor de audio por seguridad
+            initAudio(); 
             const btn = document.getElementById('btnPlay');
             if (isPlaying) {
                 clearInterval(playInterval); isPlaying = false;
@@ -297,7 +463,7 @@
             if(selectedClipEl) { 
                 const id = selectedClipEl.getAttribute('data-id');
                 let clipObj = projectClips.find(c => c.id == id);
-                if (clipObj && clipObj.domElement) clipObj.domElement.remove(); // Limpiar del DOM oculto
+                if (clipObj && clipObj.domElement) clipObj.domElement.remove();
                 projectClips = projectClips.filter(c => c.id != id);
                 selectedClipEl.remove(); selectedClipEl = null; 
             }
@@ -310,56 +476,42 @@
             const url = URL.createObjectURL(file);
             const clipId = Date.now();
             
-            // UI del clip
             const clipUi = document.createElement('div');
             clipUi.className = `clip-block ${isVideo ? '' : 'image'}`;
             clipUi.style.left = playheadX + 'px'; clipUi.style.width = '150px'; 
             clipUi.setAttribute('data-id', clipId);
             clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${isVideo ? 'film' : 'image'}"></i> &nbsp;${file.name.substring(0,8)}</div>`;
             
-            makeDraggable(clipUi, false, clipId);
-            makeResizable(clipUi, clipId); // NUEVO: Permite estirar el clip
-            
+            makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId);
             clipUi.addEventListener('mousedown', (e) => {
                 if(selectedClipEl) selectedClipEl.classList.remove('selected');
                 selectedClipEl = e.currentTarget; selectedClipEl.classList.add('selected');
             });
-
             document.getElementById(isVideo ? 'videoTrack' : 'imageTrack').appendChild(clipUi);
 
-            // Carga de archivo real
             let mediaElement;
             if(isVideo) {
                 mediaElement = document.createElement('video');
                 mediaElement.src = url; mediaElement.playsInline = true; mediaElement.crossOrigin = "anonymous";
                 mediaContainer.appendChild(mediaElement);
-                
                 mediaElement.oncanplay = () => {
                     if (!mediaElement.hasAudioConnected) {
                         try {
                             const source = audioCtx.createMediaElementSource(mediaElement);
-                            source.connect(audioCtx.destination); 
-                            source.connect(audioMixer); 
+                            source.connect(audioCtx.destination); source.connect(audioMixer); 
                             mediaElement.hasAudioConnected = true;
                         } catch(e) {} 
                     }
                 };
-            } else {
-                mediaElement = new Image(); mediaElement.src = url;
-            }
+            } else { mediaElement = new Image(); mediaElement.src = url; }
 
             projectClips.push({ id: clipId, type: isVideo ? 'video' : 'image', startPx: playheadX, widthPx: 150, domElement: mediaElement });
             playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px';
         }
 
-        // --- 4. GESTIÓN TÁCTIL (ARRASTRAR Y ESTIRAR) ---
-
-        // Función para ARRASTRAR
         function makeDraggable(element, isPlayhead = false, clipId = null) {
             let startX = 0, currentLeft = 0;
-            // Si es un clip, atamos el arrastre solo al área central, no al borde de estirar
             const dragTarget = isPlayhead ? element : element.querySelector('.drag-area');
-            
             function dragStart(e) {
                 if(isPlaying) togglePlayback(); 
                 e.preventDefault();
@@ -372,9 +524,7 @@
                 e.preventDefault();
                 let x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
                 let newLeft = currentLeft + (x - startX);
-                if(newLeft < 45) newLeft = 45; 
-                element.style.left = newLeft + 'px';
-
+                if(newLeft < 45) newLeft = 45; element.style.left = newLeft + 'px';
                 if(isPlayhead) {
                     playheadX = newLeft; globalTime = Math.floor((newLeft - 45) / (pixelsPerSecond/10)); updateTimecode();
                     projectClips.forEach(c => {
@@ -384,8 +534,7 @@
                         }
                     });
                 } else if (clipId) {
-                    let clipObj = projectClips.find(c => c.id == clipId);
-                    if(clipObj) clipObj.startPx = newLeft;
+                    let clipObj = projectClips.find(c => c.id == clipId); if(clipObj) clipObj.startPx = newLeft;
                 }
             }
             function dragEnd(e) {
@@ -396,57 +545,39 @@
         }
         makeDraggable(document.getElementById('playhead'), true);
 
-        // Función para ESTIRAR (ALARGAR CLIP)
         function makeResizable(clipUi, clipId) {
-            const handle = document.createElement('div');
-            handle.className = 'resize-handle';
-            clipUi.appendChild(handle);
-
+            const handle = document.createElement('div'); handle.className = 'resize-handle'; clipUi.appendChild(handle);
             let isResizing = false; let startX = 0; let startWidth = 0;
-
             function resizeStart(e) {
-                e.stopPropagation(); // Evita que se active el arrastre
-                isResizing = true;
+                e.stopPropagation(); isResizing = true;
                 startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
                 startWidth = parseInt(clipUi.style.width, 10);
                 document.addEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', resizeMove, {passive: false});
                 document.addEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', resizeEnd);
             }
-
             function resizeMove(e) {
-                if (!isResizing) return;
-                e.preventDefault();
+                if (!isResizing) return; e.preventDefault();
                 let currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
                 let newWidth = startWidth + (currentX - startX);
-                if (newWidth < 30) newWidth = 30; // Limite mínimo de ancho
-                clipUi.style.width = newWidth + 'px';
-
-                let clipObj = projectClips.find(c => c.id == clipId);
-                if (clipObj) clipObj.widthPx = newWidth;
+                if (newWidth < 30) newWidth = 30; clipUi.style.width = newWidth + 'px';
+                let clipObj = projectClips.find(c => c.id == clipId); if (clipObj) clipObj.widthPx = newWidth;
             }
-
             function resizeEnd(e) {
                 isResizing = false;
                 document.removeEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', resizeMove);
                 document.removeEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', resizeEnd);
             }
-
             handle.addEventListener('mousedown', resizeStart); handle.addEventListener('touchstart', resizeStart, {passive: false});
         }
 
-        // --- 5. GRABACIÓN DE VOZ EN OFF ---
+        // --- GRABACIÓN VOZ EN OFF ---
         let isRecordingVoice = false; let voiceStream; let voiceRecorder; let voiceChunks = [];
-
         async function toggleVoiceRecord() {
-            initAudio();
-            const btn = document.getElementById('btnRecVoice');
-            const badge = document.getElementById('recBadge');
-            
+            initAudio(); const btn = document.getElementById('btnRecVoice'); const badge = document.getElementById('recBadge');
             if (!isRecordingVoice) {
                 try {
                     voiceStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-                    voiceChunks = [];
-                    voiceRecorder = new MediaRecorder(voiceStream);
+                    voiceChunks = []; voiceRecorder = new MediaRecorder(voiceStream);
                     
                     voiceRecorder.ondataavailable = e => { if (e.data.size > 0) voiceChunks.push(e.data); };
                     voiceRecorder.onstop = () => {
@@ -456,13 +587,8 @@
                         clipUi.setAttribute('data-id', clipId); 
                         clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-microphone"></i> &nbsp;Voz_Off</div>`;
                         
-                        makeDraggable(clipUi, false, clipId);
-                        makeResizable(clipUi, clipId); // También se puede estirar la caja de voz si quieres sincronizarla
-                        
-                        clipUi.addEventListener('mousedown', (e) => {
-                            if(selectedClipEl) selectedClipEl.classList.remove('selected');
-                            selectedClipEl = e.currentTarget; selectedClipEl.classList.add('selected');
-                        });
+                        makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); 
+                        clipUi.addEventListener('mousedown', (e) => { if(selectedClipEl) selectedClipEl.classList.remove('selected'); selectedClipEl = e.currentTarget; selectedClipEl.classList.add('selected'); });
                         document.getElementById('audioTrack').appendChild(clipUi);
                         
                         const blob = new Blob(voiceChunks, { type: 'audio/webm' });
@@ -472,56 +598,49 @@
 
                         const source = audioCtx.createMediaElementSource(audioEl);
                         source.connect(audioCtx.destination); source.connect(audioMixer);
-                        
                         projectClips.push({ id: clipId, type: 'audio', startPx: playheadX, widthPx: 120, domElement: audioEl });
                         voiceStream.getTracks().forEach(t => t.stop());
                     };
-
                     voiceRecorder.start(); isRecordingVoice = true;
                     btn.classList.add('danger'); btn.innerHTML = '<i class="fa-solid fa-stop"></i> Detener Grabación';
                     badge.innerHTML = 'GRABANDO VOZ'; badge.style.display = 'block';
                     if(!isPlaying) togglePlayback(); 
-
                 } catch(e) { alert("Permite acceso al micrófono."); }
             } else {
                 voiceRecorder.stop(); isRecordingVoice = false;
                 if(isPlaying) togglePlayback();
-                btn.classList.remove('danger'); btn.innerHTML = '<i class="fa-solid fa-microphone"></i> Iniciar Grabación';
+                btn.classList.remove('danger'); btn.innerHTML = '<i class="fa-solid fa-microphone"></i> Iniciar Grabación de Voz';
                 badge.style.display = 'none';
             }
         }
 
-        // --- 6. CÁMARA PIP / FONDO VIRTUAL ---
+        // --- CÁMARA ---
         async function toggleCamera() {
             if(!isCamActive) {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ video: {facingMode: "user"}, audio: false });
                     hiddenCam.srcObject = stream; isCamActive = true;
-                    document.getElementById('btnToggleCam').classList.add('danger');
-                    document.getElementById('btnToggleCam').innerHTML = '<i class="fa-solid fa-video-slash"></i> Apagar Cámara';
+                    document.getElementById('btnToggleCam').classList.add('danger'); document.getElementById('btnToggleCam').innerHTML = '<i class="fa-solid fa-video-slash"></i> Apagar Cámara';
                     document.getElementById('camMode').value = "pip"; 
                 } catch(e) { alert("Permite acceso a cámara."); }
             } else {
                 let stream = hiddenCam.srcObject; if(stream) stream.getTracks().forEach(t => t.stop());
                 isCamActive = false;
-                document.getElementById('btnToggleCam').classList.remove('danger');
-                document.getElementById('btnToggleCam').innerHTML = '<i class="fa-solid fa-video"></i> Activar Cámara (Sin Audio)';
+                document.getElementById('btnToggleCam').classList.remove('danger'); document.getElementById('btnToggleCam').innerHTML = '<i class="fa-solid fa-video"></i> Activar Cámara (Sin Audio)';
                 document.getElementById('camMode').value = "none";
             }
         }
         function updateCamSettings() { if(document.getElementById('camMode').value !== 'none' && !isCamActive) toggleCamera(); }
 
-        // --- 7. EXPORTACIÓN ---
+        // --- EXPORTAR ---
         let mainRecorder; let exportChunks = [];
         function exportVideo() {
             initAudio();
+            selectedOverlay = null; // Quitar líneas punteadas de selección antes de grabar
             if(exportChunks.length > 0) exportChunks = [];
             
             const finalStream = canvas.captureStream(30);
-            
-            if (audioMixer && audioMixer.stream.getAudioTracks().length > 0) {
-                finalStream.addTrack(audioMixer.stream.getAudioTracks()[0]);
-            }
+            if (audioMixer && audioMixer.stream.getAudioTracks().length > 0) finalStream.addTrack(audioMixer.stream.getAudioTracks()[0]);
 
             try { mainRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm;codecs=vp9,opus' }); } 
             catch (e) { mainRecorder = new MediaRecorder(finalStream); }
@@ -531,7 +650,7 @@
                 const blob = new Blob(exportChunks, { type: 'video/webm' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a'); a.style.display = 'none';
-                a.href = url; a.download = `CapacitiumX_Final_${Date.now()}.webm`;
+                a.href = url; a.download = `CapacitiumX_Produccion_${Date.now()}.webm`;
                 document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
                 document.getElementById('recBadge').style.display = 'none';
                 document.getElementById('btnExport').innerHTML = '<i class="fa-solid fa-download"></i> EXPORTAR';
@@ -539,13 +658,10 @@
             };
 
             resetPlayhead();
-            document.getElementById('recBadge').innerHTML = "EXPORTANDO..."; 
-            document.getElementById('recBadge').style.display = 'block';
+            document.getElementById('recBadge').innerHTML = "EXPORTANDO..."; document.getElementById('recBadge').style.display = 'block';
             document.getElementById('btnExport').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...';
             
-            mainRecorder.start(); 
-            togglePlayback(); 
-            
+            mainRecorder.start(); togglePlayback(); 
             setTimeout(() => { if(mainRecorder.state === 'recording') { mainRecorder.stop(); togglePlayback(); } }, 15000);
         }
 
