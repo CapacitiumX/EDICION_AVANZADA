@@ -3,41 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CapacitiumX Studio Pro</title>
+    <title>CapacitiumX Pro Editor</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --glass: rgba(255, 255, 255, 0.05);
-            --neon: #3b82f6; /* Azul corporativo */
-            --bg: #09090b;
-            --panel: #18181b;
-            --track-bg: #27272a;
-        }
-
+        :root { --neon: #3b82f6; --bg: #09090b; --panel: #18181b; --track-bg: #27272a; }
         body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; position: fixed; width: 100%; }
 
-        /* Header */
         .app-header { background: var(--panel); padding: 12px 16px; display: flex; justify-content: space-between; border-bottom: 1px solid #333; font-weight: 600; font-size: 14px; }
-        
         .preview-area { background: #000; display: flex; justify-content: center; padding: 10px; height: 30vh; border-bottom: 1px solid #333; position: relative; }
         canvas { max-width: 100%; max-height: 100%; border-radius: 8px; background: #111; }
 
-        /* LÍNEA DE TIEMPO ESTILO CAPCUT */
-        .timeline-editor { background: var(--panel); display: flex; flex-direction: column; height: 25vh; border-bottom: 1px solid #333; }
-        .timeline-toolbar { display: flex; gap: 10px; padding: 8px 12px; background: #111; font-size: 12px; }
-        .timeline-toolbar i { cursor: pointer; color: #a1a1aa; padding: 5px; }
-        .timeline-toolbar i:hover { color: white; }
+        /* TOOLBAR Y REPRODUCTOR */
+        .timeline-editor { background: var(--panel); display: flex; flex-direction: column; height: 30vh; border-bottom: 1px solid #333; }
+        .timeline-toolbar { display: flex; gap: 15px; padding: 10px 12px; background: #000; font-size: 14px; align-items: center; }
+        .action-btn { cursor: pointer; color: #a1a1aa; padding: 5px; transition: 0.2s; }
+        .action-btn:hover { color: white; }
+        .action-btn.active-play { color: #10b981; }
+
+        /* PISTAS */
+        .tracks-container { flex: 1; padding: 10px 0; overflow-x: auto; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; position: relative; }
+        .track { height: 45px; background: var(--track-bg); border-radius: 0; display: flex; position: relative; min-width: 200vw; border-bottom: 1px solid #333; }
+        .track-label { position: sticky; left: 0; background: #111; width: 30px; display: flex; justify-content: center; align-items: center; font-size: 12px; z-index: 10; border-right: 1px solid #555; }
         
-        .tracks-container { flex: 1; padding: 10px; overflow-x: auto; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; position: relative; }
-        .track { height: 40px; background: var(--track-bg); border-radius: 6px; display: flex; position: relative; min-width: 150vw; } /* Ancho extendido para deslizar */
-        .track-label { position: sticky; left: 0; background: #111; padding: 0 10px; display: flex; align-items: center; font-size: 10px; z-index: 10; border-right: 1px solid #444; }
-        
-        /* Clips movibles */
-        .clip-block { position: absolute; height: 100%; background: #3b82f6; border-radius: 4px; display: flex; align-items: center; padding: 0 5px; font-size: 10px; border: 1px solid #60a5fa; cursor: pointer; opacity: 0.9; }
-        .clip-block.audio { background: #10b981; border-color: #34d399; }
-        .clip-block.text { background: #f59e0b; border-color: #fbbf24; }
-        
-        /* Panel de Controles Inferior */
+        /* EL CABEZAL DE REPRODUCCIÓN (PLAYHEAD) */
+        .playhead { position: absolute; top: 0; bottom: 0; left: 30px; width: 2px; background: #ef4444; z-index: 20; pointer-events: none; display: flex; justify-content: center; }
+        .playhead::before { content: ''; position: absolute; top: 0; width: 10px; height: 10px; background: #ef4444; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+
+        /* CLIPS */
+        .clip-block { position: absolute; height: 90%; top: 5%; background: #3b82f6; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; font-size: 11px; font-weight: bold; cursor: pointer; opacity: 0.9; overflow: hidden; white-space: nowrap; user-select: none; }
+        .clip-block.audio { background: #10b981; }
+        .clip-block.selected { border: 2px solid white; opacity: 1; box-shadow: 0 0 10px rgba(255,255,255,0.3); }
+
+        /* PANELES INFERIORES */
         .control-panel { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
         .tab-menu { display: flex; background: var(--panel); overflow-x: auto; border-bottom: 1px solid #333; }
         .tab-btn { padding: 12px 16px; font-size: 12px; color: #a1a1aa; cursor: pointer; white-space: nowrap; }
@@ -45,191 +42,232 @@
         .tab-content { flex: 1; padding: 15px; display: none; flex-direction: column; gap: 10px; overflow-y: auto; }
         .tab-content.active { display: flex; }
 
-        .btn { background: var(--glass); border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-size: 12px; text-align: center; cursor: pointer; }
+        .btn { background: #27272a; border: 1px solid #444; color: white; padding: 12px; border-radius: 6px; font-size: 12px; text-align: center; cursor: pointer; font-weight: bold; }
         .btn.primary { background: var(--neon); border: none; }
         .btn.danger { background: #ef4444; border: none; }
-        
-        input, select { background: #111; border: 1px solid #333; color: white; padding: 8px; border-radius: 6px; font-size: 12px; width: 100%; box-sizing: border-box; }
+        select { background: #111; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-size: 12px; width: 100%; }
     </style>
 </head>
 <body>
 
     <div class="app-header">
         <span><i class="fa-solid fa-film"></i> CapacitiumX NLE</span>
-        <span style="color: #10b981;"><i class="fa-solid fa-check"></i> Listo</span>
+        <span id="systemStatus" style="color: #10b981;"><i class="fa-solid fa-bolt"></i> Motor Activo</span>
     </div>
 
     <div class="preview-area">
         <canvas id="mainCanvas"></canvas>
-        <video id="hiddenCam" autoplay playsinline style="display:none;"></video>
     </div>
 
     <div class="timeline-editor">
         <div class="timeline-toolbar">
-            <i class="fa-solid fa-scissors" title="Cortar"></i>
-            <i class="fa-solid fa-trash" title="Borrar"></i>
-            <i class="fa-solid fa-wand-magic-sparkles" title="Transición"></i>
-            <span style="margin-left: auto; font-family: monospace;">00:00:00</span>
+            <i class="fa-solid fa-play action-btn" id="btnPlay" onclick="togglePlayback()" title="Reproducir"></i>
+            <i class="fa-solid fa-backward action-btn" onclick="resetPlayhead()" title="Al inicio"></i>
+            <div style="width: 1px; height: 15px; background: #555; margin: 0 10px;"></div>
+            <i class="fa-solid fa-trash action-btn" onclick="deleteSelectedClip()" title="Borrar Seleccionado"></i>
+            <span id="timecode" style="margin-left: auto; font-family: monospace; color: #10b981;">00:00.0</span>
         </div>
+        
         <div class="tracks-container" id="timelineScroll">
+            <div class="playhead" id="playhead"></div>
+            
             <div class="track" id="videoTrack">
                 <div class="track-label"><i class="fa-solid fa-video"></i></div>
             </div>
             <div class="track" id="audioTrack">
                 <div class="track-label"><i class="fa-solid fa-microphone"></i></div>
             </div>
-            <div class="track" id="textTrack">
-                <div class="track-label"><i class="fa-solid fa-t"></i></div>
-            </div>
         </div>
     </div>
 
     <div class="control-panel">
         <div class="tab-menu">
-            <div class="tab-btn active" onclick="switchTab('media')">Agregar Medios</div>
-            <div class="tab-btn" onclick="switchTab('audio')">Voz Podcast</div>
-            <div class="tab-btn" onclick="switchTab('tts')">IA de Voz</div>
+            <div class="tab-btn active" onclick="switchTab('media')"><i class="fa-solid fa-folder-open"></i> Medios</div>
+            <div class="tab-btn" onclick="switchTab('audio')"><i class="fa-solid fa-microphone-lines"></i> Grabar Voz Limpia</div>
         </div>
 
         <div id="media" class="tab-content active">
-            <div class="btn primary" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-plus"></i> Importar Archivo (Foto/Video)</div>
+            <div class="btn primary" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-plus"></i> Añadir Foto/Video</div>
             <input type="file" id="fileUpload" accept="image/*,video/*" style="display:none;" onchange="addMediaToTimeline(event)">
-            <p style="font-size: 10px; color: #888;">Nota: Los clips importados aparecerán en la línea de tiempo. Tócalos para seleccionarlos.</p>
+            <p style="font-size: 11px; color: #888; margin-top: 10px;">Toca un clip en la línea de tiempo para seleccionarlo. Usa el bote de basura arriba para borrarlo.</p>
         </div>
 
         <div id="audio" class="tab-content">
-            <label style="font-size: 11px;">Filtro de Voz</label>
-            <select id="micFilter">
-                <option value="podcast">Micrófono Podcast (Compresión + Limpieza)</option>
-                <option value="raw">Crudo (Sin filtro)</option>
+            <label style="font-size: 11px; color: #aaa;">Micrófono y Limpieza de Ruido</label>
+            <select id="micType">
+                <option value="studio">Aislamiento Total (Corta Sonido Ambiente)</option>
+                <option value="normal">Micrófono Estándar</option>
             </select>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-                <div class="btn primary" onclick="startPodcastMic()"><i class="fa-solid fa-microphone"></i> Grabar Voz</div>
-                <div class="btn danger" onclick="stopPodcastMic()"><i class="fa-solid fa-stop"></i> Detener</div>
+                <div class="btn primary" id="btnRecVoz" onclick="startCleanVoiceRecord()"><i class="fa-solid fa-microphone"></i> Grabar Voz</div>
+                <div class="btn danger" onclick="stopCleanVoiceRecord()"><i class="fa-solid fa-stop"></i> Detener</div>
             </div>
-        </div>
-
-        <div id="tts" class="tab-content">
-            <label style="font-size: 11px;">Texto a Voz (Generador)</label>
-            <textarea id="ttsText" rows="3" style="background:#111; color:white; border:1px solid #333; width:100%; border-radius:6px; padding:8px;" placeholder="Escribe el guion aquí..."></textarea>
-            <div class="btn primary" onclick="generateVoice()" style="margin-top: 10px;"><i class="fa-solid fa-robot"></i> Generar Audio</div>
-            <p style="font-size: 10px; color: #888;">* Utiliza el motor nativo del dispositivo. Para clonar tu voz se requiere integrar la API de ElevenLabs en el backend.</p>
         </div>
     </div>
 
     <script>
-        const canvas = document.getElementById('mainCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = 1280; canvas.height = 720; // Resolución HD
-        
+        // INIT CANVAS
+        const canvas = document.getElementById('mainCanvas'); const ctx = canvas.getContext('2d');
+        canvas.width = 1280; canvas.height = 720;
         ctx.fillStyle = "#18181b"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "white"; ctx.font = "30px sans-serif"; ctx.textAlign = "center";
-        ctx.fillText("CapacitiumX Pro - Lienzo", canvas.width/2, canvas.height/2);
+        ctx.fillStyle = "white"; ctx.font = "24px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("Sin Medios - Importa un archivo", canvas.width/2, canvas.height/2);
 
         function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            event.target.classList.add('active');
+            event.currentTarget.classList.add('active');
         }
 
-        // --- GESTIÓN DE LÍNEA DE TIEMPO ---
-        let clipOffset = 50; // Posición inicial X para nuevos clips
+        // --- SISTEMA NLE (LÍNEA DE TIEMPO) ---
+        let clips = []; 
+        let selectedClipEl = null;
+        let globalTime = 0;
+        let isPlaying = false;
+        let playInterval;
+        let playheadX = 30; // Inicia después del label
+
+        function updateTimecode() { document.getElementById('timecode').innerText = `00:${Math.floor(globalTime/10).toString().padStart(2,'0')}.${globalTime%10}`; }
+
+        function togglePlayback() {
+            const btn = document.getElementById('btnPlay');
+            if(isPlaying) {
+                clearInterval(playInterval); isPlaying = false;
+                btn.classList.remove('fa-pause', 'active-play'); btn.classList.add('fa-play');
+            } else {
+                isPlaying = true;
+                btn.classList.remove('fa-play'); btn.classList.add('fa-pause', 'active-play');
+                playInterval = setInterval(() => {
+                    globalTime++; playheadX += 2; // Velocidad visual
+                    document.getElementById('playhead').style.left = playheadX + 'px';
+                    updateTimecode();
+                    // Auto-scroll línea de tiempo
+                    document.getElementById('timelineScroll').scrollLeft = playheadX - 100;
+                }, 100);
+            }
+        }
+
+        function resetPlayhead() { globalTime = 0; playheadX = 30; document.getElementById('playhead').style.left = '30px'; updateTimecode(); document.getElementById('timelineScroll').scrollLeft = 0; }
+
+        function selectClip(e) {
+            if(selectedClipEl) selectedClipEl.classList.remove('selected');
+            selectedClipEl = e.currentTarget;
+            selectedClipEl.classList.add('selected');
+        }
+
+        function deleteSelectedClip() {
+            if(selectedClipEl) { selectedClipEl.remove(); selectedClipEl = null; }
+            else { alert("Toca un clip primero para seleccionarlo."); }
+        }
 
         function addMediaToTimeline(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            // Crear el bloque visual en la pista de video
-            const clip = document.createElement('div');
-            clip.className = 'clip-block';
-            clip.style.left = clipOffset + 'px';
-            clip.style.width = '100px'; // Longitud simulada
-            clip.innerHTML = `<i class="fa-solid fa-file-video"></i> &nbsp;${file.name.substring(0,8)}`;
+            const file = event.target.files[0]; if (!file) return;
+            const isVideo = file.type.startsWith('video/');
             
-            // Hacerlo movible horizontalmente (Simulación básica NLE)
-            clip.addEventListener('touchstart', dragStart);
-            clip.addEventListener('touchmove', dragMove);
+            const clip = document.createElement('div');
+            clip.className = 'clip-block'; clip.style.left = playheadX + 'px'; clip.style.width = '120px';
+            clip.innerHTML = `<i class="fa-solid fa-${isVideo ? 'film' : 'image'}"></i> &nbsp;${file.name.substring(0,8)}`;
+            
+            // Hacerlo seleccionable y movible
+            clip.addEventListener('click', selectClip);
+            clip.addEventListener('touchstart', dragStart, {passive: true});
+            clip.addEventListener('touchmove', dragMove, {passive: false});
 
             document.getElementById('videoTrack').appendChild(clip);
-            clipOffset += 110; // Mover el cursor para el siguiente clip
+            playheadX += 130; document.getElementById('playhead').style.left = playheadX + 'px'; // Mover cursor
 
-            // Renderizar en Canvas si es imagen
-            if(file.type.startsWith('image/')) {
+            // Render visual en lienzo
+            if(!isVideo) {
                 const img = new Image();
                 img.onload = () => { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); };
                 img.src = URL.createObjectURL(file);
             }
         }
 
-        // Lógica simple para mover clips en el "caracol"
-        let activeClip = null, startX = 0, currentX = 0;
-        function dragStart(e) { activeClip = e.target; startX = e.touches[0].clientX - activeClip.offsetLeft; }
+        // Movimiento Táctil
+        let activeDrag = null, startX = 0, initialLeft = 0;
+        function dragStart(e) { 
+            activeDrag = e.currentTarget; selectClip(e);
+            startX = e.touches[0].clientX; 
+            initialLeft = parseInt(activeDrag.style.left || 30);
+        }
         function dragMove(e) { 
-            if(!activeClip) return; 
-            currentX = e.touches[0].clientX - startX; 
-            activeClip.style.left = Math.max(40, currentX) + 'px'; // No rebasar la etiqueta
+            if(!activeDrag) return; 
+            e.preventDefault(); // Evita que la pantalla haga scroll al arrastrar
+            const deltaX = e.touches[0].clientX - startX;
+            let newLeft = initialLeft + deltaX;
+            if(newLeft < 30) newLeft = 30; // No cruzar el label
+            activeDrag.style.left = newLeft + 'px'; 
         }
 
-        // --- AUDIO: ESTUDIO PODCAST ---
-        let audioCtx, micStream, podcastNode;
-        async function startPodcastMic() {
+        // --- SISTEMA DE GRABACIÓN DE VOZ (AISLAMIENTO EXTREMO) ---
+        let audioCtx, mediaRecorder, voiceChunks = [], micStream;
+        
+        async function startCleanVoiceRecord() {
             if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            voiceChunks = [];
+            
             try {
-                micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false } });
+                // Parámetros EXTREMOS nativos de WebRTC para aislar ruido
+                micStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: { 
+                        echoCancellation: true, 
+                        noiseSuppression: true, 
+                        autoGainControl: true, // Deja que el navegador baje el volumen del fondo
+                        channelCount: 1
+                    } 
+                });
+
                 const source = audioCtx.createMediaStreamSource(micStream);
-                
-                // Configuración de Compresor (Voz de Locutor/Podcast)
-                podcastNode = audioCtx.createDynamicsCompressor();
-                podcastNode.threshold.setValueAtTime(-50, audioCtx.currentTime); // Atrapa sonidos bajos
-                podcastNode.knee.setValueAtTime(40, audioCtx.currentTime);
-                podcastNode.ratio.setValueAtTime(12, audioCtx.currentTime); // Comprime fuerte
-                podcastNode.attack.setValueAtTime(0, audioCtx.currentTime);
-                podcastNode.release.setValueAtTime(0.25, audioCtx.currentTime);
+                const dest = audioCtx.createMediaStreamDestination();
 
-                // Ecualizador (Dar presencia/brillo)
-                const eq = audioCtx.createBiquadFilter();
-                eq.type = "peaking"; eq.frequency.value = 3000; eq.gain.value = 4;
+                if (document.getElementById('micType').value === 'studio') {
+                    // Filtro Highpass (Corta frecuencias bajas como motores o viento debajo de 85Hz)
+                    const lowCut = audioCtx.createBiquadFilter();
+                    lowCut.type = 'highpass'; lowCut.frequency.value = 85;
 
-                if (document.getElementById('micFilter').value === 'podcast') {
-                    source.connect(podcastNode).connect(eq).connect(audioCtx.destination);
+                    // Compresor fuerte (Actúa como limitador para enfocar la voz)
+                    const compressor = audioCtx.createDynamicsCompressor();
+                    compressor.threshold.value = -40; compressor.ratio.value = 10;
+                    
+                    source.connect(lowCut); lowCut.connect(compressor); compressor.connect(dest);
                 } else {
-                    source.connect(audioCtx.destination);
+                    source.connect(dest);
                 }
-                
-                // Añadir bloque a línea de tiempo
-                const clip = document.createElement('div');
-                clip.className = 'clip-block audio'; clip.style.left = '50px'; clip.style.width = '150px';
-                clip.innerHTML = `<i class="fa-solid fa-microphone"></i> Voz Rec`;
-                document.getElementById('audioTrack').appendChild(clip);
 
-            } catch (err) { alert("Error accediendo al micrófono."); }
+                mediaRecorder = new MediaRecorder(dest.stream);
+                mediaRecorder.ondataavailable = e => voiceChunks.push(e.data);
+                mediaRecorder.onstop = createVoiceClip;
+                mediaRecorder.start();
+
+                document.getElementById('btnRecVoz').classList.add('danger');
+                document.getElementById('btnRecVoz').innerHTML = "GRABANDO...";
+                document.getElementById('systemStatus').innerHTML = "<i class='fa-solid fa-circle' style='color:red;'></i> Rec Voz";
+
+            } catch(e) { alert("Permite el acceso al micrófono en los ajustes de tu navegador."); }
         }
 
-        function stopPodcastMic() {
-            if(micStream) micStream.getTracks().forEach(track => track.stop());
+        function stopCleanVoiceRecord() {
+            if(mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                micStream.getTracks().forEach(t => t.stop());
+                document.getElementById('btnRecVoz').classList.remove('danger');
+                document.getElementById('btnRecVoz').innerHTML = '<i class="fa-solid fa-microphone"></i> Grabar Voz';
+                document.getElementById('systemStatus').innerHTML = '<i class="fa-solid fa-bolt"></i> Motor Activo';
+            }
         }
 
-        // --- IA: TEXTO A VOZ (Nativo) ---
-        function generateVoice() {
-            const text = document.getElementById('ttsText').value;
-            if(!text) return;
-            
-            const synth = window.speechSynthesis;
-            const utterThis = new SpeechSynthesisUtterance(text);
-            
-            // Buscar una voz en español
-            const voices = synth.getVoices();
-            const esVoice = voices.find(v => v.lang.includes('es'));
-            if(esVoice) utterThis.voice = esVoice;
-            
-            synth.speak(utterThis);
-
-            // Añadir bloque de texto a la línea de tiempo
+        function createVoiceClip() {
             const clip = document.createElement('div');
-            clip.className = 'clip-block text'; clip.style.left = '50px'; clip.style.width = '120px';
-            clip.innerHTML = `<i class="fa-solid fa-font"></i> Guion IA`;
-            document.getElementById('textTrack').appendChild(clip);
+            clip.className = 'clip-block audio'; clip.style.left = playheadX + 'px'; clip.style.width = '100px';
+            clip.innerHTML = `<i class="fa-solid fa-microphone"></i> &nbsp;Voz_Limpia`;
+            
+            clip.addEventListener('click', selectClip);
+            clip.addEventListener('touchstart', dragStart, {passive: true});
+            clip.addEventListener('touchmove', dragMove, {passive: false});
+
+            document.getElementById('audioTrack').appendChild(clip);
+            playheadX += 110; document.getElementById('playhead').style.left = playheadX + 'px';
         }
     </script>
 </body>
