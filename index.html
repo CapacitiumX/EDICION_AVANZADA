@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CapacitiumX Studio V18 - Audio Guardado</title>
+    <title>CapacitiumX Studio V19 - Full Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --neon: #3b82f6; --bg: #050507; --panel: #121216; --track-bg: #1f1f23; }
@@ -80,10 +80,10 @@
 
     <div class="app-header">
         <div style="display: flex; align-items: center; gap: 15px;">
-            <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Estudio Pro</span>
+            <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Estudio Pro V19</span>
             <div class="autosave-badge" id="saveIndicator"><i class="fa-solid fa-cloud"></i> Guardado</div>
         </div>
-        <button class="btn-save" id="btnExport" onclick="exportVideo()"><i class="fa-solid fa-rocket"></i> EXPORTAR ZONA</button>
+        <button class="btn-save" id="btnExport" onclick="exportVideo()"><i class="fa-solid fa-rocket"></i> EXPORTAR HASTA LÍNEA AMARILLA</button>
     </div>
 
     <div class="preview-area">
@@ -127,6 +127,7 @@
         <div class="tab-menu">
             <div class="tab-btn active" onclick="switchTab('media')"><i class="fa-solid fa-folder-open"></i> Medios</div>
             <div class="tab-btn" onclick="switchTab('fx')"><i class="fa-solid fa-wand-magic-sparkles"></i> Textos y FX</div>
+            <div class="tab-btn" onclick="switchTab('thumbs')"><i class="fa-solid fa-image"></i> Miniaturas</div>
             <div class="tab-btn" onclick="switchTab('projects')"><i class="fa-solid fa-floppy-disk"></i> Historial</div>
         </div>
 
@@ -139,7 +140,9 @@
                 <label style="font-size: 11px; color: #aaa;">Volumen del Video Original (Ideal para Doblaje)</label>
                 <input type="range" id="masterVolume" min="0" max="100" value="100" oninput="updateMasterVolume()">
             </div>
-            <p style="font-size: 10px; color: #888; text-align: center;">Mueve la <b>línea amarilla</b> para indicarle al sistema dónde debe detener la grabación automáticamente al exportar.</p>
+            
+            <label style="font-size: 11px; color: #aaa; text-align: center; margin-top: 10px; display: block;">Micrófono IA (Aislamiento Acústico Activo)</label>
+            <div class="btn primary" id="btnRecVoice" onclick="toggleVoiceRecord()" style="padding: 12px; margin-top: 5px; font-size: 14px;"><i class="fa-solid fa-microphone"></i> Grabar Narración en Off</div>
         </div>
 
         <!-- TEXTOS Y FX (EDICIÓN EN VIVO) -->
@@ -175,6 +178,19 @@
             <input type="file" id="stickerUpload" accept="image/*" style="display:none;" onchange="addStickerToTimeline(event)">
         </div>
 
+        <!-- GENERADOR DE MINIATURAS (RESTAURADO Y MEJORADO) -->
+        <div id="thumbs" class="tab-content">
+            <div style="background: #121216; padding: 15px; border-radius: 6px; border: 1px solid #10b981; text-align: center;">
+                <i class="fa-brands fa-youtube" style="font-size: 24px; color: #ef4444; margin-bottom: 10px;"></i>
+                <h3 style="margin: 0 0 5px 0; font-size: 14px;">Creador de Miniaturas (YouTube)</h3>
+                <p style="font-size: 11px; color: #aaa;">Acomoda tus textos, stickers y filtros en el lienzo. Coloca la línea de reproducción blanca en el instante exacto que quieras capturar.</p>
+                <div class="grid-2" style="margin-top: 15px;">
+                    <button class="btn primary" onclick="generateThumbnail('manual')" style="font-size: 11px;"><i class="fa-solid fa-camera-retro"></i> Captura Manual (Con Textos)</button>
+                    <button class="btn" onclick="generateThumbnail('auto')" style="background: #ef4444; border: none; font-size: 11px;"><i class="fa-solid fa-wand-magic-sparkles"></i> Automático (Video Limpio)</button>
+                </div>
+            </div>
+        </div>
+
         <!-- PROYECTOS / AUTOGUARDADO -->
         <div id="projects" class="tab-content">
             <div style="background: #121216; padding: 15px; border-radius: 6px; border: 1px solid #10b981;">
@@ -184,10 +200,6 @@
                     <button class="btn primary" onclick="forceSaveProject()"><i class="fa-solid fa-save"></i> Guardar</button>
                 </div>
             </div>
-            
-            <label style="font-size: 11px; color: #aaa; text-align: center; margin-top: 10px; display: block;">Micrófono IA (Aislamiento Acústico Activo)</label>
-            <div class="btn primary" id="btnRecVoice" onclick="toggleVoiceRecord()" style="padding: 16px; margin-top: 5px; font-size: 14px;"><i class="fa-solid fa-microphone"></i> Grabar Narración en Off</div>
-            <p style="font-size: 9px; color: #10b981; text-align: center; margin-top: 5px;">*Tus audios grabados aquí ahora se guardan automáticamente en el historial.*</p>
 
             <h4 style="font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 5px; margin: 15px 0 5px 0;">Historial de Proyectos</h4>
             <div class="project-list" id="projectListDisplay">
@@ -223,7 +235,7 @@
                     content: c.content, color: c.color, font: c.font, useBg: c.useBg, bgColor: c.bgColor,
                     x: c.x, y: c.y, size: c.size, filter: c.filter, anim: c.anim, ratio: c.ratio,
                     base64Data: c.base64Data || null,
-                    isOffline: (c.type === 'video') // Ahora solo los videos se marcan como offline forzosamente
+                    isOffline: (c.type === 'video') 
                 };
             });
 
@@ -239,7 +251,6 @@
                 setTimeout(() => { ind.innerHTML = '<i class="fa-solid fa-check" style="color:#10b981;"></i> Guardado'; loadProjectList(); }, 500);
             } catch (e) {
                 ind.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;"></i> Memoria Llena';
-                alert("¡Límite de memoria del navegador alcanzado! Has grabado demasiado audio o subido fotos muy pesadas. Libera espacio borrando proyectos antiguos o los últimos cambios no se guardarán en el historial al cerrar la ventana.");
             }
         }
 
@@ -275,24 +286,17 @@
                 clipUi.className = `clip-block ${c.type === 'text' ? 'text' : (c.type === 'audio' ? 'audio' : (c.type === 'image' || c.type === 'sticker' ? 'image' : ''))}`;
                 
                 let domEl = null; let imgObj = null;
-                // Restaurar Imágenes y Stickers desde Base64
                 if ((c.type === 'image' || c.type === 'sticker') && c.base64Data) {
                     let img = new Image(); img.src = c.base64Data;
                     if(c.type === 'image') domEl = img; else imgObj = img;
                     c.isOffline = false;
                 }
                 
-                // Restaurar Audio desde Base64
                 if (c.type === 'audio' && c.base64Data) {
                     let audioEl = document.createElement('audio'); audioEl.src = c.base64Data;
                     mediaContainer.appendChild(audioEl);
-                    audioEl.oncanplay = () => {
-                        if (!audioEl.hasAudioConnected) {
-                            try { const source = audioCtx.createMediaElementSource(audioEl); source.connect(audioCtx.destination); source.connect(audioMixer); audioEl.hasAudioConnected = true; } catch(e) {}
-                        }
-                    };
-                    domEl = audioEl;
-                    c.isOffline = false;
+                    audioEl.oncanplay = () => { if (!audioEl.hasAudioConnected) { try { const source = audioCtx.createMediaElementSource(audioEl); source.connect(audioCtx.destination); source.connect(audioMixer); audioEl.hasAudioConnected = true; } catch(e) {} } };
+                    domEl = audioEl; c.isOffline = false;
                 }
 
                 if(c.isOffline) clipUi.classList.add('offline');
@@ -324,7 +328,7 @@
 
                 projectClips.push({...c, domElement: domEl, imgObj: imgObj});
             });
-            resetPlayhead(); alert("Proyecto cargado. Tus audios, textos y fotos están listos. Si usaste un Video MP4, haz doble clic en su bloque gris para reconectarlo.");
+            resetPlayhead(); 
         }
 
         // --- SISTEMA DE MARCADORES (LÍNEA AMARILLA) ---
@@ -485,7 +489,7 @@
             const pos = getCanvasPos(e); let found = null;
             for (let i = projectClips.length - 1; i >= 0; i--) {
                 let o = projectClips[i];
-                if ((o.type === 'text' || o.type === 'sticker') && playheadX >= o.startPx && playheadX <= o.startPx + o.widthPx) {
+                if (!o.tempHidden && (o.type === 'text' || o.type === 'sticker') && playheadX >= o.startPx && playheadX <= o.startPx + o.widthPx) {
                     if (o.type === 'text') { ctx.font = `bold ${o.size}px ${o.font || 'sans-serif'}`; let w = ctx.measureText(o.content).width; let h = o.size; if (pos.x >= o.x - w/2 - 30 && pos.x <= o.x + w/2 + 30 && pos.y >= o.y - h - 30 && pos.y <= o.y + 30) { found = o; break; } } 
                     else if (o.type === 'sticker') { let w = o.size; let h = o.size * o.ratio; if (pos.x >= o.x - w/2 - 30 && pos.x <= o.x + w/2 + 30 && pos.y >= o.y - h/2 - 30 && pos.y <= o.y + h/2 + 30) { found = o; break; } }
                 }
@@ -496,8 +500,8 @@
         function handleCanvasEnd(e) { if(isDraggingOverlay){ isDraggingOverlay = false; triggerAutosave(); } }
         canvas.addEventListener('mousedown', handleCanvasStart); canvas.addEventListener('touchstart', handleCanvasStart, {passive: false}); canvas.addEventListener('mousemove', handleCanvasMove);  canvas.addEventListener('touchmove', handleCanvasMove, {passive: false}); window.addEventListener('mouseup', handleCanvasEnd); window.addEventListener('touchend', handleCanvasEnd);
 
-        // --- RENDERIZADO ---
-        function renderLoop() {
+        // --- RENDERIZADO VISUAL ---
+        function renderCanvasGraphics() {
             ctx.fillStyle = "#111115"; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             let activeVisualClip = null;
@@ -519,23 +523,47 @@
             }
             
             projectClips.forEach(o => {
-                if ((o.type === 'text' || o.type === 'sticker') && playheadX >= o.startPx && playheadX <= o.startPx + o.widthPx && !o.isOffline) {
+                if (!o.tempHidden && (o.type === 'text' || o.type === 'sticker') && playheadX >= o.startPx && playheadX <= o.startPx + o.widthPx && !o.isOffline) {
                     ctx.textAlign = "center"; ctx.textBaseline = "middle";
                     if (o.type === 'text') {
                         ctx.font = `bold ${o.size}px ${o.font || 'sans-serif'}`; let w = ctx.measureText(o.content).width; let h = o.size;
                         if(o.useBg) { ctx.fillStyle = o.bgColor || '#000000'; ctx.fillRect(o.x - w/2 - 15, o.y - h/2 - 10, w + 30, h + 20); }
                         ctx.strokeStyle = '#000000'; ctx.lineWidth = o.size / 10; ctx.strokeText(o.content, o.x, o.y); ctx.fillStyle = o.color; ctx.fillText(o.content, o.x, o.y);
                     } else if (o.type === 'sticker') { let w = o.size; let h = o.size * o.ratio; ctx.drawImage(o.imgObj, o.x - w/2, o.y - h/2, w, h); }
-                    if (selectedClipEl && selectedClipEl.getAttribute('data-id') == o.id && !isExporting) {
+                    if (selectedClipEl && selectedClipEl.getAttribute('data-id') == o.id && !isExporting && !o.tempHidden) {
                         ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 3; ctx.setLineDash([10, 10]);
                         if (o.type === 'text') { let w = ctx.measureText(o.content).width; let h = o.size; ctx.strokeRect(o.x - w/2 - 15, o.y - h/2 - 15, w + 30, h + 30); } 
                         else if (o.type === 'sticker') { let w = o.size; let h = o.size * o.ratio; ctx.strokeRect(o.x - w/2 - 5, o.y - h/2 - 5, w + 10, h + 10); } ctx.setLineDash([]);
                     }
                 }
             });
+        }
+
+        function renderLoop() {
+            renderCanvasGraphics();
             requestAnimationFrame(renderLoop);
         }
         renderLoop();
+
+        // --- GENERADOR DE MINIATURAS ---
+        function generateThumbnail(mode) {
+            if (selectedClipEl) { selectedClipEl.classList.remove('selected'); selectedClipEl = null; }
+            
+            if(mode === 'auto') {
+                projectClips.forEach(c => { if(c.type === 'text' || c.type === 'sticker') c.tempHidden = true; });
+            }
+            
+            // Esperar un fotograma para asegurar que el canvas se actualizó sin las líneas de selección o los textos ocultos
+            setTimeout(() => {
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+                const a = document.createElement('a'); a.style.display = 'none';
+                a.href = dataUrl; a.download = `Miniatura_${mode}_${Date.now()}.jpg`;
+                document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(dataUrl);
+                
+                if(mode === 'auto') { projectClips.forEach(c => { delete c.tempHidden; }); }
+                alert("¡Miniatura descargada con éxito!");
+            }, 100);
+        }
 
         // --- SISTEMA DE TIEMPOS ---
         let globalTime = 0; let isPlaying = false; let playInterval; let playheadX = 45; const pixelsPerSecond = 20; 
@@ -569,15 +597,9 @@
                         makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById('audioTrack').appendChild(clipUi);
                         
                         const blob = new Blob(voiceChunks, { type: 'audio/webm' }); 
-                        
-                        // Convertir a Base64 para guardarlo en localStorage
                         getBase64(blob, (b64Audio) => {
                             const audioEl = document.createElement('audio'); audioEl.src = b64Audio; mediaContainer.appendChild(audioEl); 
-                            audioEl.oncanplay = () => {
-                                if(!audioEl.hasAudioConnected) {
-                                    try { const source = audioCtx.createMediaElementSource(audioEl); source.connect(audioCtx.destination); source.connect(audioMixer); audioEl.hasAudioConnected = true; } catch(e){}
-                                }
-                            };
+                            audioEl.oncanplay = () => { if(!audioEl.hasAudioConnected) { try { const source = audioCtx.createMediaElementSource(audioEl); source.connect(audioCtx.destination); source.connect(audioMixer); audioEl.hasAudioConnected = true; } catch(e){} } };
                             projectClips.push({ id: clipId, type: 'audio', startPx: playheadX, widthPx: finalWidth, offsetPx: 0, domElement: audioEl, isOffline: false, base64Data: b64Audio }); 
                             triggerAutosave();
                         });
