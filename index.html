@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CapacitiumX Studio V20 - Full Pro</title>
+    <title>CapacitiumX Studio V21 - Full Pro FX</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --neon: #3b82f6; --bg: #050507; --panel: #121216; --track-bg: #1f1f23; }
@@ -80,7 +80,7 @@
 
     <div class="app-header">
         <div style="display: flex; align-items: center; gap: 15px;">
-            <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Estudio Pro V20</span>
+            <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Estudio Pro V21</span>
             <div class="autosave-badge" id="saveIndicator"><i class="fa-solid fa-cloud"></i> Guardado</div>
         </div>
         <button class="btn-save" id="btnExport" onclick="exportVideo()"><i class="fa-solid fa-rocket"></i> EXPORTAR HASTA LÍNEA AMARILLA</button>
@@ -126,7 +126,7 @@
     <div class="control-panel">
         <div class="tab-menu">
             <div class="tab-btn active" onclick="switchTab('media')"><i class="fa-solid fa-folder-open"></i> Medios</div>
-            <div class="tab-btn" onclick="switchTab('fx')"><i class="fa-solid fa-wand-magic-sparkles"></i> Textos y FX</div>
+            <div class="tab-btn" onclick="switchTab('fx')"><i class="fa-solid fa-wand-magic-sparkles"></i> Diseño & FX</div>
             <div class="tab-btn" onclick="switchTab('thumbs')"><i class="fa-solid fa-image"></i> Miniaturas</div>
             <div class="tab-btn" onclick="switchTab('projects')"><i class="fa-solid fa-floppy-disk"></i> Historial</div>
         </div>
@@ -145,10 +145,10 @@
             <div class="btn primary" id="btnRecVoice" onclick="toggleVoiceRecord()" style="padding: 12px; margin-top: 5px; font-size: 14px;"><i class="fa-solid fa-microphone"></i> Grabar Narración en Off</div>
         </div>
 
-        <!-- TEXTOS Y FX (EDICIÓN EN VIVO CORREGIDA) -->
+        <!-- TEXTOS Y FX (15 EFECTOS COMPLETOS) -->
         <div id="fx" class="tab-content">
             <div style="background: #121216; padding: 10px; border-radius: 6px; border: 1px solid #3b82f6;">
-                <label style="font-size: 11px; color: #3b82f6; font-weight: bold;">Editor de Texto (Escribe tu texto y toca Añadir Capa)</label>
+                <label style="font-size: 11px; color: #3b82f6; font-weight: bold;">Editor de Texto en Vivo</label>
                 <input type="text" id="overlayText" placeholder="Escribe tu título aquí..." style="margin-bottom: 5px;" oninput="liveUpdateText()">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
                     <div><label style="font-size: 9px; color: #888;">Fuente</label><select id="textFont" onchange="liveUpdateText()"><option value="sans-serif">Arial</option><option value="serif">Times</option><option value="Impact">Impact</option><option value="Courier New">Máquina Escribir</option></select></div>
@@ -160,7 +160,7 @@
                         <label style="font-size: 9px; color: #888;">¿Fondo en el Texto?</label>
                         <select id="useBgOption" onchange="liveUpdateText()">
                             <option value="transparent">Sin Fondo</option>
-                            <option value="color">Con Fondo de Color</option>
+                            <option value="color">Con Fondo</option>
                         </select>
                     </div>
                     <div><label style="font-size: 9px; color: #888;">Color de Fondo</label><input type="color" id="overlayBg" value="#e50000" oninput="liveUpdateText()"></div>
@@ -168,23 +168,47 @@
                 <button class="btn primary" onclick="addTextToTimeline()" style="width: 100%; margin-top: 10px; padding: 8px;"><i class="fa-solid fa-plus"></i> Añadir Capa de Texto</button>
             </div>
 
-            <div style="background: #121216; padding: 12px; border-radius: 6px; border: 1px solid #3b82f6; position: relative; margin-top: 10px;">
-                <span style="position:absolute; top:-8px; left:10px; background:#3b82f6; font-size:9px; padding:2px 6px; border-radius:4px; font-weight:bold;">EFECTOS AL CLIP SELECCIONADO</span>
+            <div style="background: #121216; padding: 12px; border-radius: 6px; border: 1px solid #10b981; position: relative; margin-top: 10px;">
+                <span style="position:absolute; top:-8px; left:10px; background:#10b981; font-size:9px; padding:2px 6px; border-radius:4px; font-weight:bold; color:black;">EFECTOS AL CLIP SELECCIONADO</span>
                 <div class="grid-2" style="margin-top: 5px;">
                     <div>
+                        <label style="font-size: 9px; color: #888;">Filtros (15)</label>
                         <select id="clipFilter">
-                            <option value="none">Color Original</option>
-                            <option value="sepia(100%)">Retro (Sepia)</option>
-                            <option value="grayscale(100%) contrast(120%)">Cine B/N</option>
-                            <option value="brightness(110%) contrast(120%) saturate(140%)">Cinemático</option>
+                            <option value="none">1. Original</option>
+                            <option value="sepia(100%)">2. Retro (Sepia)</option>
+                            <option value="grayscale(100%) contrast(120%)">3. Cine B/N</option>
+                            <option value="brightness(110%) contrast(120%) saturate(140%)">4. Cinemático (Vivos)</option>
+                            <option value="contrast(130%) saturate(10%) sepia(30%) hue-rotate(180deg)">5. Cyberpunk Oscuro</option>
+                            <option value="brightness(80%) contrast(140%)">6. Documental Drama</option>
+                            <option value="hue-rotate(90deg) saturate(150%)">7. Alien / Tóxico</option>
+                            <option value="invert(100%)">8. Visión Nocturna / Negativo</option>
+                            <option value="sepia(50%) hue-rotate(320deg) saturate(200%)">9. Atardecer Cálido</option>
+                            <option value="sepia(50%) hue-rotate(200deg) saturate(150%)">10. Frío Metálico</option>
+                            <option value="contrast(200%) grayscale(100%)">11. Noir Extremo</option>
+                            <option value="saturate(300%)">12. Saturación Máx</option>
+                            <option value="blur(3px) contrast(150%)">13. Sueño / Flashback</option>
+                            <option value="brightness(150%)">14. Sobreexpuesto</option>
+                            <option value="sepia(80%) contrast(110%) brightness(90%)">15. Vintage 90s</option>
                         </select>
                     </div>
                     <div>
+                        <label style="font-size: 9px; color: #888;">Animaciones/Transiciones (15)</label>
                         <select id="clipAnim">
-                            <option value="none">Sin Animación</option>
-                            <option value="fade">Fade In/Out</option>
-                            <option value="zoom-in">Zoom In Lento</option>
-                            <option value="pop">Efecto Pop</option>
+                            <option value="none">1. Sin Movimiento</option>
+                            <option value="fade">2. Fade In/Out Suave</option>
+                            <option value="zoom-in">3. Zoom In Lento</option>
+                            <option value="zoom-out">4. Zoom Out Lento</option>
+                            <option value="slide-left">5. Entra por Izquierda</option>
+                            <option value="slide-right">6. Entra por Derecha</option>
+                            <option value="slide-up">7. Sube desde Abajo</option>
+                            <option value="slide-down">8. Baja desde Arriba</option>
+                            <option value="spin-in">9. Giro 360 Dinámico</option>
+                            <option value="pop">10. Efecto Pop (Rebote)</option>
+                            <option value="shake">11. Temblor / Sismo</option>
+                            <option value="pulse">12. Latido de Corazón</option>
+                            <option value="flash">13. Parpadeo Flash</option>
+                            <option value="cinematic-pan">14. Paneo Lateral Cine</option>
+                            <option value="blur-in">15. Aparece Desenfocado</option>
                         </select>
                     </div>
                 </div>
@@ -333,6 +357,7 @@
                 let icon = c.type === 'video' ? 'film' : (c.type === 'audio' ? 'microphone' : (c.type === 'text' ? 'font' : 'image'));
                 let title = c.type === 'text' ? c.content.substring(0,6) : (c.isOffline ? 'Toca para reconectar' : (c.type === 'sticker' ? 'Sticker' : (c.type === 'audio' ? 'Voz_Off' : 'Foto')));
                 clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${icon}"></i> &nbsp;${title}</div>`;
+                if (c.filter !== 'none' || c.anim !== 'none') clipUi.innerHTML += `<div class="fx-badge"><i class="fa-solid fa-wand-magic-sparkles"></i></div>`;
                 
                 makeDraggable(clipUi, false, c.id); makeResizable(clipUi, c.id);
                 clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true});
@@ -377,22 +402,39 @@
 
         function updateMasterVolume() { let vol = document.getElementById('masterVolume').value / 100; projectClips.forEach(c => { if (c.type === 'video' && c.domElement) c.domElement.volume = vol; }); }
 
-        // --- SISTEMA FX POR CLIP ---
+        // --- SISTEMA FX POR CLIP (15 EFECTOS) ---
         function applyFXToSelected() {
             if(!selectedClipEl) return alert("Toca un cuadrito en la línea de tiempo primero.");
             let id = selectedClipEl.getAttribute('data-id'); let clip = projectClips.find(c => c.id == id);
             if(clip) {
                 clip.filter = document.getElementById('clipFilter').value; clip.anim = document.getElementById('clipAnim').value;
-                selectedClipEl.classList.add('has-fx'); alert("Efecto aplicado a este clip.");
+                selectedClipEl.classList.add('has-fx');
+                if (selectedClipEl.querySelector('.fx-badge') === null) {
+                    selectedClipEl.innerHTML += `<div class="fx-badge"><i class="fa-solid fa-wand-magic-sparkles"></i></div>`;
+                }
+                triggerAutosave();
+                alert("Efecto/Animación aplicado a este clip.");
             }
         }
 
+        // Matemáticas para las 15 animaciones dentro de Canvas
         function getTransformValues(anim, progress, progressIn, progressOut) {
             let scale = 1, tx = 0, ty = 0, angle = 0, alpha = 1, extraFilter = '';
             switch(anim) {
                 case 'fade': alpha = Math.min(progressIn, progressOut); break;
                 case 'zoom-in': scale = 1 + (progress * 0.3); break;
+                case 'zoom-out': scale = 1.3 - (progress * 0.3); break;
+                case 'slide-left': if(progressIn < 1) tx = (1 - Math.pow(progressIn, 3)) * 1280; break;
+                case 'slide-right': if(progressIn < 1) tx = -(1 - Math.pow(progressIn, 3)) * 1280; break;
+                case 'slide-up': if(progressIn < 1) ty = (1 - Math.pow(progressIn, 3)) * 720; break;
+                case 'slide-down': if(progressIn < 1) ty = -(1 - Math.pow(progressIn, 3)) * 720; break;
+                case 'spin-in': if(progressIn < 1) { angle = (1 - progressIn) * Math.PI * 4; scale = progressIn; alpha = progressIn; } break;
                 case 'pop': if(progressIn < 1) { scale = progressIn + Math.sin(progressIn * Math.PI) * 0.5; } break;
+                case 'shake': tx = Math.sin(progress * 200) * 15; ty = Math.cos(progress * 180) * 15; break;
+                case 'pulse': scale = 1 + Math.sin(progress * 30) * 0.08; break;
+                case 'flash': alpha = Math.abs(Math.sin(progress * 40)); break;
+                case 'cinematic-pan': tx = (progress - 0.5) * 150; scale = 1.1; break;
+                case 'blur-in': if(progressIn < 1) { extraFilter = ` blur(${(1-progressIn)*20}px)`; alpha = progressIn; } break;
             }
             return {scale, tx, ty, angle, alpha, extraFilter};
         }
@@ -418,7 +460,7 @@
             triggerAutosave();
         }
 
-        // --- EDICIÓN EN VIVO DE TEXTO (CORREGIDA) ---
+        // --- EDICIÓN EN VIVO DE TEXTO ---
         function liveUpdateText() {
             if(selectedClipEl) {
                 const id = selectedClipEl.getAttribute('data-id'); let clipObj = projectClips.find(c => c.id == id);
@@ -439,19 +481,16 @@
             const id = selectedClipEl.getAttribute('data-id'); const c = projectClips.find(clip => clip.id == id);
             if(c) {
                 if(c.type === 'text' || c.type === 'sticker') document.getElementById('elementSize').value = c.size;
-                // Cargar datos en los inputs para edición en vivo
                 if(c.type === 'text') {
-                    document.getElementById('overlayText').value = c.content;
-                    document.getElementById('overlayColor').value = c.color;
-                    document.getElementById('overlayBg').value = c.bgColor || '#000000';
-                    document.getElementById('textFont').value = c.font || 'sans-serif';
+                    document.getElementById('overlayText').value = c.content; document.getElementById('overlayColor').value = c.color;
+                    document.getElementById('overlayBg').value = c.bgColor || '#000000'; document.getElementById('textFont').value = c.font || 'sans-serif';
                     document.getElementById('useBgOption').value = c.useBg ? 'color' : 'transparent';
                 }
+                document.getElementById('clipFilter').value = c.filter || 'none'; document.getElementById('clipAnim').value = c.anim || 'none';
             }
         }
 
         function addTextToTimeline() {
-            // Leer lo que el usuario escribió ANTES de crear el clip
             let inputVal = document.getElementById('overlayText').value.trim();
             let textContent = inputVal !== '' ? inputVal : "Texto";
 
@@ -469,9 +508,7 @@
 
             projectClips.push({ id: clipId, type: 'text', content: textContent, color: fontColor, font: fontType, useBg: hasBg, bgColor: bgColor, x: 640, y: 360, size: 80, startPx: playheadX, widthPx: 150, offsetPx: 0, filter: 'none', anim: 'none', isOffline: false });
             
-            // Simular click para seleccionarlo y dejar los valores listos para edición en vivo
-            clipUi.dispatchEvent(new Event('mousedown')); 
-            document.getElementById('overlayText').value = textContent;
+            clipUi.dispatchEvent(new Event('mousedown')); document.getElementById('overlayText').value = textContent;
 
             let endClip = playheadX + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } 
             playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
@@ -653,6 +690,35 @@
         function resetPlayhead() { 
             playheadX = inMarkerX; document.getElementById('playhead').style.left = playheadX + 'px'; globalTime = Math.floor((playheadX - 45) / (pixelsPerSecond/10)); updateTimecode(); document.getElementById('timelineScroll').scrollLeft = playheadX - 100; 
             projectClips.forEach(clip => { if((clip.type === 'video' || clip.type === 'audio') && clip.domElement && !clip.isOffline) { let mediaTime = ((playheadX - clip.startPx) + clip.offsetPx) / pixelsPerSecond; if(mediaTime >= 0) clip.domElement.currentTime = mediaTime; } });
+        }
+
+        // --- NARRACIÓN Y BASE64 AUDIO ---
+        let isRecordingVoice = false; let voiceStream; let voiceRecorder; let voiceChunks = []; let voiceStartTime = 0;
+        async function toggleVoiceRecord() {
+            initAudio(); const btn = document.getElementById('btnRecVoice'); const badge = document.getElementById('recBadge');
+            if (!isRecordingVoice) {
+                try {
+                    voiceStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); voiceChunks = []; voiceRecorder = new MediaRecorder(voiceStream); voiceRecorder.ondataavailable = e => { if (e.data.size > 0) voiceChunks.push(e.data); };
+                    voiceRecorder.onstop = () => {
+                        let realDurationSec = (Date.now() - voiceStartTime) / 1000; let finalWidth = Math.max(30, realDurationSec * pixelsPerSecond); const clipId = Date.now();
+                        const clipUi = document.createElement('div'); clipUi.className = 'clip-block audio'; clipUi.style.left = playheadX + 'px'; clipUi.style.width = finalWidth + 'px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-microphone"></i> &nbsp;Voz</div>`;
+                        makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById('audioTrack').appendChild(clipUi);
+                        
+                        const blob = new Blob(voiceChunks, { type: 'audio/webm' }); 
+                        getBase64(blob, (b64Audio) => {
+                            const audioEl = document.createElement('audio'); audioEl.src = b64Audio; mediaContainer.appendChild(audioEl); 
+                            audioEl.oncanplay = () => { if(!audioEl.hasAudioConnected) { try { const source = audioCtx.createMediaElementSource(audioEl); source.connect(audioCtx.destination); source.connect(audioMixer); audioEl.hasAudioConnected = true; } catch(e){} } };
+                            projectClips.push({ id: clipId, type: 'audio', startPx: playheadX, widthPx: finalWidth, offsetPx: 0, domElement: audioEl, isOffline: false, base64Data: b64Audio }); 
+                            triggerAutosave();
+                        });
+
+                        voiceStream.getTracks().forEach(t => t.stop());
+                        let endClip = playheadX + finalWidth; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += finalWidth; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
+                    };
+                    voiceStartTime = Date.now(); voiceRecorder.start(); isRecordingVoice = true; btn.classList.add('danger'); btn.innerHTML = '<i class="fa-solid fa-stop"></i> Detener Narración'; badge.innerHTML = 'GRABANDO VOZ'; badge.style.display = 'block';
+                    if(!isPlaying) togglePlayback(); 
+                } catch(e) { alert("Permite acceso al micrófono."); }
+            } else { voiceRecorder.stop(); isRecordingVoice = false; if(isPlaying) togglePlayback(); btn.classList.remove('danger'); btn.innerHTML = '<i class="fa-solid fa-microphone"></i> Grabar Narración en Off'; badge.style.display = 'none'; }
         }
 
         // --- EXPORTAR ---
