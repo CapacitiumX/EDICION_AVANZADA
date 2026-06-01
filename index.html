@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CapacitiumX Studio Premium</title>
+    <title>CapacitiumX Studio V15</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --neon: #3b82f6; --bg: #050507; --panel: #121216; --track-bg: #1f1f23; }
@@ -26,11 +26,12 @@
         .track { height: 40px; background: var(--track-bg); display: flex; position: relative; min-width: 300vw; border-bottom: 1px solid #2a2a30; }
         .track-label { position: sticky; left: 0; background: #0a0a0c; width: 45px; display: flex; justify-content: center; align-items: center; font-size: 10px; z-index: 30; border-right: 1px solid #444; flex-direction: column; color: #aaa; font-weight: bold; }
         
-        .export-zone { position: absolute; top: 0; bottom: 0; background: rgba(16, 185, 129, 0.1); z-index: 5; pointer-events: none; border-top: 2px solid #10b981; border-bottom: 2px solid #10b981; }
+        /* DELIMITADORES DE EXPORTACIÓN (LÍNEA AMARILLA) */
+        .export-zone { position: absolute; top: 0; bottom: 0; background: rgba(16, 185, 129, 0.1); z-index: 5; pointer-events: none; border-top: 2px solid #10b981; border-bottom: 2px solid #eab308; }
         .marker-in { position: absolute; top: 0; bottom: 0; width: 4px; background: #10b981; z-index: 35; cursor: ew-resize; }
-        .marker-in::before { content: 'IN'; position: absolute; top: -10px; left: 0; background: #10b981; font-size: 8px; padding: 2px 4px; border-radius: 2px; color: white; font-weight: bold; }
-        .marker-out { position: absolute; top: 0; bottom: 0; width: 4px; background: #ef4444; z-index: 35; cursor: ew-resize; }
-        .marker-out::before { content: 'OUT'; position: absolute; top: -10px; left: -16px; background: #ef4444; font-size: 8px; padding: 2px 4px; border-radius: 2px; color: white; font-weight: bold; }
+        .marker-in::before { content: 'INICIO'; position: absolute; top: -10px; left: 0; background: #10b981; font-size: 8px; padding: 2px 4px; border-radius: 2px; color: white; font-weight: bold; }
+        .marker-out { position: absolute; top: 0; bottom: 0; width: 4px; background: #eab308; z-index: 35; cursor: ew-resize; box-shadow: 0 0 10px rgba(234, 179, 8, 0.8); }
+        .marker-out::before { content: 'FIN DE VIDEO'; position: absolute; top: -10px; left: -30px; background: #eab308; font-size: 8px; padding: 2px 4px; border-radius: 2px; color: black; font-weight: bold; }
 
         .playhead-container { position: absolute; top: 0; bottom: 0; left: 45px; width: 20px; z-index: 40; transform: translateX(-10px); cursor: ew-resize; }
         .playhead-line { position: absolute; left: 10px; width: 2px; height: 100%; background: #ffffff; pointer-events: none; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
@@ -73,8 +74,8 @@
 <body>
 
     <div class="app-header">
-        <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Estudio Pro V14</span>
-        <button class="btn-save" id="btnExport" onclick="exportVideo()"><i class="fa-solid fa-rocket"></i> EXPORTAR ZONA</button>
+        <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Estudio Pro V15</span>
+        <button class="btn-save" id="btnExport" onclick="exportVideo()"><i class="fa-solid fa-rocket"></i> EXPORTAR HASTA LÍNEA AMARILLA</button>
     </div>
 
     <div class="preview-area">
@@ -87,7 +88,7 @@
     <div class="timeline-editor">
         <div class="timeline-toolbar">
             <i class="fa-solid fa-play action-btn" id="btnPlay" onclick="togglePlayback()" title="Reproducir/Pausar"></i>
-            <i class="fa-solid fa-backward action-btn" onclick="resetPlayhead()" title="Ir al Inicio (IN)"></i>
+            <i class="fa-solid fa-backward action-btn" onclick="resetPlayhead()" title="Ir al Inicio"></i>
             <div style="width: 1px; height: 15px; background: #555; margin: 0 10px;"></div>
             
             <i class="fa-solid fa-scissors action-btn" onclick="splitSelectedClip()" title="Corte Quirúrgico (Tijeras)" style="color: #f59e0b;"></i>
@@ -97,6 +98,7 @@
         </div>
         
         <div class="tracks-container" id="timelineScroll">
+            <!-- DELIMITADORES DE EXPORTACIÓN (LÍNEA AMARILLA INCORPORADA) -->
             <div class="export-zone" id="exportZone"></div>
             <div class="marker-in" id="markerIn"></div>
             <div class="marker-out" id="markerOut"></div>
@@ -116,10 +118,11 @@
     <div class="control-panel">
         <div class="tab-menu">
             <div class="tab-btn active" onclick="switchTab('media')"><i class="fa-solid fa-folder-open"></i> Medios</div>
-            <div class="tab-btn" onclick="switchTab('fx')"><i class="fa-solid fa-wand-magic-sparkles"></i> Diseño & FX 15+</div>
-            <div class="tab-btn" onclick="switchTab('voice')"><i class="fa-solid fa-microphone"></i> Narración</div>
+            <div class="tab-btn" onclick="switchTab('fx')"><i class="fa-solid fa-wand-magic-sparkles"></i> Textos y FX</div>
+            <div class="tab-btn" onclick="switchTab('thumbs')"><i class="fa-solid fa-image"></i> Miniaturas</div>
         </div>
 
+        <!-- PESTAÑA MEDIOS -->
         <div id="media" class="tab-content active">
             <div class="btn primary" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-film"></i> Importar Video / Foto Base</div>
             <input type="file" id="fileUpload" accept="image/*,video/*" style="display:none;" onchange="addMediaToTimeline(event)">
@@ -128,83 +131,77 @@
                 <label style="font-size: 11px; color: #aaa;">Volumen del Video Original (Ideal para Doblaje)</label>
                 <input type="range" id="masterVolume" min="0" max="100" value="100" oninput="updateMasterVolume()">
             </div>
+            <p style="font-size: 10px; color: #888; text-align: center;">Mueve la <b>línea amarilla</b> para indicarle al sistema dónde debe detener la grabación automáticamente al exportar.</p>
         </div>
 
+        <!-- PESTAÑA TEXTOS Y FX -->
         <div id="fx" class="tab-content">
-            <div style="background: #121216; padding: 12px; border-radius: 6px; border: 1px solid #3b82f6; position: relative;">
-                <span style="position:absolute; top:-8px; left:10px; background:#3b82f6; font-size:9px; padding:2px 6px; border-radius:4px; font-weight:bold;">EFECTOS EXCLUSIVOS AL CLIP SELECCIONADO</span>
-                <div class="grid-2" style="margin-top: 5px;">
-                    <div>
-                        <label style="font-size: 9px; color: #888;">Filtros de Color (15)</label>
-                        <select id="clipFilter">
-                            <option value="none">1. Original</option>
-                            <option value="sepia(100%)">2. Retro (Sepia)</option>
-                            <option value="grayscale(100%) contrast(120%)">3. Cine B/N</option>
-                            <option value="brightness(110%) contrast(120%) saturate(140%)">4. Cinemático (Vivos)</option>
-                            <option value="contrast(130%) saturate(10%) sepia(30%) hue-rotate(180deg)">5. Cyberpunk Oscuro</option>
-                            <option value="brightness(80%) contrast(140%)">6. Documental Drama</option>
-                            <option value="hue-rotate(90deg) saturate(150%)">7. Alien / Tóxico</option>
-                            <option value="invert(100%)">8. Visión Nocturna / Negativo</option>
-                            <option value="sepia(50%) hue-rotate(320deg) saturate(200%)">9. Atardecer Cálido</option>
-                            <option value="sepia(50%) hue-rotate(200deg) saturate(150%)">10. Frío Metálico</option>
-                            <option value="contrast(200%) grayscale(100%)">11. Noir Extremo</option>
-                            <option value="saturate(300%)">12. Saturación Máx</option>
-                            <option value="blur(3px) contrast(150%)">13. Sueño / Flashback</option>
-                            <option value="brightness(150%)">14. Sobreexpuesto</option>
-                            <option value="sepia(80%) contrast(110%) brightness(90%)">15. Vintage 90s</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size: 9px; color: #888;">Animaciones/Transiciones (15)</label>
-                        <select id="clipAnim">
-                            <option value="none">1. Sin Movimiento</option>
-                            <option value="fade">2. Fade In/Out Suave</option>
-                            <option value="zoom-in">3. Zoom In Lento</option>
-                            <option value="zoom-out">4. Zoom Out Lento</option>
-                            <option value="slide-left">5. Entra por Izquierda</option>
-                            <option value="slide-right">6. Entra por Derecha</option>
-                            <option value="slide-up">7. Sube desde Abajo</option>
-                            <option value="slide-down">8. Baja desde Arriba</option>
-                            <option value="spin-in">9. Giro 360 Dinámico</option>
-                            <option value="pop">10. Efecto Pop (Rebote)</option>
-                            <option value="shake">11. Temblor / Sismo</option>
-                            <option value="pulse">12. Latido de Corazón</option>
-                            <option value="flash">13. Parpadeo Flash</option>
-                            <option value="cinematic-pan">14. Paneo Lateral Cine</option>
-                            <option value="blur-in">15. Aparece Desenfocado</option>
-                        </select>
-                    </div>
-                </div>
-                <button class="btn primary" onclick="applyFXToSelected()" style="width: 100%; margin-top: 10px; padding: 8px;"><i class="fa-solid fa-check-double"></i> Aplicar al Cuadrito Seleccionado</button>
-            </div>
-            
-            <div style="background: #121216; padding: 10px; border-radius: 6px; border: 1px solid #333; margin-top: 10px;">
+            <div style="background: #121216; padding: 10px; border-radius: 6px; border: 1px solid #333;">
                 <label style="font-size: 11px; color: #aaa;">Añadir Texto</label>
-                <input type="text" id="overlayText" placeholder="Escribe tu guion o título..." style="margin-bottom: 5px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
+                <input type="text" id="overlayText" placeholder="Escribe tu título..." style="margin-bottom: 5px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
                     <div><label style="font-size: 9px; color: #888;">Fuente</label><select id="textFont"><option value="sans-serif">Arial</option><option value="serif">Times</option><option value="Impact">Impact</option><option value="Courier New">Máquina Escribir</option></select></div>
                     <div><label style="font-size: 9px; color: #888;">Color Letra</label><input type="color" id="overlayColor" value="#ffffff"></div>
-                    <div><label style="font-size: 9px; color: #888;">Color Fondo</label><input type="color" id="overlayBg" value="#e50000"></div>
                 </div>
-                <div style="display: flex; gap: 10px; margin-top: 10px; align-items: center;">
-                    <label style="font-size: 10px; color: #aaa; flex: 1;"><input type="checkbox" id="useBg" checked> Habilitar Fondo Rectangular</label>
-                    <button class="btn primary" onclick="addTextToTimeline()" style="padding: 8px 15px;"><i class="fa-solid fa-plus"></i> Añadir Capa</button>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px; align-items: center;">
+                    <div>
+                        <label style="font-size: 9px; color: #888;">¿Fondo en el Texto?</label>
+                        <select id="useBgOption">
+                            <option value="transparent">Sin Fondo (Transparente)</option>
+                            <option value="color">Con Fondo de Color</option>
+                        </select>
+                    </div>
+                    <div><label style="font-size: 9px; color: #888;">Color de Fondo</label><input type="color" id="overlayBg" value="#e50000"></div>
                 </div>
+                
+                <button class="btn primary" onclick="addTextToTimeline()" style="width: 100%; margin-top: 10px; padding: 8px;"><i class="fa-solid fa-plus"></i> Añadir Capa de Texto</button>
             </div>
 
+            <div style="background: #121216; padding: 12px; border-radius: 6px; border: 1px solid #3b82f6; position: relative; margin-top: 10px;">
+                <span style="position:absolute; top:-8px; left:10px; background:#3b82f6; font-size:9px; padding:2px 6px; border-radius:4px; font-weight:bold;">EFECTOS AL CLIP SELECCIONADO</span>
+                <div class="grid-2" style="margin-top: 5px;">
+                    <div>
+                        <select id="clipFilter">
+                            <option value="none">Color Original</option>
+                            <option value="sepia(100%)">Retro (Sepia)</option>
+                            <option value="grayscale(100%) contrast(120%)">Cine B/N</option>
+                            <option value="brightness(110%) contrast(120%) saturate(140%)">Cinemático</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select id="clipAnim">
+                            <option value="none">Sin Animación</option>
+                            <option value="fade">Fade In/Out</option>
+                            <option value="zoom-in">Zoom In Lento</option>
+                            <option value="pop">Efecto Pop</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn primary" onclick="applyFXToSelected()" style="width: 100%; margin-top: 10px; padding: 8px;"><i class="fa-solid fa-check-double"></i> Aplicar al Cuadrito</button>
+            </div>
+            
             <div class="grid-2" style="margin-top: 10px;">
-                <button class="btn primary" onclick="document.getElementById('stickerUpload').click()"><i class="fa-solid fa-image"></i> Añadir Foto / Logo</button>
+                <button class="btn primary" onclick="document.getElementById('stickerUpload').click()"><i class="fa-solid fa-image"></i> Añadir Foto/Sticker</button>
                 <div>
-                    <label style="font-size: 11px; color: #aaa;">Tamaño Texto/Foto Seleccionado</label>
+                    <label style="font-size: 11px; color: #aaa;">Tamaño Texto/Sticker</label>
                     <input type="range" id="elementSize" min="10" max="800" value="60" oninput="updateSelectedOverlaySize()">
                 </div>
             </div>
             <input type="file" id="stickerUpload" accept="image/*" style="display:none;" onchange="addStickerToTimeline(event)">
         </div>
 
-        <div id="voice" class="tab-content">
-            <label style="font-size: 11px; color: #aaa; text-align: center;">Micrófono IA (Aislamiento Acústico Activo)</label>
-            <div class="btn primary" id="btnRecVoice" onclick="toggleVoiceRecord()" style="padding: 16px; margin-top: 10px; font-size: 14px;"><i class="fa-solid fa-microphone"></i> Grabar Narración en Off</div>
+        <!-- NUEVO: GENERADOR DE MINIATURAS Y VOZ -->
+        <div id="thumbs" class="tab-content">
+            <div style="background: #121216; padding: 15px; border-radius: 6px; border: 1px solid #10b981; text-align: center;">
+                <i class="fa-brands fa-youtube" style="font-size: 24px; color: #ef4444; margin-bottom: 10px;"></i>
+                <h3 style="margin: 0 0 5px 0; font-size: 14px;">Generador Automático de Miniaturas</h3>
+                <p style="font-size: 11px; color: #aaa;">Acomoda tus textos e imágenes en la previsualización de arriba. Cuando esté perfecta, presiona el botón para guardar un archivo JPG listo para YouTube.</p>
+                <button class="btn" onclick="generateThumbnail()" style="width: 100%; margin-top: 10px; background: linear-gradient(90deg, #ef4444, #b91c1c); border: none; font-size: 14px;"><i class="fa-solid fa-camera-retro"></i> Tomar Fotografía del Lienzo</button>
+            </div>
+            
+            <label style="font-size: 11px; color: #aaa; text-align: center; margin-top: 10px;">Micrófono IA (Aislamiento Acústico Activo)</label>
+            <div class="btn primary" id="btnRecVoice" onclick="toggleVoiceRecord()" style="padding: 16px; font-size: 14px;"><i class="fa-solid fa-microphone"></i> Grabar Narración en Off</div>
         </div>
     </div>
 
@@ -221,7 +218,6 @@
         const canvas = document.getElementById('mainCanvas'); 
         const ctx = canvas.getContext('2d');
         canvas.width = 1280; canvas.height = 720;
-        const hiddenCam = document.getElementById('hiddenCam');
         const mediaContainer = document.getElementById('hidden-media-container');
         
         let projectClips = []; 
@@ -229,7 +225,7 @@
         let isDraggingOverlay = false;
         let isExporting = false;
 
-        // --- SISTEMA DE MARCADORES (IN / OUT) ---
+        // --- SISTEMA DE MARCADORES (IN / OUT - LÍNEA AMARILLA) ---
         let inMarkerX = 45; 
         let outMarkerX = 300; 
 
@@ -258,36 +254,22 @@
 
         function updateMasterVolume() { let vol = document.getElementById('masterVolume').value / 100; projectClips.forEach(c => { if (c.type === 'video' && c.domElement) c.domElement.volume = vol; }); }
 
-        // --- SISTEMA FX POR CLIP (15+ OPCIONES) ---
+        // --- SISTEMA FX POR CLIP ---
         function applyFXToSelected() {
             if(!selectedClipEl) return alert("Toca un cuadrito en la línea de tiempo primero.");
             let id = selectedClipEl.getAttribute('data-id'); let clip = projectClips.find(c => c.id == id);
             if(clip) {
-                clip.filter = document.getElementById('clipFilter').value;
-                clip.anim = document.getElementById('clipAnim').value;
-                selectedClipEl.classList.add('has-fx');
-                alert("Efecto Premium aplicado a este clip.");
+                clip.filter = document.getElementById('clipFilter').value; clip.anim = document.getElementById('clipAnim').value;
+                selectedClipEl.classList.add('has-fx'); alert("Efecto aplicado a este clip.");
             }
         }
 
-        // Matemáticas para las 15 animaciones dentro de Canvas
         function getTransformValues(anim, progress, progressIn, progressOut) {
             let scale = 1, tx = 0, ty = 0, angle = 0, alpha = 1, extraFilter = '';
             switch(anim) {
                 case 'fade': alpha = Math.min(progressIn, progressOut); break;
                 case 'zoom-in': scale = 1 + (progress * 0.3); break;
-                case 'zoom-out': scale = 1.3 - (progress * 0.3); break;
-                case 'slide-left': if(progressIn < 1) tx = (1 - Math.pow(progressIn, 3)) * 1280; break;
-                case 'slide-right': if(progressIn < 1) tx = -(1 - Math.pow(progressIn, 3)) * 1280; break;
-                case 'slide-up': if(progressIn < 1) ty = (1 - Math.pow(progressIn, 3)) * 720; break;
-                case 'slide-down': if(progressIn < 1) ty = -(1 - Math.pow(progressIn, 3)) * 720; break;
-                case 'spin-in': if(progressIn < 1) { angle = (1 - progressIn) * Math.PI * 4; scale = progressIn; alpha = progressIn; } break;
                 case 'pop': if(progressIn < 1) { scale = progressIn + Math.sin(progressIn * Math.PI) * 0.5; } break;
-                case 'shake': tx = Math.sin(progress * 200) * 15; ty = Math.cos(progress * 180) * 15; break;
-                case 'pulse': scale = 1 + Math.sin(progress * 30) * 0.08; break;
-                case 'flash': alpha = Math.abs(Math.sin(progress * 40)); break;
-                case 'cinematic-pan': tx = (progress - 0.5) * 150; scale = 1.1; break; // Scale slightly to avoid seeing black borders when panning
-                case 'blur-in': if(progressIn < 1) { extraFilter = ` blur(${(1-progressIn)*20}px)`; alpha = progressIn; } break;
             }
             return {scale, tx, ty, angle, alpha, extraFilter};
         }
@@ -312,13 +294,21 @@
             projectClips.push({ ...orig, id: newId, startPx: playheadX, widthPx: rightWidth, offsetPx: newOffset, domElement: newDom });
         }
 
+        // --- TEXTOS CON OPCIÓN DE FONDO TRANSPARENTE ---
         function addTextToTimeline() {
             const text = document.getElementById('overlayText').value; if (!text) return;
             const clipId = Date.now(); const clipUi = document.createElement('div'); clipUi.className = 'clip-block text'; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '150px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-font"></i> &nbsp;${text.substring(0,6)}</div><div class="fx-badge"><i class="fa-solid fa-wand-magic-sparkles"></i></div>`;
             makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById('textTrack').appendChild(clipUi);
-            projectClips.push({ id: clipId, type: 'text', content: text, color: document.getElementById('overlayColor').value, font: document.getElementById('textFont').value, useBg: document.getElementById('useBg').checked, bgColor: document.getElementById('overlayBg').value, x: 640, y: 360, size: 80, startPx: playheadX, widthPx: 150, offsetPx: 0, filter: 'none', anim: 'none' });
+
+            // Leer la opción de fondo
+            const useBgOption = document.getElementById('useBgOption').value;
+            const useBg = useBgOption === 'color'; // true si eligió 'color', false si 'transparent'
+
+            projectClips.push({ id: clipId, type: 'text', content: text, color: document.getElementById('overlayColor').value, font: document.getElementById('textFont').value, useBg: useBg, bgColor: document.getElementById('overlayBg').value, x: 640, y: 360, size: 80, startPx: playheadX, widthPx: 150, offsetPx: 0, filter: 'none', anim: 'none' });
             document.getElementById('overlayText').value = '';
-            let endClip = playheadX + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
+            
+            let endClip = playheadX + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); }
+            playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
         }
 
         function addStickerToTimeline(event) {
@@ -327,7 +317,9 @@
                 const clipId = Date.now(); const clipUi = document.createElement('div'); clipUi.className = 'clip-block image'; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '100px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-face-smile"></i> &nbsp;Sticker</div><div class="fx-badge"><i class="fa-solid fa-wand-magic-sparkles"></i></div>`;
                 makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById('textTrack').appendChild(clipUi); 
                 projectClips.push({ id: clipId, type: 'sticker', imgObj: img, ratio: img.height / img.width, x: 640, y: 360, size: 300, startPx: playheadX, widthPx: 100, offsetPx: 0, filter: 'none', anim: 'none' });
-                let endClip = playheadX + 100; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 110; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
+                
+                let endClip = playheadX + 100; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); }
+                playheadX += 110; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
             }; img.src = URL.createObjectURL(file);
         }
 
@@ -337,13 +329,38 @@
             if (original && (original.type === 'text' || original.type === 'sticker')) {
                 const newId = Date.now(); const clipUi = document.createElement('div'); clipUi.className = selectedClipEl.className; clipUi.style.left = playheadX + 'px'; clipUi.style.width = original.widthPx + 'px'; clipUi.setAttribute('data-id', newId); clipUi.innerHTML = selectedClipEl.innerHTML;
                 makeDraggable(clipUi, false, newId); makeResizable(clipUi, newId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); selectedClipEl.parentElement.appendChild(clipUi);
-                projectClips.push({...original, id: newId, startPx: playheadX, y: original.y + 60, offsetPx: 0});
-                let endClip = playheadX + original.widthPx; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += original.widthPx + 10; document.getElementById('playhead').style.left = playheadX + 'px';
+                projectClips.push({...original, id: newId, startPx: playheadX, y: original.y + 40, offsetPx: 0});
+                
+                let endClip = playheadX + original.widthPx; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); }
+                playheadX += original.widthPx + 10; document.getElementById('playhead').style.left = playheadX + 'px';
             }
         }
 
         function updateSelectedOverlaySize() { if (selectedClipEl) { const id = selectedClipEl.getAttribute('data-id'); let clipObj = projectClips.find(c => c.id == id); if (clipObj && (clipObj.type === 'text' || clipObj.type === 'sticker')) clipObj.size = parseInt(document.getElementById('elementSize').value); } }
 
+        // --- GENERADOR DE MINIATURAS ---
+        function generateThumbnail() {
+            // Se asegura de que no haya líneas de selección de arrastre dibujadas
+            if (selectedClipEl) { selectedClipEl.classList.remove('selected'); selectedClipEl = null; }
+            
+            // Forzamos un último render limpio
+            renderCanvasGraphics();
+            
+            // Sacamos la "foto" en alta calidad JPG (0.95 = 95% de calidad)
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+            
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = dataUrl;
+            a.download = `Miniatura_CapacitiumX_${Date.now()}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(dataUrl);
+            
+            alert("¡Miniatura descargada! Lista para subir a YouTube.");
+        }
+
+        // --- TÁCTIL EN CANVAS ---
         function getCanvasPos(e) { const rect = canvas.getBoundingClientRect(); const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY; return { x: (clientX - rect.left) * (canvas.width / rect.width), y: (clientY - rect.top) * (canvas.height / rect.height) }; }
         function handleCanvasStart(e) {
             const pos = getCanvasPos(e); let found = null;
@@ -360,8 +377,8 @@
         function handleCanvasEnd(e) { isDraggingOverlay = false; }
         canvas.addEventListener('mousedown', handleCanvasStart); canvas.addEventListener('touchstart', handleCanvasStart, {passive: false}); canvas.addEventListener('mousemove', handleCanvasMove);  canvas.addEventListener('touchmove', handleCanvasMove, {passive: false}); window.addEventListener('mouseup', handleCanvasEnd); window.addEventListener('touchend', handleCanvasEnd);
 
-        // --- RENDERIZADO VISUAL CON TRANSFORMACIONES 15+ ---
-        function renderLoop() {
+        // --- LÓGICA DE DIBUJADO EXTRAIDA PARA RE-USO (MINIATURAS) ---
+        function renderCanvasGraphics() {
             ctx.fillStyle = "#050507"; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             let activeVisualClip = null;
@@ -376,49 +393,30 @@
             });
 
             if (activeVisualClip && activeVisualClip.domElement) {
-                // Matemáticas de Animación
-                let clipTimePx = playheadX - activeVisualClip.startPx;
-                let progress = clipTimePx / activeVisualClip.widthPx;
-                let progressIn = Math.min(1, clipTimePx / 20); // Dibuja la animación de entrada en ~1 segundo
-                let progressOut = Math.max(0, (activeVisualClip.widthPx - clipTimePx) / 20);
-                
+                let clipTimePx = playheadX - activeVisualClip.startPx; let progress = clipTimePx / activeVisualClip.widthPx; let progressIn = Math.min(1, clipTimePx / 20); let progressOut = Math.max(0, (activeVisualClip.widthPx - clipTimePx) / 20);
                 let t = getTransformValues(activeVisualClip.anim || 'none', progress, progressIn, progressOut);
                 
-                ctx.save();
-                ctx.translate((canvas.width/2) + t.tx, (canvas.height/2) + t.ty);
-                ctx.rotate(t.angle); ctx.scale(t.scale, t.scale);
-                ctx.globalAlpha = t.alpha;
-                ctx.filter = (activeVisualClip.filter && activeVisualClip.filter !== 'none' ? activeVisualClip.filter : '') + t.extraFilter;
+                ctx.save(); ctx.translate((canvas.width/2) + t.tx, (canvas.height/2) + t.ty); ctx.rotate(t.angle); ctx.scale(t.scale, t.scale); ctx.globalAlpha = t.alpha; ctx.filter = (activeVisualClip.filter && activeVisualClip.filter !== 'none' ? activeVisualClip.filter : '') + t.extraFilter;
 
                 if(activeVisualClip.type === 'video' && activeVisualClip.domElement.readyState >= 2) { ctx.drawImage(activeVisualClip.domElement, -canvas.width/2, -canvas.height/2, canvas.width, canvas.height); } 
                 else if (activeVisualClip.type === 'image') { ctx.drawImage(activeVisualClip.domElement, -canvas.width/2, -canvas.height/2, canvas.width, canvas.height); }
                 ctx.restore();
-            } else {
-                ctx.globalAlpha = 1.0; ctx.filter = 'none'; ctx.fillStyle = "#ffffff"; ctx.font = "bold 28px sans-serif"; ctx.textAlign = "center"; ctx.fillText("Sin Medios - Arrastra aquí", canvas.width/2, canvas.height/2);
-            }
+            } else { ctx.globalAlpha = 1.0; ctx.filter = 'none'; ctx.fillStyle = "#ffffff"; ctx.font = "bold 28px sans-serif"; ctx.textAlign = "center"; ctx.fillText("Sin Medios", canvas.width/2, canvas.height/2); }
             
             ctx.globalAlpha = 1.0; ctx.filter = 'none';
 
             projectClips.forEach(o => {
                 if ((o.type === 'text' || o.type === 'sticker') && playheadX >= o.startPx && playheadX <= o.startPx + o.widthPx) {
-                    
-                    let clipTimePx = playheadX - o.startPx; let progress = clipTimePx / o.widthPx;
-                    let progressIn = Math.min(1, clipTimePx / 15); let progressOut = Math.max(0, (o.widthPx - clipTimePx) / 15);
+                    let clipTimePx = playheadX - o.startPx; let progress = clipTimePx / o.widthPx; let progressIn = Math.min(1, clipTimePx / 15); let progressOut = Math.max(0, (o.widthPx - clipTimePx) / 15);
                     let t = getTransformValues(o.anim || 'none', progress, progressIn, progressOut);
 
-                    ctx.save();
-                    ctx.translate(o.x + t.tx, o.y + t.ty);
-                    ctx.rotate(t.angle); ctx.scale(t.scale, t.scale);
-                    ctx.globalAlpha = t.alpha;
-                    ctx.filter = (o.filter && o.filter !== 'none' ? o.filter : '') + t.extraFilter;
-                    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                    ctx.save(); ctx.translate(o.x + t.tx, o.y + t.ty); ctx.rotate(t.angle); ctx.scale(t.scale, t.scale); ctx.globalAlpha = t.alpha; ctx.filter = (o.filter && o.filter !== 'none' ? o.filter : '') + t.extraFilter; ctx.textAlign = "center"; ctx.textBaseline = "middle";
 
                     if (o.type === 'text') {
                         ctx.font = `bold ${o.size}px ${o.font || 'sans-serif'}`; let w = ctx.measureText(o.content).width; let h = o.size;
                         if(o.useBg) { ctx.fillStyle = o.bgColor || '#000000'; ctx.fillRect(-w/2 - 15, -h/2 - 10, w + 30, h + 20); }
                         ctx.strokeStyle = '#000000'; ctx.lineWidth = o.size / 10; ctx.strokeText(o.content, 0, 0); ctx.fillStyle = o.color; ctx.fillText(o.content, 0, 0);
                     } else if (o.type === 'sticker') { let w = o.size; let h = o.size * o.ratio; ctx.drawImage(o.imgObj, -w/2, -h/2, w, h); }
-                    
                     ctx.restore();
 
                     if (selectedClipEl && selectedClipEl.getAttribute('data-id') == o.id && !isExporting) {
@@ -429,7 +427,10 @@
                     }
                 }
             });
+        }
 
+        function renderLoop() {
+            renderCanvasGraphics();
             requestAnimationFrame(renderLoop);
         }
         renderLoop();
@@ -444,6 +445,8 @@
                 isPlaying = true; btn.classList.remove('fa-play'); btn.classList.add('fa-pause', 'active-play');
                 playInterval = setInterval(() => {
                     globalTime++; playheadX = 45 + (globalTime * (pixelsPerSecond/10)); document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode(); document.getElementById('timelineScroll').scrollLeft = playheadX - 100;
+                    
+                    // Detener si llega a la línea amarilla durante la exportación
                     if(isExporting && playheadX >= outMarkerX) { mainRecorder.stop(); togglePlayback(); }
                 }, 100);
             }
@@ -472,7 +475,9 @@
                 mediaElement.oncanplay = () => { if (!mediaElement.hasAudioConnected) { try { const source = audioCtx.createMediaElementSource(mediaElement); source.connect(audioCtx.destination); source.connect(audioMixer); mediaElement.hasAudioConnected = true; } catch(e) {} } };
             } else { mediaElement = new Image(); mediaElement.src = url; }
             projectClips.push({ id: clipId, type: isVideo ? 'video' : 'image', startPx: playheadX, widthPx: 150, offsetPx: 0, domElement: mediaElement, filter: 'none', anim: 'none' });
-            let endClip = playheadX + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
+            
+            let endClip = playheadX + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); }
+            playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
         }
 
         function makeDraggable(element, isPlayhead = false, clipId = null) {
@@ -530,7 +535,10 @@
                 isExporting = false; const blob = new Blob(exportChunks, { type: 'video/webm' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = `CapacitiumX_Produccion_${Date.now()}.webm`; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
                 document.getElementById('recBadge').style.display = 'none'; document.getElementById('btnExport').innerHTML = '<i class="fa-solid fa-rocket"></i> EXPORTAR ZONA'; alert("¡Exportación completada!");
             };
-            resetPlayhead(); isExporting = true; document.getElementById('recBadge').innerHTML = "EXPORTANDO ZONA..."; document.getElementById('recBadge').style.display = 'block'; document.getElementById('btnExport').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...';
+            
+            // Iniciar exactamente en la línea de Inicio Verde
+            resetPlayhead(); 
+            isExporting = true; document.getElementById('recBadge').innerHTML = "EXPORTANDO ZONA..."; document.getElementById('recBadge').style.display = 'block'; document.getElementById('btnExport').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...';
             mainRecorder.start(); togglePlayback(); 
         }
 
