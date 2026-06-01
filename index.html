@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CapacitiumX Studio V21 - Full Pro FX</title>
+    <title>CapacitiumX Studio V22 - Multi Import</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --neon: #3b82f6; --bg: #050507; --panel: #121216; --track-bg: #1f1f23; }
@@ -80,7 +80,7 @@
 
     <div class="app-header">
         <div style="display: flex; align-items: center; gap: 15px;">
-            <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Estudio Pro V21</span>
+            <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Estudio Pro V22</span>
             <div class="autosave-badge" id="saveIndicator"><i class="fa-solid fa-cloud"></i> Guardado</div>
         </div>
         <button class="btn-save" id="btnExport" onclick="exportVideo()"><i class="fa-solid fa-rocket"></i> EXPORTAR HASTA LÍNEA AMARILLA</button>
@@ -126,53 +126,27 @@
     <div class="control-panel">
         <div class="tab-menu">
             <div class="tab-btn active" onclick="switchTab('media')"><i class="fa-solid fa-folder-open"></i> Medios</div>
-            <div class="tab-btn" onclick="switchTab('fx')"><i class="fa-solid fa-wand-magic-sparkles"></i> Diseño & FX</div>
-            <div class="tab-btn" onclick="switchTab('thumbs')"><i class="fa-solid fa-image"></i> Miniaturas</div>
-            <div class="tab-btn" onclick="switchTab('projects')"><i class="fa-solid fa-floppy-disk"></i> Historial</div>
+            <div class="tab-btn" onclick="switchTab('fx')"><i class="fa-solid fa-wand-magic-sparkles"></i> Diseño & FX 15+</div>
+            <div class="tab-btn" onclick="switchTab('voice')"><i class="fa-solid fa-microphone"></i> Narración</div>
         </div>
 
-        <!-- MEDIOS -->
         <div id="media" class="tab-content active">
-            <div class="btn primary" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-film"></i> Importar Video / Foto Base</div>
-            <input type="file" id="fileUpload" accept="image/*,video/*" style="display:none;" onchange="addMediaToTimeline(event)">
+            <!-- NOTA: Añadido "multiple" para permitir seleccionar varias fotos/videos de jalón -->
+            <div class="btn primary" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-film"></i> Cargar Varias Fotos / Videos de jalón</div>
+            <input type="file" id="fileUpload" accept="image/*,video/*" multiple style="display:none;" onchange="addMediaToTimeline(event)">
             
             <div style="background: #121216; padding: 10px; border-radius: 6px; margin-top: 5px; border: 1px solid #333;">
-                <label style="font-size: 11px; color: #aaa;">Volumen del Video Original</label>
+                <label style="font-size: 11px; color: #aaa;">Volumen del Video Original (Ideal para Doblaje)</label>
                 <input type="range" id="masterVolume" min="0" max="100" value="100" oninput="updateMasterVolume()">
             </div>
-            
-            <label style="font-size: 11px; color: #aaa; text-align: center; margin-top: 10px; display: block;">Micrófono IA (Aislamiento Acústico Activo)</label>
-            <div class="btn primary" id="btnRecVoice" onclick="toggleVoiceRecord()" style="padding: 12px; margin-top: 5px; font-size: 14px;"><i class="fa-solid fa-microphone"></i> Grabar Narración en Off</div>
         </div>
 
-        <!-- TEXTOS Y FX (15 EFECTOS COMPLETOS) -->
         <div id="fx" class="tab-content">
-            <div style="background: #121216; padding: 10px; border-radius: 6px; border: 1px solid #3b82f6;">
-                <label style="font-size: 11px; color: #3b82f6; font-weight: bold;">Editor de Texto en Vivo</label>
-                <input type="text" id="overlayText" placeholder="Escribe tu título aquí..." style="margin-bottom: 5px;" oninput="liveUpdateText()">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                    <div><label style="font-size: 9px; color: #888;">Fuente</label><select id="textFont" onchange="liveUpdateText()"><option value="sans-serif">Arial</option><option value="serif">Times</option><option value="Impact">Impact</option><option value="Courier New">Máquina Escribir</option></select></div>
-                    <div><label style="font-size: 9px; color: #888;">Color Letra</label><input type="color" id="overlayColor" value="#ffffff" oninput="liveUpdateText()"></div>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px; align-items: center;">
-                    <div>
-                        <label style="font-size: 9px; color: #888;">¿Fondo en el Texto?</label>
-                        <select id="useBgOption" onchange="liveUpdateText()">
-                            <option value="transparent">Sin Fondo</option>
-                            <option value="color">Con Fondo</option>
-                        </select>
-                    </div>
-                    <div><label style="font-size: 9px; color: #888;">Color de Fondo</label><input type="color" id="overlayBg" value="#e50000" oninput="liveUpdateText()"></div>
-                </div>
-                <button class="btn primary" onclick="addTextToTimeline()" style="width: 100%; margin-top: 10px; padding: 8px;"><i class="fa-solid fa-plus"></i> Añadir Capa de Texto</button>
-            </div>
-
-            <div style="background: #121216; padding: 12px; border-radius: 6px; border: 1px solid #10b981; position: relative; margin-top: 10px;">
-                <span style="position:absolute; top:-8px; left:10px; background:#10b981; font-size:9px; padding:2px 6px; border-radius:4px; font-weight:bold; color:black;">EFECTOS AL CLIP SELECCIONADO</span>
+            <div style="background: #121216; padding: 12px; border-radius: 6px; border: 1px solid #3b82f6; position: relative;">
+                <span style="position:absolute; top:-8px; left:10px; background:#3b82f6; font-size:9px; padding:2px 6px; border-radius:4px; font-weight:bold;">EFECTOS EXCLUSIVOS AL CLIP SELECCIONADO</span>
                 <div class="grid-2" style="margin-top: 5px;">
                     <div>
-                        <label style="font-size: 9px; color: #888;">Filtros (15)</label>
+                        <label style="font-size: 9px; color: #888;">Filtros de Color (15)</label>
                         <select id="clipFilter">
                             <option value="none">1. Original</option>
                             <option value="sepia(100%)">2. Retro (Sepia)</option>
@@ -212,47 +186,37 @@
                         </select>
                     </div>
                 </div>
-                <button class="btn primary" onclick="applyFXToSelected()" style="width: 100%; margin-top: 10px; padding: 8px;"><i class="fa-solid fa-check-double"></i> Aplicar al Cuadrito</button>
+                <button class="btn primary" onclick="applyFXToSelected()" style="width: 100%; margin-top: 10px; padding: 8px;"><i class="fa-solid fa-check-double"></i> Aplicar al Cuadrito Seleccionado</button>
             </div>
             
+            <div style="background: #121216; padding: 10px; border-radius: 6px; border: 1px solid #333; margin-top: 10px;">
+                <label style="font-size: 11px; color: #aaa;">Añadir Texto</label>
+                <input type="text" id="overlayText" placeholder="Escribe tu guion o título..." style="margin-bottom: 5px;" oninput="liveUpdateText()">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
+                    <div><label style="font-size: 9px; color: #888;">Fuente</label><select id="textFont" onchange="liveUpdateText()"><option value="sans-serif">Arial</option><option value="serif">Times</option><option value="Impact">Impact</option><option value="Courier New">Máquina Escribir</option></select></div>
+                    <div><label style="font-size: 9px; color: #888;">Color Letra</label><input type="color" id="overlayColor" value="#ffffff" oninput="liveUpdateText()"></div>
+                    <div><label style="font-size: 9px; color: #888;">Color Fondo</label><input type="color" id="overlayBg" value="#e50000" oninput="liveUpdateText()"></div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px; align-items: center;">
+                    <label style="font-size: 10px; color: #aaa; flex: 1;"><input type="checkbox" id="useBg" checked onchange="liveUpdateText()"> Habilitar Fondo</label>
+                    <button class="btn primary" onclick="addTextToTimeline()" style="padding: 8px 15px;"><i class="fa-solid fa-plus"></i> Añadir Capa</button>
+                </div>
+            </div>
+
             <div class="grid-2" style="margin-top: 10px;">
-                <button class="btn primary" onclick="document.getElementById('stickerUpload').click()"><i class="fa-solid fa-image"></i> Añadir Foto/Sticker</button>
+                <button class="btn primary" onclick="document.getElementById('stickerUpload').click()"><i class="fa-solid fa-image"></i> Añadir Foto / Logo (Múltiples)</button>
                 <div>
-                    <label style="font-size: 11px; color: #aaa;">Tamaño Texto/Sticker</label>
+                    <label style="font-size: 11px; color: #aaa;">Tamaño Texto/Foto Seleccionado</label>
                     <input type="range" id="elementSize" min="10" max="800" value="60" oninput="updateSelectedOverlaySize()">
                 </div>
             </div>
-            <input type="file" id="stickerUpload" accept="image/*" style="display:none;" onchange="addStickerToTimeline(event)">
+            <!-- También activamos el upload multiple para stickers si gustas -->
+            <input type="file" id="stickerUpload" accept="image/*" multiple style="display:none;" onchange="addStickerToTimeline(event)">
         </div>
 
-        <!-- GENERADOR DE MINIATURAS -->
-        <div id="thumbs" class="tab-content">
-            <div style="background: #121216; padding: 15px; border-radius: 6px; border: 1px solid #10b981; text-align: center;">
-                <i class="fa-brands fa-youtube" style="font-size: 24px; color: #ef4444; margin-bottom: 10px;"></i>
-                <h3 style="margin: 0 0 5px 0; font-size: 14px;">Creador de Miniaturas (YouTube)</h3>
-                <p style="font-size: 11px; color: #aaa;">Acomoda tus textos, stickers y filtros en el lienzo. Coloca la línea de reproducción blanca en el instante exacto que quieras capturar.</p>
-                <div class="grid-2" style="margin-top: 15px;">
-                    <button class="btn primary" onclick="generateThumbnail('manual')" style="font-size: 11px;"><i class="fa-solid fa-camera-retro"></i> Captura Manual (Con Textos)</button>
-                    <button class="btn" onclick="generateThumbnail('auto')" style="background: #ef4444; border: none; font-size: 11px;"><i class="fa-solid fa-wand-magic-sparkles"></i> Automático (Video Limpio)</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- PROYECTOS / AUTOGUARDADO -->
-        <div id="projects" class="tab-content">
-            <div style="background: #121216; padding: 15px; border-radius: 6px; border: 1px solid #10b981;">
-                <label style="font-size: 11px; color: #aaa;">Nombrar Proyecto Actual</label>
-                <div style="display: flex; gap: 5px; margin-top: 5px;">
-                    <input type="text" id="projectName" placeholder="Ej: Video Monterreyense..." value="Proyecto Sin Título">
-                    <button class="btn primary" onclick="forceSaveProject()"><i class="fa-solid fa-save"></i> Guardar</button>
-                </div>
-            </div>
-
-            <h4 style="font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 5px; margin: 15px 0 5px 0;">Historial de Proyectos</h4>
-            <div class="project-list" id="projectListDisplay">
-                <!-- Se llena vía JS -->
-            </div>
-            <div class="btn danger" onclick="clearProjects()" style="margin-top: 10px;"><i class="fa-solid fa-trash"></i> Borrar Todo el Historial</div>
+        <div id="voice" class="tab-content">
+            <label style="font-size: 11px; color: #aaa; text-align: center;">Micrófono IA (Aislamiento Acústico Activo)</label>
+            <div class="btn primary" id="btnRecVoice" onclick="toggleVoiceRecord()" style="padding: 16px; margin-top: 10px; font-size: 14px;"><i class="fa-solid fa-microphone"></i> Grabar Narración en Off</div>
         </div>
     </div>
 
@@ -269,7 +233,7 @@
         let projectClips = []; 
         let selectedClipEl = null; let isDraggingOverlay = false; let isExporting = false;
 
-        // --- SISTEMA DE AUTOGUARDADO AVANZADO ---
+        // --- SISTEMA DE AUTOGUARDADO ---
         let currentProjectId = Date.now().toString();
 
         function triggerAutosave() {
@@ -286,107 +250,21 @@
                 };
             });
 
-            let projName = document.getElementById('projectName').value;
-            let projectInfo = { id: currentProjectId, name: projName, date: new Date().toLocaleString(), markers: { in: inMarkerX, out: outMarkerX }, clips: saveData };
-            
+            let projectInfo = { id: currentProjectId, name: "Proyecto Actual", date: new Date().toLocaleString(), markers: { in: inMarkerX, out: outMarkerX }, clips: saveData };
             let allProjects = JSON.parse(localStorage.getItem('capacitiumProjects') || '[]');
             let existingIdx = allProjects.findIndex(p => p.id === currentProjectId);
             if(existingIdx >= 0) { allProjects[existingIdx] = projectInfo; } else { allProjects.push(projectInfo); }
             
-            try {
-                localStorage.setItem('capacitiumProjects', JSON.stringify(allProjects));
-                setTimeout(() => { ind.innerHTML = '<i class="fa-solid fa-check" style="color:#10b981;"></i> Guardado'; loadProjectList(); }, 500);
-            } catch (e) {
-                ind.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;"></i> Memoria Llena';
-            }
+            try { localStorage.setItem('capacitiumProjects', JSON.stringify(allProjects)); setTimeout(() => { ind.innerHTML = '<i class="fa-solid fa-check" style="color:#10b981;"></i> Guardado'; }, 500); } 
+            catch (e) { ind.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;"></i> Memoria Llena'; }
         }
 
-        function forceSaveProject() { triggerAutosave(); }
-
-        function loadProjectList() {
-            const container = document.getElementById('projectListDisplay'); container.innerHTML = '';
-            let allProjects = JSON.parse(localStorage.getItem('capacitiumProjects') || '[]');
-            allProjects.reverse().forEach(p => {
-                let div = document.createElement('div'); div.className = 'project-item';
-                div.innerHTML = `<div><strong>${p.name}</strong><br><span style="font-size:8px; color:#888;">${p.date}</span></div> <button class="btn primary" style="padding: 4px 8px;" onclick="loadProject('${p.id}')">Cargar</button>`;
-                container.appendChild(div);
-            });
-        }
-        
-        function clearProjects() { if(confirm("¿Borrar todo el historial?")) { localStorage.removeItem('capacitiumProjects'); loadProjectList(); } }
-
-        function loadProject(id) {
-            let allProjects = JSON.parse(localStorage.getItem('capacitiumProjects') || '[]');
-            let p = allProjects.find(x => x.id === id); if(!p) return;
-            
-            document.getElementById('videoTrack').innerHTML = '<div class="track-label"><i class="fa-solid fa-video"></i> Vid</div>';
-            document.getElementById('imageTrack').innerHTML = '<div class="track-label"><i class="fa-solid fa-image"></i> Img</div>';
-            document.getElementById('textTrack').innerHTML = '<div class="track-label"><i class="fa-solid fa-font"></i> Txt</div>';
-            document.getElementById('audioTrack').innerHTML = '<div class="track-label"><i class="fa-solid fa-microphone"></i> Voz</div>';
-            mediaContainer.innerHTML = ''; projectClips = [];
-
-            currentProjectId = p.id; document.getElementById('projectName').value = p.name;
-            inMarkerX = p.markers.in || 45; outMarkerX = p.markers.out || 300; updateExportZone();
-
-            p.clips.forEach(c => {
-                const clipUi = document.createElement('div');
-                clipUi.className = `clip-block ${c.type === 'text' ? 'text' : (c.type === 'audio' ? 'audio' : (c.type === 'image' || c.type === 'sticker' ? 'image' : ''))}`;
-                
-                let domEl = null; let imgObj = null;
-                if ((c.type === 'image' || c.type === 'sticker') && c.base64Data) {
-                    let img = new Image(); img.src = c.base64Data;
-                    if(c.type === 'image') domEl = img; else imgObj = img;
-                    c.isOffline = false;
-                }
-                
-                if (c.type === 'audio' && c.base64Data) {
-                    let audioEl = document.createElement('audio'); audioEl.src = c.base64Data;
-                    mediaContainer.appendChild(audioEl);
-                    audioEl.oncanplay = () => {
-                        if (!audioEl.hasAudioConnected) {
-                            try { const source = audioCtx.createMediaElementSource(audioEl); source.connect(audioCtx.destination); source.connect(audioMixer); audioEl.hasAudioConnected = true; } catch(e) {}
-                        }
-                    };
-                    domEl = audioEl;
-                    c.isOffline = false;
-                }
-
-                if(c.isOffline) clipUi.classList.add('offline');
-                clipUi.style.left = c.startPx + 'px'; clipUi.style.width = c.widthPx + 'px'; clipUi.setAttribute('data-id', c.id);
-                
-                let icon = c.type === 'video' ? 'film' : (c.type === 'audio' ? 'microphone' : (c.type === 'text' ? 'font' : 'image'));
-                let title = c.type === 'text' ? c.content.substring(0,6) : (c.isOffline ? 'Toca para reconectar' : (c.type === 'sticker' ? 'Sticker' : (c.type === 'audio' ? 'Voz_Off' : 'Foto')));
-                clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${icon}"></i> &nbsp;${title}</div>`;
-                if (c.filter !== 'none' || c.anim !== 'none') clipUi.innerHTML += `<div class="fx-badge"><i class="fa-solid fa-wand-magic-sparkles"></i></div>`;
-                
-                makeDraggable(clipUi, false, c.id); makeResizable(clipUi, c.id);
-                clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true});
-                
-                if(c.isOffline) {
-                    clipUi.addEventListener('dblclick', () => {
-                        let input = document.createElement('input'); input.type = 'file'; input.accept = c.type === 'audio' ? 'audio/*,video/*' : 'image/*,video/*';
-                        input.onchange = (e) => {
-                            let file = e.target.files[0]; if(!file) return; let url = URL.createObjectURL(file);
-                            let mediaEl;
-                            if(c.type === 'video' || c.type === 'audio') { mediaEl = document.createElement('video'); mediaEl.src = url; mediaEl.crossOrigin = "anonymous"; mediaContainer.appendChild(mediaEl); } 
-                            else { mediaEl = new Image(); mediaEl.src = url; }
-                            let found = projectClips.find(pc => pc.id == c.id);
-                            if(found) { found.domElement = mediaEl; found.isOffline = false; clipUi.classList.remove('offline'); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${icon}"></i> &nbsp;${file.name.substring(0,6)}</div>`; triggerAutosave(); }
-                        }; input.click();
-                    });
-                }
-
-                let trackId = c.type === 'text' ? 'textTrack' : (c.type === 'audio' ? 'audioTrack' : (c.type === 'sticker' || c.type === 'image' ? 'imageTrack' : 'videoTrack'));
-                document.getElementById(trackId).appendChild(clipUi);
-
-                projectClips.push({...c, domElement: domEl, imgObj: imgObj});
-            });
-            resetPlayhead(); alert("Proyecto cargado. Tus audios, textos y fotos están listos. Si usaste un Video MP4, haz doble clic en su bloque gris para reconectarlo.");
-        }
-
-        // --- SISTEMA DE MARCADORES (LÍNEA AMARILLA) ---
+        // --- SISTEMA DE MARCADORES (IN / OUT) ---
         let inMarkerX = 45; let outMarkerX = 300; 
-        function updateExportZone() { document.getElementById('markerIn').style.left = inMarkerX + 'px'; document.getElementById('markerOut').style.left = outMarkerX + 'px'; document.getElementById('exportZone').style.left = inMarkerX + 'px'; document.getElementById('exportZone').style.width = Math.max(0, outMarkerX - inMarkerX) + 'px'; triggerAutosave(); }
+
+        function updateExportZone() {
+            document.getElementById('markerIn').style.left = inMarkerX + 'px'; document.getElementById('markerOut').style.left = outMarkerX + 'px'; document.getElementById('exportZone').style.left = inMarkerX + 'px'; document.getElementById('exportZone').style.width = Math.max(0, outMarkerX - inMarkerX) + 'px';
+        }
         updateExportZone();
 
         function makeMarkerDraggable(element, type) {
@@ -395,29 +273,25 @@
             function dragMove(e) { e.preventDefault(); let x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; let newLeft = currentLeft + (x - startX); if(newLeft < 45) newLeft = 45;
                 if(type === 'in') { if (newLeft > outMarkerX - 10) newLeft = outMarkerX - 10; inMarkerX = newLeft; } else { if (newLeft < inMarkerX + 10) newLeft = inMarkerX + 10; outMarkerX = newLeft; } updateExportZone();
             }
-            function dragEnd(e) { document.removeEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', dragMove); document.removeEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', dragEnd); }
+            function dragEnd(e) { document.removeEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', dragMove); document.removeEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', dragEnd); triggerAutosave(); }
             element.addEventListener('mousedown', dragStart); element.addEventListener('touchstart', dragStart, {passive: false});
         }
         makeMarkerDraggable(document.getElementById('markerIn'), 'in'); makeMarkerDraggable(document.getElementById('markerOut'), 'out');
 
         function updateMasterVolume() { let vol = document.getElementById('masterVolume').value / 100; projectClips.forEach(c => { if (c.type === 'video' && c.domElement) c.domElement.volume = vol; }); }
 
-        // --- SISTEMA FX POR CLIP (15 EFECTOS) ---
+        // --- SISTEMA FX POR CLIP (15+ OPCIONES) ---
         function applyFXToSelected() {
             if(!selectedClipEl) return alert("Toca un cuadrito en la línea de tiempo primero.");
             let id = selectedClipEl.getAttribute('data-id'); let clip = projectClips.find(c => c.id == id);
             if(clip) {
                 clip.filter = document.getElementById('clipFilter').value; clip.anim = document.getElementById('clipAnim').value;
                 selectedClipEl.classList.add('has-fx');
-                if (selectedClipEl.querySelector('.fx-badge') === null) {
-                    selectedClipEl.innerHTML += `<div class="fx-badge"><i class="fa-solid fa-wand-magic-sparkles"></i></div>`;
-                }
-                triggerAutosave();
-                alert("Efecto/Animación aplicado a este clip.");
+                if (selectedClipEl.querySelector('.fx-badge') === null) { selectedClipEl.innerHTML += `<div class="fx-badge"><i class="fa-solid fa-wand-magic-sparkles"></i></div>`; }
+                triggerAutosave(); alert("Efecto Premium aplicado a este clip.");
             }
         }
 
-        // Matemáticas para las 15 animaciones dentro de Canvas
         function getTransformValues(anim, progress, progressIn, progressOut) {
             let scale = 1, tx = 0, ty = 0, angle = 0, alpha = 1, extraFilter = '';
             switch(anim) {
@@ -443,7 +317,7 @@
         function splitSelectedClip() {
             if(!selectedClipEl) return alert("Selecciona un clip para cortarlo.");
             const id = selectedClipEl.getAttribute('data-id'); const orig = projectClips.find(c => c.id == id);
-            if(!orig || playheadX <= orig.startPx || playheadX >= orig.startPx + orig.widthPx) { return alert("Coloca la línea de reproducción blanca sobre el clip."); }
+            if(!orig || playheadX <= orig.startPx || playheadX >= orig.startPx + orig.widthPx) { return alert("Coloca la línea de reproducción blanca (cabezal) sobre el clip seleccionado."); }
 
             const leftWidth = playheadX - orig.startPx; const rightWidth = orig.widthPx - leftWidth; const newId = Date.now();
             orig.widthPx = leftWidth; selectedClipEl.style.width = leftWidth + 'px';
@@ -469,7 +343,7 @@
                     clipObj.color = document.getElementById('overlayColor').value;
                     clipObj.bgColor = document.getElementById('overlayBg').value;
                     clipObj.font = document.getElementById('textFont').value;
-                    clipObj.useBg = document.getElementById('useBgOption').value === 'color';
+                    clipObj.useBg = document.getElementById('useBg').checked;
                     selectedClipEl.querySelector('.drag-area').innerHTML = `<i class="fa-solid fa-font"></i> &nbsp;${clipObj.content.substring(0,6)}`;
                     triggerAutosave();
                 }
@@ -484,71 +358,28 @@
                 if(c.type === 'text') {
                     document.getElementById('overlayText').value = c.content; document.getElementById('overlayColor').value = c.color;
                     document.getElementById('overlayBg').value = c.bgColor || '#000000'; document.getElementById('textFont').value = c.font || 'sans-serif';
-                    document.getElementById('useBgOption').value = c.useBg ? 'color' : 'transparent';
+                    document.getElementById('useBg').checked = c.useBg;
                 }
                 document.getElementById('clipFilter').value = c.filter || 'none'; document.getElementById('clipAnim').value = c.anim || 'none';
             }
         }
 
         function addTextToTimeline() {
-            let inputVal = document.getElementById('overlayText').value.trim();
-            let textContent = inputVal !== '' ? inputVal : "Texto";
-
+            let inputVal = document.getElementById('overlayText').value.trim(); let textContent = inputVal !== '' ? inputVal : "Texto";
             const clipId = Date.now(); const clipUi = document.createElement('div'); clipUi.className = 'clip-block text'; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '150px'; clipUi.setAttribute('data-id', clipId); 
             clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-font"></i> &nbsp;${textContent.substring(0,6)}</div>`;
             
-            makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); 
-            clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); 
-            document.getElementById('textTrack').appendChild(clipUi);
+            makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById('textTrack').appendChild(clipUi);
 
-            let fontColor = document.getElementById('overlayColor').value || '#ffffff';
-            let fontType = document.getElementById('textFont').value || 'sans-serif';
-            let hasBg = document.getElementById('useBgOption') ? document.getElementById('useBgOption').value === 'color' : false;
-            let bgColor = document.getElementById('overlayBg').value || '#e50000';
+            let fontColor = document.getElementById('overlayColor').value || '#ffffff'; let fontType = document.getElementById('textFont').value || 'sans-serif'; let hasBg = document.getElementById('useBg').checked; let bgColor = document.getElementById('overlayBg').value || '#e50000';
 
             projectClips.push({ id: clipId, type: 'text', content: textContent, color: fontColor, font: fontType, useBg: hasBg, bgColor: bgColor, x: 640, y: 360, size: 80, startPx: playheadX, widthPx: 150, offsetPx: 0, filter: 'none', anim: 'none', isOffline: false });
             
             clipUi.dispatchEvent(new Event('mousedown')); document.getElementById('overlayText').value = textContent;
-
-            let endClip = playheadX + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } 
-            playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
-            triggerAutosave();
-        }
-
-        // --- CONVERTIR ARCHIVOS A BASE64 ---
-        function getBase64(file, callback) { var reader = new FileReader(); reader.readAsDataURL(file); reader.onload = function () { callback(reader.result); }; }
-
-        function addMediaToTimeline(event) {
-            initAudio(); const file = event.target.files[0]; if (!file) return; const isVideo = file.type.startsWith('video/'); const url = URL.createObjectURL(file); const clipId = Date.now();
-            const clipUi = document.createElement('div'); clipUi.className = `clip-block ${isVideo ? '' : 'image'}`; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '150px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${isVideo ? 'film' : 'image'}"></i> &nbsp;${file.name.substring(0,8)}</div>`;
-            makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById(isVideo ? 'videoTrack' : 'imageTrack').appendChild(clipUi);
-            
-            let mediaElement;
-            if(isVideo) {
-                mediaElement = document.createElement('video'); mediaElement.src = url; mediaElement.playsInline = true; mediaElement.crossOrigin = "anonymous"; mediaElement.volume = document.getElementById('masterVolume').value / 100; mediaContainer.appendChild(mediaElement);
-                mediaElement.oncanplay = () => { if (!mediaElement.hasAudioConnected) { try { const source = audioCtx.createMediaElementSource(mediaElement); source.connect(audioCtx.destination); source.connect(audioMixer); mediaElement.hasAudioConnected = true; } catch(e) {} } };
-                pushMediaObj(clipId, 'video', mediaElement, null, null);
-            } else { 
-                mediaElement = new Image(); mediaElement.src = url; 
-                getBase64(file, (b64) => { pushMediaObj(clipId, 'image', mediaElement, null, b64); });
-            }
-        }
-
-        function addStickerToTimeline(event) {
-            const file = event.target.files[0]; if (!file) return; const img = new Image(); const url = URL.createObjectURL(file); img.src = url;
-            img.onload = () => {
-                const clipId = Date.now(); const clipUi = document.createElement('div'); clipUi.className = 'clip-block image'; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '100px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-face-smile"></i> &nbsp;Sticker</div>`;
-                makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById('textTrack').appendChild(clipUi); 
-                getBase64(file, (b64) => { projectClips.push({ id: clipId, type: 'sticker', imgObj: img, ratio: img.height / img.width, x: 640, y: 360, size: 300, startPx: playheadX, widthPx: 100, offsetPx: 0, filter: 'none', anim: 'none', isOffline: false, base64Data: b64 }); triggerAutosave(); });
-                let endClip = playheadX + 100; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 110; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
-            }; 
-        }
-
-        function pushMediaObj(id, type, domElement, imgObj, b64) {
-            projectClips.push({ id: id, type: type, startPx: playheadX, widthPx: 150, offsetPx: 0, domElement: domElement, imgObj: imgObj, filter: 'none', anim: 'none', isOffline: false, base64Data: b64 });
             let endClip = playheadX + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode(); triggerAutosave();
         }
 
+        function deleteSelectedClip() { if(selectedClipEl) { const id = selectedClipEl.getAttribute('data-id'); let clipObj = projectClips.find(c => c.id == id); if (clipObj && clipObj.domElement) clipObj.domElement.remove(); projectClips = projectClips.filter(c => c.id != id); selectedClipEl.remove(); selectedClipEl = null; triggerAutosave(); } }
         function duplicateSelectedClip() {
             if (!selectedClipEl) return;
             const id = selectedClipEl.getAttribute('data-id'); const original = projectClips.find(c => c.id == id);
@@ -559,10 +390,83 @@
                 let endClip = playheadX + original.widthPx; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += original.widthPx + 10; document.getElementById('playhead').style.left = playheadX + 'px'; triggerAutosave();
             }
         }
-
         function updateSelectedOverlaySize() { if (selectedClipEl) { const id = selectedClipEl.getAttribute('data-id'); let clipObj = projectClips.find(c => c.id == id); if (clipObj && (clipObj.type === 'text' || clipObj.type === 'sticker')) { clipObj.size = parseInt(document.getElementById('elementSize').value); triggerAutosave(); } } }
 
-        function deleteSelectedClip() { if(selectedClipEl) { const id = selectedClipEl.getAttribute('data-id'); let clipObj = projectClips.find(c => c.id == id); if (clipObj && clipObj.domElement) clipObj.domElement.remove(); projectClips = projectClips.filter(c => c.id != id); selectedClipEl.remove(); selectedClipEl = null; triggerAutosave(); } }
+        // --- CONVERTIR ARCHIVOS A BASE64 ---
+        function getBase64(file, callback) { var reader = new FileReader(); reader.readAsDataURL(file); reader.onload = function () { callback(reader.result); }; }
+
+        // --- IMPORTACIÓN MULTIPLE ("DE JALÓN") ---
+        function addMediaToTimeline(event) {
+            initAudio(); 
+            const files = event.target.files; 
+            if (!files || files.length === 0) return; 
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const isVideo = file.type.startsWith('video/'); 
+                const url = URL.createObjectURL(file); 
+                const clipId = Date.now() + i; 
+                
+                const clipUi = document.createElement('div'); 
+                clipUi.className = `clip-block ${isVideo ? '' : 'image'}`; 
+                
+                // Guardar la posición actual para este clip específico dentro del ciclo
+                const currentPx = playheadX;
+                
+                clipUi.style.left = currentPx + 'px'; 
+                clipUi.style.width = '150px'; 
+                clipUi.setAttribute('data-id', clipId); 
+                clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${isVideo ? 'film' : 'image'}"></i> &nbsp;${file.name.substring(0,8)}</div>`;
+                
+                makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); 
+                clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); 
+                document.getElementById(isVideo ? 'videoTrack' : 'imageTrack').appendChild(clipUi);
+                
+                let mediaElement;
+                if(isVideo) {
+                    mediaElement = document.createElement('video'); mediaElement.src = url; mediaElement.playsInline = true; mediaElement.crossOrigin = "anonymous"; mediaElement.volume = document.getElementById('masterVolume').value / 100; mediaContainer.appendChild(mediaElement);
+                    mediaElement.oncanplay = () => { if (!mediaElement.hasAudioConnected) { try { const source = audioCtx.createMediaElementSource(mediaElement); source.connect(audioCtx.destination); source.connect(audioMixer); mediaElement.hasAudioConnected = true; } catch(e) {} } };
+                    
+                    projectClips.push({ id: clipId, type: 'video', startPx: currentPx, widthPx: 150, offsetPx: 0, domElement: mediaElement, filter: 'none', anim: 'none', isOffline: false });
+                    triggerAutosave();
+                } else { 
+                    mediaElement = new Image(); mediaElement.src = url; 
+                    getBase64(file, (b64) => { 
+                        projectClips.push({ id: clipId, type: 'image', startPx: currentPx, widthPx: 150, offsetPx: 0, domElement: mediaElement, filter: 'none', anim: 'none', isOffline: false, base64Data: b64 }); 
+                        triggerAutosave(); 
+                    });
+                }
+                
+                let endClip = currentPx + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } 
+                playheadX += 160; // Avanzar el playhead para la siguiente foto en el ciclo
+            }
+            
+            document.getElementById('playhead').style.left = playheadX + 'px'; 
+            updateTimecode();
+            event.target.value = ''; // Permite seleccionar los mismos archivos de nuevo
+        }
+
+        // Múltiples Stickers también
+        function addStickerToTimeline(event) {
+            const files = event.target.files; if (!files || files.length === 0) return; 
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i]; const img = new Image(); const url = URL.createObjectURL(file); img.src = url;
+                const currentPx = playheadX;
+                const clipId = Date.now() + i;
+
+                img.onload = () => {
+                    const clipUi = document.createElement('div'); clipUi.className = 'clip-block image'; clipUi.style.left = currentPx + 'px'; clipUi.style.width = '100px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-face-smile"></i> &nbsp;Sticker</div>`;
+                    makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById('textTrack').appendChild(clipUi); 
+                    getBase64(file, (b64) => { projectClips.push({ id: clipId, type: 'sticker', imgObj: img, ratio: img.height / img.width, x: 640, y: 360, size: 300, startPx: currentPx, widthPx: 100, offsetPx: 0, filter: 'none', anim: 'none', isOffline: false, base64Data: b64 }); triggerAutosave(); });
+                }; 
+                
+                let endClip = currentPx + 100; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } 
+                playheadX += 110; 
+            }
+            document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
+            event.target.value = '';
+        }
 
         // --- ARRASTRE ---
         function makeDraggable(element, isPlayhead = false, clipId = null) {
@@ -605,7 +509,7 @@
         function handleCanvasEnd(e) { if(isDraggingOverlay){ isDraggingOverlay = false; triggerAutosave(); } }
         canvas.addEventListener('mousedown', handleCanvasStart); canvas.addEventListener('touchstart', handleCanvasStart, {passive: false}); canvas.addEventListener('mousemove', handleCanvasMove);  canvas.addEventListener('touchmove', handleCanvasMove, {passive: false}); window.addEventListener('mouseup', handleCanvasEnd); window.addEventListener('touchend', handleCanvasEnd);
 
-        // --- RENDERIZADO VISUAL PARA PREVIEW Y MINIATURAS ---
+        // --- RENDERIZADO VISUAL ---
         function renderCanvasGraphics() {
             ctx.fillStyle = "#111115"; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -629,7 +533,7 @@
                 if(activeVisualClip.type === 'video' && activeVisualClip.domElement.readyState >= 2) { ctx.drawImage(activeVisualClip.domElement, -canvas.width/2, -canvas.height/2, canvas.width, canvas.height); } 
                 else if (activeVisualClip.type === 'image') { ctx.drawImage(activeVisualClip.domElement, -canvas.width/2, -canvas.height/2, canvas.width, canvas.height); }
                 ctx.restore();
-            } else { ctx.globalAlpha = 1.0; ctx.filter = 'none'; ctx.fillStyle = "#ffffff"; ctx.font = "bold 28px sans-serif"; ctx.textAlign = "center"; ctx.fillText("Sin Medios", canvas.width/2, canvas.height/2); }
+            } else { ctx.globalAlpha = 1.0; ctx.filter = 'none'; ctx.fillStyle = "#ffffff"; ctx.font = "bold 28px sans-serif"; ctx.textAlign = "center"; ctx.fillText("Sin Medios - Arrastra aquí", canvas.width/2, canvas.height/2); }
             
             ctx.globalAlpha = 1.0; ctx.filter = 'none';
 
@@ -659,19 +563,6 @@
 
         function renderLoop() { renderCanvasGraphics(); requestAnimationFrame(renderLoop); }
         renderLoop();
-
-        // --- GENERADOR DE MINIATURAS ---
-        function generateThumbnail(mode) {
-            if (selectedClipEl) { selectedClipEl.classList.remove('selected'); selectedClipEl = null; }
-            if(mode === 'auto') { projectClips.forEach(c => { if(c.type === 'text' || c.type === 'sticker') c.tempHidden = true; }); }
-            
-            setTimeout(() => {
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-                const a = document.createElement('a'); a.style.display = 'none'; a.href = dataUrl; a.download = `Miniatura_${mode}_${Date.now()}.jpg`; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(dataUrl);
-                if(mode === 'auto') { projectClips.forEach(c => { delete c.tempHidden; }); }
-                alert("¡Miniatura descargada con éxito!");
-            }, 100);
-        }
 
         // --- SISTEMA DE TIEMPOS ---
         let globalTime = 0; let isPlaying = false; let playInterval; let playheadX = 45; const pixelsPerSecond = 20; 
@@ -738,7 +629,6 @@
         }
 
         function switchTab(tabId) { document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active')); document.getElementById(tabId).classList.add('active'); event.currentTarget.classList.add('active'); }
-        window.onload = loadProjectList;
     </script>
 </body>
 </html>
