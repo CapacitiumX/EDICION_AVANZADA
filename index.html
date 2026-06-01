@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CapacitiumX Studio V15</title>
+    <title>CapacitiumX Studio V16 - AutoGuardado</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --neon: #3b82f6; --bg: #050507; --panel: #121216; --track-bg: #1f1f23; }
@@ -11,6 +11,7 @@
 
         .app-header { background: var(--panel); padding: 12px 16px; display: flex; justify-content: space-between; border-bottom: 1px solid #333; font-weight: 600; font-size: 14px; align-items: center; }
         .btn-save { background: linear-gradient(90deg, #10b981, #059669); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 12px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
+        .autosave-badge { font-size: 10px; color: #888; display: flex; align-items: center; gap: 5px; }
         
         .preview-area { background: #000; display: flex; justify-content: center; padding: 10px; height: 30vh; border-bottom: 1px solid #333; position: relative; overflow: hidden; }
         canvas { max-width: 100%; max-height: 100%; border-radius: 8px; background: #0a0a0a; object-fit: contain; cursor: crosshair; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
@@ -26,7 +27,6 @@
         .track { height: 40px; background: var(--track-bg); display: flex; position: relative; min-width: 300vw; border-bottom: 1px solid #2a2a30; }
         .track-label { position: sticky; left: 0; background: #0a0a0c; width: 45px; display: flex; justify-content: center; align-items: center; font-size: 10px; z-index: 30; border-right: 1px solid #444; flex-direction: column; color: #aaa; font-weight: bold; }
         
-        /* DELIMITADORES DE EXPORTACIÓN (LÍNEA AMARILLA) */
         .export-zone { position: absolute; top: 0; bottom: 0; background: rgba(16, 185, 129, 0.1); z-index: 5; pointer-events: none; border-top: 2px solid #10b981; border-bottom: 2px solid #eab308; }
         .marker-in { position: absolute; top: 0; bottom: 0; width: 4px; background: #10b981; z-index: 35; cursor: ew-resize; }
         .marker-in::before { content: 'INICIO'; position: absolute; top: -10px; left: 0; background: #10b981; font-size: 8px; padding: 2px 4px; border-radius: 2px; color: white; font-weight: bold; }
@@ -41,6 +41,7 @@
         .clip-block.image { background: linear-gradient(135deg, #d97706, #f59e0b); border-color: #fbbf24; }
         .clip-block.audio { background: linear-gradient(135deg, #059669, #10b981); border-color: #34d399; }
         .clip-block.text { background: linear-gradient(135deg, #7c3aed, #8b5cf6); border-color: #a78bfa; }
+        .clip-block.offline { background: #333 !important; border-color: #555 !important; color: #ef4444; border-style: dashed; }
         .clip-block.selected { border: 2px solid white; opacity: 1; z-index: 25; box-shadow: 0 0 10px rgba(255,255,255,0.4); }
         
         .fx-badge { position: absolute; bottom: 2px; right: 15px; font-size: 8px; background: rgba(0,0,0,0.6); padding: 2px 4px; border-radius: 2px; display: none; color: #fbbf24; }
@@ -68,13 +69,20 @@
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         #hidden-media-container { display: none; }
+        
+        .project-list { display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto; }
+        .project-item { background: #18181c; padding: 10px; border-radius: 6px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <div class="app-header">
-        <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Estudio Pro V15</span>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Estudio Pro</span>
+            <div class="autosave-badge" id="saveIndicator"><i class="fa-solid fa-cloud"></i> Guardado</div>
+        </div>
         <button class="btn-save" id="btnExport" onclick="exportVideo()"><i class="fa-solid fa-rocket"></i> EXPORTAR HASTA LÍNEA AMARILLA</button>
     </div>
 
@@ -98,7 +106,7 @@
         </div>
         
         <div class="tracks-container" id="timelineScroll">
-            <!-- DELIMITADORES DE EXPORTACIÓN (LÍNEA AMARILLA INCORPORADA) -->
+            <!-- DELIMITADORES DE EXPORTACIÓN -->
             <div class="export-zone" id="exportZone"></div>
             <div class="marker-in" id="markerIn"></div>
             <div class="marker-out" id="markerOut"></div>
@@ -119,10 +127,9 @@
         <div class="tab-menu">
             <div class="tab-btn active" onclick="switchTab('media')"><i class="fa-solid fa-folder-open"></i> Medios</div>
             <div class="tab-btn" onclick="switchTab('fx')"><i class="fa-solid fa-wand-magic-sparkles"></i> Textos y FX</div>
-            <div class="tab-btn" onclick="switchTab('thumbs')"><i class="fa-solid fa-image"></i> Miniaturas</div>
+            <div class="tab-btn" onclick="switchTab('projects')"><i class="fa-solid fa-floppy-disk"></i> Mis Proyectos</div>
         </div>
 
-        <!-- PESTAÑA MEDIOS -->
         <div id="media" class="tab-content active">
             <div class="btn primary" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-film"></i> Importar Video / Foto Base</div>
             <input type="file" id="fileUpload" accept="image/*,video/*" style="display:none;" onchange="addMediaToTimeline(event)">
@@ -134,7 +141,6 @@
             <p style="font-size: 10px; color: #888; text-align: center;">Mueve la <b>línea amarilla</b> para indicarle al sistema dónde debe detener la grabación automáticamente al exportar.</p>
         </div>
 
-        <!-- PESTAÑA TEXTOS Y FX -->
         <div id="fx" class="tab-content">
             <div style="background: #121216; padding: 10px; border-radius: 6px; border: 1px solid #333;">
                 <label style="font-size: 11px; color: #aaa;">Añadir Texto</label>
@@ -148,37 +154,13 @@
                     <div>
                         <label style="font-size: 9px; color: #888;">¿Fondo en el Texto?</label>
                         <select id="useBgOption">
-                            <option value="transparent">Sin Fondo (Transparente)</option>
+                            <option value="transparent">Sin Fondo</option>
                             <option value="color">Con Fondo de Color</option>
                         </select>
                     </div>
                     <div><label style="font-size: 9px; color: #888;">Color de Fondo</label><input type="color" id="overlayBg" value="#e50000"></div>
                 </div>
-                
                 <button class="btn primary" onclick="addTextToTimeline()" style="width: 100%; margin-top: 10px; padding: 8px;"><i class="fa-solid fa-plus"></i> Añadir Capa de Texto</button>
-            </div>
-
-            <div style="background: #121216; padding: 12px; border-radius: 6px; border: 1px solid #3b82f6; position: relative; margin-top: 10px;">
-                <span style="position:absolute; top:-8px; left:10px; background:#3b82f6; font-size:9px; padding:2px 6px; border-radius:4px; font-weight:bold;">EFECTOS AL CLIP SELECCIONADO</span>
-                <div class="grid-2" style="margin-top: 5px;">
-                    <div>
-                        <select id="clipFilter">
-                            <option value="none">Color Original</option>
-                            <option value="sepia(100%)">Retro (Sepia)</option>
-                            <option value="grayscale(100%) contrast(120%)">Cine B/N</option>
-                            <option value="brightness(110%) contrast(120%) saturate(140%)">Cinemático</option>
-                        </select>
-                    </div>
-                    <div>
-                        <select id="clipAnim">
-                            <option value="none">Sin Animación</option>
-                            <option value="fade">Fade In/Out</option>
-                            <option value="zoom-in">Zoom In Lento</option>
-                            <option value="pop">Efecto Pop</option>
-                        </select>
-                    </div>
-                </div>
-                <button class="btn primary" onclick="applyFXToSelected()" style="width: 100%; margin-top: 10px; padding: 8px;"><i class="fa-solid fa-check-double"></i> Aplicar al Cuadrito</button>
             </div>
             
             <div class="grid-2" style="margin-top: 10px;">
@@ -191,61 +173,146 @@
             <input type="file" id="stickerUpload" accept="image/*" style="display:none;" onchange="addStickerToTimeline(event)">
         </div>
 
-        <!-- NUEVO: GENERADOR DE MINIATURAS Y VOZ -->
-        <div id="thumbs" class="tab-content">
-            <div style="background: #121216; padding: 15px; border-radius: 6px; border: 1px solid #10b981; text-align: center;">
-                <i class="fa-brands fa-youtube" style="font-size: 24px; color: #ef4444; margin-bottom: 10px;"></i>
-                <h3 style="margin: 0 0 5px 0; font-size: 14px;">Generador Automático de Miniaturas</h3>
-                <p style="font-size: 11px; color: #aaa;">Acomoda tus textos e imágenes en la previsualización de arriba. Cuando esté perfecta, presiona el botón para guardar un archivo JPG listo para YouTube.</p>
-                <button class="btn" onclick="generateThumbnail()" style="width: 100%; margin-top: 10px; background: linear-gradient(90deg, #ef4444, #b91c1c); border: none; font-size: 14px;"><i class="fa-solid fa-camera-retro"></i> Tomar Fotografía del Lienzo</button>
+        <!-- PESTAÑA PROYECTOS / AUTOGUARDADO -->
+        <div id="projects" class="tab-content">
+            <div style="background: #121216; padding: 15px; border-radius: 6px; border: 1px solid #10b981;">
+                <label style="font-size: 11px; color: #aaa;">Nombrar Proyecto Actual</label>
+                <div style="display: flex; gap: 5px; margin-top: 5px;">
+                    <input type="text" id="projectName" placeholder="Ej: Video Monterreyense..." value="Proyecto Sin Título">
+                    <button class="btn primary" onclick="forceSaveProject()"><i class="fa-solid fa-save"></i> Guardar</button>
+                </div>
+                <p style="font-size: 9px; color: #888; margin-top: 5px;">El sistema guarda tus cortes y textos automáticamente. Por políticas del navegador web, si cierras la ventana, tendrás que volver a cargar los archivos de video pesados, pero el sistema recordará exactamente dónde los habías cortado.</p>
             </div>
             
-            <label style="font-size: 11px; color: #aaa; text-align: center; margin-top: 10px;">Micrófono IA (Aislamiento Acústico Activo)</label>
-            <div class="btn primary" id="btnRecVoice" onclick="toggleVoiceRecord()" style="padding: 16px; font-size: 14px;"><i class="fa-solid fa-microphone"></i> Grabar Narración en Off</div>
+            <h4 style="font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 5px; margin: 10px 0 5px 0;">Proyectos Recientes</h4>
+            <div class="project-list" id="projectListDisplay">
+                <!-- Se llena vía JS -->
+            </div>
+            
+            <div class="btn danger" onclick="clearProjects()" style="margin-top: 10px;"><i class="fa-solid fa-trash"></i> Borrar Todo el Historial</div>
         </div>
     </div>
 
     <script>
         let audioCtx; let audioMixer; 
         function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                audioMixer = audioCtx.createMediaStreamDestination();
-            }
+            if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); audioMixer = audioCtx.createMediaStreamDestination(); }
             if (audioCtx.state === 'suspended') audioCtx.resume();
         }
 
-        const canvas = document.getElementById('mainCanvas'); 
-        const ctx = canvas.getContext('2d');
-        canvas.width = 1280; canvas.height = 720;
-        const mediaContainer = document.getElementById('hidden-media-container');
+        const canvas = document.getElementById('mainCanvas'); const ctx = canvas.getContext('2d'); canvas.width = 1280; canvas.height = 720;
+        const hiddenCam = document.getElementById('hiddenCam'); const mediaContainer = document.getElementById('hidden-media-container');
         
         let projectClips = []; 
-        let selectedClipEl = null; 
-        let isDraggingOverlay = false;
-        let isExporting = false;
+        let selectedClipEl = null; let isDraggingOverlay = false; let isExporting = false;
+
+        // --- SISTEMA DE AUTOGUARDADO (LOCALSTORAGE) ---
+        let currentProjectId = Date.now().toString();
+
+        function triggerAutosave() {
+            const ind = document.getElementById('saveIndicator');
+            ind.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+            
+            // Construir objeto serializable
+            let saveData = projectClips.map(c => {
+                return {
+                    id: c.id, type: c.type, startPx: c.startPx, widthPx: c.widthPx, offsetPx: c.offsetPx,
+                    content: c.content, color: c.color, font: c.font, useBg: c.useBg, bgColor: c.bgColor,
+                    x: c.x, y: c.y, size: c.size, filter: c.filter, anim: c.anim,
+                    // No podemos guardar Blobs pesados en localStorage de manera confiable, marcamos como offline
+                    isOffline: (c.type === 'video' || c.type === 'audio' || c.type === 'sticker') 
+                };
+            });
+
+            let projName = document.getElementById('projectName').value;
+            let projectInfo = { id: currentProjectId, name: projName, date: new Date().toLocaleString(), markers: { in: inMarkerX, out: outMarkerX }, clips: saveData };
+            
+            let allProjects = JSON.parse(localStorage.getItem('capacitiumProjects') || '[]');
+            let existingIdx = allProjects.findIndex(p => p.id === currentProjectId);
+            if(existingIdx >= 0) { allProjects[existingIdx] = projectInfo; } else { allProjects.push(projectInfo); }
+            
+            localStorage.setItem('capacitiumProjects', JSON.stringify(allProjects));
+            
+            setTimeout(() => { ind.innerHTML = '<i class="fa-solid fa-check" style="color:#10b981;"></i> Guardado'; loadProjectList(); }, 500);
+        }
+
+        function forceSaveProject() { triggerAutosave(); }
+
+        function loadProjectList() {
+            const container = document.getElementById('projectListDisplay'); container.innerHTML = '';
+            let allProjects = JSON.parse(localStorage.getItem('capacitiumProjects') || '[]');
+            allProjects.reverse().forEach(p => {
+                let div = document.createElement('div'); div.className = 'project-item';
+                div.innerHTML = `<div><strong>${p.name}</strong><br><span style="font-size:8px; color:#888;">${p.date}</span></div> <button class="btn primary" style="padding: 4px 8px;" onclick="loadProject('${p.id}')">Cargar</button>`;
+                container.appendChild(div);
+            });
+        }
+        
+        function clearProjects() { if(confirm("¿Borrar todo el historial?")) { localStorage.removeItem('capacitiumProjects'); loadProjectList(); } }
+
+        function loadProject(id) {
+            let allProjects = JSON.parse(localStorage.getItem('capacitiumProjects') || '[]');
+            let p = allProjects.find(x => x.id === id); if(!p) return;
+            
+            // Limpiar DOM
+            document.getElementById('videoTrack').innerHTML = '<div class="track-label"><i class="fa-solid fa-video"></i> Vid</div>';
+            document.getElementById('imageTrack').innerHTML = '<div class="track-label"><i class="fa-solid fa-image"></i> Img</div>';
+            document.getElementById('textTrack').innerHTML = '<div class="track-label"><i class="fa-solid fa-font"></i> Txt</div>';
+            document.getElementById('audioTrack').innerHTML = '<div class="track-label"><i class="fa-solid fa-microphone"></i> Voz</div>';
+            mediaContainer.innerHTML = ''; projectClips = [];
+
+            currentProjectId = p.id; document.getElementById('projectName').value = p.name;
+            inMarkerX = p.markers.in || 45; outMarkerX = p.markers.out || 300; updateExportZone();
+
+            p.clips.forEach(c => {
+                const clipUi = document.createElement('div');
+                clipUi.className = `clip-block ${c.type === 'text' ? 'text' : (c.type === 'audio' ? 'audio' : (c.type === 'image' ? 'image' : ''))}`;
+                if(c.isOffline) clipUi.classList.add('offline');
+                clipUi.style.left = c.startPx + 'px'; clipUi.style.width = c.widthPx + 'px'; clipUi.setAttribute('data-id', c.id);
+                
+                let icon = c.type === 'video' ? 'film' : (c.type === 'audio' ? 'microphone' : (c.type === 'text' ? 'font' : 'image'));
+                let title = c.type === 'text' ? c.content.substring(0,6) : (c.isOffline ? 'Toca para reconectar archivo' : 'Medio');
+                clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${icon}"></i> &nbsp;${title}</div>`;
+                
+                makeDraggable(clipUi, false, c.id); makeResizable(clipUi, c.id);
+                clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true});
+                
+                // Reconexión de archivos
+                if(c.isOffline) {
+                    clipUi.addEventListener('dblclick', () => {
+                        let input = document.createElement('input'); input.type = 'file'; input.accept = c.type === 'audio' ? 'audio/*,video/*' : 'image/*,video/*';
+                        input.onchange = (e) => {
+                            let file = e.target.files[0]; if(!file) return;
+                            let url = URL.createObjectURL(file);
+                            let mediaEl;
+                            if(c.type === 'video' || c.type === 'audio') { mediaEl = document.createElement('video'); mediaEl.src = url; mediaEl.crossOrigin = "anonymous"; mediaContainer.appendChild(mediaEl); } 
+                            else { mediaEl = new Image(); mediaEl.src = url; }
+                            
+                            let found = projectClips.find(pc => pc.id == c.id);
+                            if(found) { found.domElement = mediaEl; found.isOffline = false; clipUi.classList.remove('offline'); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${icon}"></i> &nbsp;${file.name.substring(0,6)}</div>`; triggerAutosave(); }
+                        };
+                        input.click();
+                    });
+                }
+
+                let trackId = c.type === 'text' ? 'textTrack' : (c.type === 'audio' ? 'audioTrack' : (c.type === 'sticker' || c.type === 'image' ? 'imageTrack' : 'videoTrack'));
+                document.getElementById(trackId).appendChild(clipUi);
+
+                projectClips.push({...c, domElement: null});
+            });
+            resetPlayhead(); alert("Proyecto cargado. Haz doble clic en los bloques grises para reconectar los archivos de video/imagen de tu dispositivo.");
+        }
 
         // --- SISTEMA DE MARCADORES (IN / OUT - LÍNEA AMARILLA) ---
-        let inMarkerX = 45; 
-        let outMarkerX = 300; 
-
-        function updateExportZone() {
-            document.getElementById('markerIn').style.left = inMarkerX + 'px'; document.getElementById('markerOut').style.left = outMarkerX + 'px'; document.getElementById('exportZone').style.left = inMarkerX + 'px'; document.getElementById('exportZone').style.width = Math.max(0, outMarkerX - inMarkerX) + 'px';
-        }
+        let inMarkerX = 45; let outMarkerX = 300; 
+        function updateExportZone() { document.getElementById('markerIn').style.left = inMarkerX + 'px'; document.getElementById('markerOut').style.left = outMarkerX + 'px'; document.getElementById('exportZone').style.left = inMarkerX + 'px'; document.getElementById('exportZone').style.width = Math.max(0, outMarkerX - inMarkerX) + 'px'; triggerAutosave(); }
         updateExportZone();
 
         function makeMarkerDraggable(element, type) {
             let startX = 0, currentLeft = 0;
-            function dragStart(e) {
-                e.preventDefault(); startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; currentLeft = parseInt(element.style.left || 45);
-                document.addEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', dragMove, {passive: false}); document.addEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', dragEnd);
-            }
-            function dragMove(e) {
-                e.preventDefault(); let x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; let newLeft = currentLeft + (x - startX);
-                if(newLeft < 45) newLeft = 45;
-                if(type === 'in') { if (newLeft > outMarkerX - 10) newLeft = outMarkerX - 10; inMarkerX = newLeft; } 
-                else { if (newLeft < inMarkerX + 10) newLeft = inMarkerX + 10; outMarkerX = newLeft; }
-                updateExportZone();
+            function dragStart(e) { e.preventDefault(); startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; currentLeft = parseInt(element.style.left || 45); document.addEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', dragMove, {passive: false}); document.addEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', dragEnd); }
+            function dragMove(e) { e.preventDefault(); let x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; let newLeft = currentLeft + (x - startX); if(newLeft < 45) newLeft = 45;
+                if(type === 'in') { if (newLeft > outMarkerX - 10) newLeft = outMarkerX - 10; inMarkerX = newLeft; } else { if (newLeft < inMarkerX + 10) newLeft = inMarkerX + 10; outMarkerX = newLeft; } updateExportZone();
             }
             function dragEnd(e) { document.removeEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', dragMove); document.removeEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', dragEnd); }
             element.addEventListener('mousedown', dragStart); element.addEventListener('touchstart', dragStart, {passive: false});
@@ -254,31 +321,11 @@
 
         function updateMasterVolume() { let vol = document.getElementById('masterVolume').value / 100; projectClips.forEach(c => { if (c.type === 'video' && c.domElement) c.domElement.volume = vol; }); }
 
-        // --- SISTEMA FX POR CLIP ---
-        function applyFXToSelected() {
-            if(!selectedClipEl) return alert("Toca un cuadrito en la línea de tiempo primero.");
-            let id = selectedClipEl.getAttribute('data-id'); let clip = projectClips.find(c => c.id == id);
-            if(clip) {
-                clip.filter = document.getElementById('clipFilter').value; clip.anim = document.getElementById('clipAnim').value;
-                selectedClipEl.classList.add('has-fx'); alert("Efecto aplicado a este clip.");
-            }
-        }
-
-        function getTransformValues(anim, progress, progressIn, progressOut) {
-            let scale = 1, tx = 0, ty = 0, angle = 0, alpha = 1, extraFilter = '';
-            switch(anim) {
-                case 'fade': alpha = Math.min(progressIn, progressOut); break;
-                case 'zoom-in': scale = 1 + (progress * 0.3); break;
-                case 'pop': if(progressIn < 1) { scale = progressIn + Math.sin(progressIn * Math.PI) * 0.5; } break;
-            }
-            return {scale, tx, ty, angle, alpha, extraFilter};
-        }
-
         // --- CORTE QUIRÚRGICO (TIJERAS) ---
         function splitSelectedClip() {
             if(!selectedClipEl) return alert("Selecciona un clip para cortarlo.");
             const id = selectedClipEl.getAttribute('data-id'); const orig = projectClips.find(c => c.id == id);
-            if(!orig || playheadX <= orig.startPx || playheadX >= orig.startPx + orig.widthPx) { return alert("Coloca la línea de reproducción blanca (cabezal) sobre el clip seleccionado."); }
+            if(!orig || playheadX <= orig.startPx || playheadX >= orig.startPx + orig.widthPx) { return alert("Coloca la línea de reproducción blanca sobre el clip."); }
 
             const leftWidth = playheadX - orig.startPx; const rightWidth = orig.widthPx - leftWidth; const newId = Date.now();
             orig.widthPx = leftWidth; selectedClipEl.style.width = leftWidth + 'px';
@@ -292,34 +339,31 @@
                 if (orig.type === 'video') { newDom.oncanplay = () => { if (!newDom.hasAudioConnected) { try { const source = audioCtx.createMediaElementSource(newDom); source.connect(audioCtx.destination); source.connect(audioMixer); newDom.hasAudioConnected = true; } catch(e) {} } }; }
             }
             projectClips.push({ ...orig, id: newId, startPx: playheadX, widthPx: rightWidth, offsetPx: newOffset, domElement: newDom });
+            triggerAutosave();
         }
 
-        // --- TEXTOS CON OPCIÓN DE FONDO TRANSPARENTE ---
+        // --- TEXTOS ---
         function addTextToTimeline() {
             const text = document.getElementById('overlayText').value; if (!text) return;
-            const clipId = Date.now(); const clipUi = document.createElement('div'); clipUi.className = 'clip-block text'; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '150px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-font"></i> &nbsp;${text.substring(0,6)}</div><div class="fx-badge"><i class="fa-solid fa-wand-magic-sparkles"></i></div>`;
+            const clipId = Date.now(); const clipUi = document.createElement('div'); clipUi.className = 'clip-block text'; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '150px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-font"></i> &nbsp;${text.substring(0,6)}</div>`;
             makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById('textTrack').appendChild(clipUi);
 
-            // Leer la opción de fondo
-            const useBgOption = document.getElementById('useBgOption').value;
-            const useBg = useBgOption === 'color'; // true si eligió 'color', false si 'transparent'
-
-            projectClips.push({ id: clipId, type: 'text', content: text, color: document.getElementById('overlayColor').value, font: document.getElementById('textFont').value, useBg: useBg, bgColor: document.getElementById('overlayBg').value, x: 640, y: 360, size: 80, startPx: playheadX, widthPx: 150, offsetPx: 0, filter: 'none', anim: 'none' });
+            const useBgOption = document.getElementById('useBgOption').value; const useBg = useBgOption === 'color'; 
+            projectClips.push({ id: clipId, type: 'text', content: text, color: document.getElementById('overlayColor').value, font: document.getElementById('textFont').value, useBg: useBg, bgColor: document.getElementById('overlayBg').value, x: 640, y: 360, size: 80, startPx: playheadX, widthPx: 150, offsetPx: 0, filter: 'none', anim: 'none', isOffline: false });
             document.getElementById('overlayText').value = '';
             
-            let endClip = playheadX + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); }
-            playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
+            let endClip = playheadX + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
+            triggerAutosave();
         }
 
         function addStickerToTimeline(event) {
             const file = event.target.files[0]; if (!file) return; const img = new Image();
             img.onload = () => {
-                const clipId = Date.now(); const clipUi = document.createElement('div'); clipUi.className = 'clip-block image'; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '100px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-face-smile"></i> &nbsp;Sticker</div><div class="fx-badge"><i class="fa-solid fa-wand-magic-sparkles"></i></div>`;
+                const clipId = Date.now(); const clipUi = document.createElement('div'); clipUi.className = 'clip-block image'; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '100px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-face-smile"></i> &nbsp;Sticker</div>`;
                 makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById('textTrack').appendChild(clipUi); 
-                projectClips.push({ id: clipId, type: 'sticker', imgObj: img, ratio: img.height / img.width, x: 640, y: 360, size: 300, startPx: playheadX, widthPx: 100, offsetPx: 0, filter: 'none', anim: 'none' });
+                projectClips.push({ id: clipId, type: 'sticker', imgObj: img, ratio: img.height / img.width, x: 640, y: 360, size: 300, startPx: playheadX, widthPx: 100, offsetPx: 0, filter: 'none', anim: 'none', isOffline: false });
                 
-                let endClip = playheadX + 100; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); }
-                playheadX += 110; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
+                let endClip = playheadX + 100; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 110; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode(); triggerAutosave();
             }; img.src = URL.createObjectURL(file);
         }
 
@@ -330,37 +374,12 @@
                 const newId = Date.now(); const clipUi = document.createElement('div'); clipUi.className = selectedClipEl.className; clipUi.style.left = playheadX + 'px'; clipUi.style.width = original.widthPx + 'px'; clipUi.setAttribute('data-id', newId); clipUi.innerHTML = selectedClipEl.innerHTML;
                 makeDraggable(clipUi, false, newId); makeResizable(clipUi, newId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); selectedClipEl.parentElement.appendChild(clipUi);
                 projectClips.push({...original, id: newId, startPx: playheadX, y: original.y + 40, offsetPx: 0});
-                
-                let endClip = playheadX + original.widthPx; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); }
-                playheadX += original.widthPx + 10; document.getElementById('playhead').style.left = playheadX + 'px';
+                let endClip = playheadX + original.widthPx; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += original.widthPx + 10; document.getElementById('playhead').style.left = playheadX + 'px'; triggerAutosave();
             }
         }
 
-        function updateSelectedOverlaySize() { if (selectedClipEl) { const id = selectedClipEl.getAttribute('data-id'); let clipObj = projectClips.find(c => c.id == id); if (clipObj && (clipObj.type === 'text' || clipObj.type === 'sticker')) clipObj.size = parseInt(document.getElementById('elementSize').value); } }
+        function updateSelectedOverlaySize() { if (selectedClipEl) { const id = selectedClipEl.getAttribute('data-id'); let clipObj = projectClips.find(c => c.id == id); if (clipObj && (clipObj.type === 'text' || clipObj.type === 'sticker')) { clipObj.size = parseInt(document.getElementById('elementSize').value); triggerAutosave(); } } }
 
-        // --- GENERADOR DE MINIATURAS ---
-        function generateThumbnail() {
-            // Se asegura de que no haya líneas de selección de arrastre dibujadas
-            if (selectedClipEl) { selectedClipEl.classList.remove('selected'); selectedClipEl = null; }
-            
-            // Forzamos un último render limpio
-            renderCanvasGraphics();
-            
-            // Sacamos la "foto" en alta calidad JPG (0.95 = 95% de calidad)
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-            
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = dataUrl;
-            a.download = `Miniatura_CapacitiumX_${Date.now()}.jpg`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(dataUrl);
-            
-            alert("¡Miniatura descargada! Lista para subir a YouTube.");
-        }
-
-        // --- TÁCTIL EN CANVAS ---
         function getCanvasPos(e) { const rect = canvas.getBoundingClientRect(); const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY; return { x: (clientX - rect.left) * (canvas.width / rect.width), y: (clientY - rect.top) * (canvas.height / rect.height) }; }
         function handleCanvasStart(e) {
             const pos = getCanvasPos(e); let found = null;
@@ -374,18 +393,18 @@
             if (found) { isDraggingOverlay = true; let clipDom = document.querySelector(`.clip-block[data-id="${found.id}"]`); if (clipDom) { if(selectedClipEl) selectedClipEl.classList.remove('selected'); selectedClipEl = clipDom; selectedClipEl.classList.add('selected'); } document.getElementById('elementSize').value = found.size; e.preventDefault(); }
         }
         function handleCanvasMove(e) { if (!isDraggingOverlay || !selectedClipEl) return; e.preventDefault(); const pos = getCanvasPos(e); const id = selectedClipEl.getAttribute('data-id'); let clipObj = projectClips.find(c => c.id == id); if(clipObj && (clipObj.type === 'text' || clipObj.type === 'sticker')) { clipObj.x = pos.x; clipObj.y = pos.y; } }
-        function handleCanvasEnd(e) { isDraggingOverlay = false; }
+        function handleCanvasEnd(e) { if(isDraggingOverlay) { isDraggingOverlay = false; triggerAutosave(); } }
         canvas.addEventListener('mousedown', handleCanvasStart); canvas.addEventListener('touchstart', handleCanvasStart, {passive: false}); canvas.addEventListener('mousemove', handleCanvasMove);  canvas.addEventListener('touchmove', handleCanvasMove, {passive: false}); window.addEventListener('mouseup', handleCanvasEnd); window.addEventListener('touchend', handleCanvasEnd);
 
-        // --- LÓGICA DE DIBUJADO EXTRAIDA PARA RE-USO (MINIATURAS) ---
-        function renderCanvasGraphics() {
-            ctx.fillStyle = "#050507"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // --- RENDERIZADO ---
+        function renderLoop() {
+            ctx.fillStyle = "#111115"; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             let activeVisualClip = null;
-            for (let i = projectClips.length - 1; i >= 0; i--) { const clip = projectClips[i]; if ((clip.type === 'video' || clip.type === 'image') && playheadX >= clip.startPx && playheadX <= clip.startPx + clip.widthPx) { activeVisualClip = clip; break; } }
+            for (let i = projectClips.length - 1; i >= 0; i--) { const clip = projectClips[i]; if ((clip.type === 'video' || clip.type === 'image') && playheadX >= clip.startPx && playheadX <= clip.startPx + clip.widthPx && !clip.isOffline) { activeVisualClip = clip; break; } }
 
             projectClips.forEach(clip => {
-                if (clip.domElement && (clip.type === 'video' || clip.type === 'audio')) {
+                if (clip.domElement && (clip.type === 'video' || clip.type === 'audio') && !clip.isOffline) {
                     let isUnderPlayhead = (playheadX >= clip.startPx && playheadX <= clip.startPx + clip.widthPx);
                     if (isUnderPlayhead && isPlaying) { if (clip.domElement.paused) clip.domElement.play().catch(e => {}); } 
                     else { if (!clip.domElement.paused) clip.domElement.pause(); }
@@ -393,44 +412,27 @@
             });
 
             if (activeVisualClip && activeVisualClip.domElement) {
-                let clipTimePx = playheadX - activeVisualClip.startPx; let progress = clipTimePx / activeVisualClip.widthPx; let progressIn = Math.min(1, clipTimePx / 20); let progressOut = Math.max(0, (activeVisualClip.widthPx - clipTimePx) / 20);
-                let t = getTransformValues(activeVisualClip.anim || 'none', progress, progressIn, progressOut);
-                
-                ctx.save(); ctx.translate((canvas.width/2) + t.tx, (canvas.height/2) + t.ty); ctx.rotate(t.angle); ctx.scale(t.scale, t.scale); ctx.globalAlpha = t.alpha; ctx.filter = (activeVisualClip.filter && activeVisualClip.filter !== 'none' ? activeVisualClip.filter : '') + t.extraFilter;
-
-                if(activeVisualClip.type === 'video' && activeVisualClip.domElement.readyState >= 2) { ctx.drawImage(activeVisualClip.domElement, -canvas.width/2, -canvas.height/2, canvas.width, canvas.height); } 
-                else if (activeVisualClip.type === 'image') { ctx.drawImage(activeVisualClip.domElement, -canvas.width/2, -canvas.height/2, canvas.width, canvas.height); }
-                ctx.restore();
-            } else { ctx.globalAlpha = 1.0; ctx.filter = 'none'; ctx.fillStyle = "#ffffff"; ctx.font = "bold 28px sans-serif"; ctx.textAlign = "center"; ctx.fillText("Sin Medios", canvas.width/2, canvas.height/2); }
+                if(activeVisualClip.type === 'video' && activeVisualClip.domElement.readyState >= 2) { ctx.drawImage(activeVisualClip.domElement, 0, 0, canvas.width, canvas.height); } 
+                else if (activeVisualClip.type === 'image') { ctx.drawImage(activeVisualClip.domElement, 0, 0, canvas.width, canvas.height); }
+            } else {
+                ctx.fillStyle = "#ffffff"; ctx.font = "bold 28px sans-serif"; ctx.textAlign = "center"; ctx.fillText("Área de Lienzo", canvas.width/2, canvas.height/2);
+            }
             
-            ctx.globalAlpha = 1.0; ctx.filter = 'none';
-
             projectClips.forEach(o => {
-                if ((o.type === 'text' || o.type === 'sticker') && playheadX >= o.startPx && playheadX <= o.startPx + o.widthPx) {
-                    let clipTimePx = playheadX - o.startPx; let progress = clipTimePx / o.widthPx; let progressIn = Math.min(1, clipTimePx / 15); let progressOut = Math.max(0, (o.widthPx - clipTimePx) / 15);
-                    let t = getTransformValues(o.anim || 'none', progress, progressIn, progressOut);
-
-                    ctx.save(); ctx.translate(o.x + t.tx, o.y + t.ty); ctx.rotate(t.angle); ctx.scale(t.scale, t.scale); ctx.globalAlpha = t.alpha; ctx.filter = (o.filter && o.filter !== 'none' ? o.filter : '') + t.extraFilter; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-
+                if ((o.type === 'text' || o.type === 'sticker') && playheadX >= o.startPx && playheadX <= o.startPx + o.widthPx && !o.isOffline) {
+                    ctx.textAlign = "center"; ctx.textBaseline = "middle";
                     if (o.type === 'text') {
                         ctx.font = `bold ${o.size}px ${o.font || 'sans-serif'}`; let w = ctx.measureText(o.content).width; let h = o.size;
-                        if(o.useBg) { ctx.fillStyle = o.bgColor || '#000000'; ctx.fillRect(-w/2 - 15, -h/2 - 10, w + 30, h + 20); }
-                        ctx.strokeStyle = '#000000'; ctx.lineWidth = o.size / 10; ctx.strokeText(o.content, 0, 0); ctx.fillStyle = o.color; ctx.fillText(o.content, 0, 0);
-                    } else if (o.type === 'sticker') { let w = o.size; let h = o.size * o.ratio; ctx.drawImage(o.imgObj, -w/2, -h/2, w, h); }
-                    ctx.restore();
-
+                        if(o.useBg) { ctx.fillStyle = o.bgColor || '#000000'; ctx.fillRect(o.x - w/2 - 15, o.y - h/2 - 10, w + 30, h + 20); }
+                        ctx.strokeStyle = '#000000'; ctx.lineWidth = o.size / 10; ctx.strokeText(o.content, o.x, o.y); ctx.fillStyle = o.color; ctx.fillText(o.content, o.x, o.y);
+                    } else if (o.type === 'sticker') { let w = o.size; let h = o.size * o.ratio; ctx.drawImage(o.imgObj, o.x - w/2, o.y - h/2, w, h); }
                     if (selectedClipEl && selectedClipEl.getAttribute('data-id') == o.id && !isExporting) {
                         ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 3; ctx.setLineDash([10, 10]);
-                        if (o.type === 'text') { ctx.font = `bold ${o.size}px ${o.font || 'sans-serif'}`; let w = ctx.measureText(o.content).width; let h = o.size; ctx.strokeRect(o.x - w/2 - 15, o.y - h/2 - 15, w + 30, h + 30); } 
-                        else if (o.type === 'sticker') { let w = o.size; let h = o.size * o.ratio; ctx.strokeRect(o.x - w/2 - 5, o.y - h/2 - 5, w + 10, h + 10); }
-                        ctx.setLineDash([]);
+                        if (o.type === 'text') { let w = ctx.measureText(o.content).width; let h = o.size; ctx.strokeRect(o.x - w/2 - 15, o.y - h/2 - 15, w + 30, h + 30); } 
+                        else if (o.type === 'sticker') { let w = o.size; let h = o.size * o.ratio; ctx.strokeRect(o.x - w/2 - 5, o.y - h/2 - 5, w + 10, h + 10); } ctx.setLineDash([]);
                     }
                 }
             });
-        }
-
-        function renderLoop() {
-            renderCanvasGraphics();
             requestAnimationFrame(renderLoop);
         }
         renderLoop();
@@ -445,39 +447,32 @@
                 isPlaying = true; btn.classList.remove('fa-play'); btn.classList.add('fa-pause', 'active-play');
                 playInterval = setInterval(() => {
                     globalTime++; playheadX = 45 + (globalTime * (pixelsPerSecond/10)); document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode(); document.getElementById('timelineScroll').scrollLeft = playheadX - 100;
-                    
-                    // Detener si llega a la línea amarilla durante la exportación
                     if(isExporting && playheadX >= outMarkerX) { mainRecorder.stop(); togglePlayback(); }
                 }, 100);
             }
         }
         function resetPlayhead() { 
             playheadX = inMarkerX; document.getElementById('playhead').style.left = playheadX + 'px'; globalTime = Math.floor((playheadX - 45) / (pixelsPerSecond/10)); updateTimecode(); document.getElementById('timelineScroll').scrollLeft = playheadX - 100; 
-            projectClips.forEach(clip => { if((clip.type === 'video' || clip.type === 'audio') && clip.domElement) { let mediaTime = ((playheadX - clip.startPx) + clip.offsetPx) / pixelsPerSecond; if(mediaTime >= 0) clip.domElement.currentTime = mediaTime; } });
+            projectClips.forEach(clip => { if((clip.type === 'video' || clip.type === 'audio') && clip.domElement && !clip.isOffline) { let mediaTime = ((playheadX - clip.startPx) + clip.offsetPx) / pixelsPerSecond; if(mediaTime >= 0) clip.domElement.currentTime = mediaTime; } });
         }
         function selectClip(e) {
             if(selectedClipEl) selectedClipEl.classList.remove('selected'); selectedClipEl = e.currentTarget; selectedClipEl.classList.add('selected');
             const id = selectedClipEl.getAttribute('data-id'); const c = projectClips.find(clip => clip.id == id);
-            if(c) {
-                if(c.type === 'text' || c.type === 'sticker') document.getElementById('elementSize').value = c.size;
-                document.getElementById('clipFilter').value = c.filter || 'none'; document.getElementById('clipAnim').value = c.anim || 'none';
-            }
+            if(c && (c.type === 'text' || c.type === 'sticker')) document.getElementById('elementSize').value = c.size;
         }
-        function deleteSelectedClip() { if(selectedClipEl) { const id = selectedClipEl.getAttribute('data-id'); let clipObj = projectClips.find(c => c.id == id); if (clipObj && clipObj.domElement) clipObj.domElement.remove(); projectClips = projectClips.filter(c => c.id != id); selectedClipEl.remove(); selectedClipEl = null; } }
+        function deleteSelectedClip() { if(selectedClipEl) { const id = selectedClipEl.getAttribute('data-id'); let clipObj = projectClips.find(c => c.id == id); if (clipObj && clipObj.domElement) clipObj.domElement.remove(); projectClips = projectClips.filter(c => c.id != id); selectedClipEl.remove(); selectedClipEl = null; triggerAutosave(); } }
 
         function addMediaToTimeline(event) {
             initAudio(); const file = event.target.files[0]; if (!file) return; const isVideo = file.type.startsWith('video/'); const url = URL.createObjectURL(file); const clipId = Date.now();
-            const clipUi = document.createElement('div'); clipUi.className = `clip-block ${isVideo ? '' : 'image'}`; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '150px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${isVideo ? 'film' : 'image'}"></i> &nbsp;${file.name.substring(0,8)}</div><div class="fx-badge"><i class="fa-solid fa-wand-magic-sparkles"></i></div>`;
+            const clipUi = document.createElement('div'); clipUi.className = `clip-block ${isVideo ? '' : 'image'}`; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '150px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${isVideo ? 'film' : 'image'}"></i> &nbsp;${file.name.substring(0,8)}</div>`;
             makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById(isVideo ? 'videoTrack' : 'imageTrack').appendChild(clipUi);
             let mediaElement;
             if(isVideo) {
                 mediaElement = document.createElement('video'); mediaElement.src = url; mediaElement.playsInline = true; mediaElement.crossOrigin = "anonymous"; mediaElement.volume = document.getElementById('masterVolume').value / 100; mediaContainer.appendChild(mediaElement);
                 mediaElement.oncanplay = () => { if (!mediaElement.hasAudioConnected) { try { const source = audioCtx.createMediaElementSource(mediaElement); source.connect(audioCtx.destination); source.connect(audioMixer); mediaElement.hasAudioConnected = true; } catch(e) {} } };
             } else { mediaElement = new Image(); mediaElement.src = url; }
-            projectClips.push({ id: clipId, type: isVideo ? 'video' : 'image', startPx: playheadX, widthPx: 150, offsetPx: 0, domElement: mediaElement, filter: 'none', anim: 'none' });
-            
-            let endClip = playheadX + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); }
-            playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
+            projectClips.push({ id: clipId, type: isVideo ? 'video' : 'image', startPx: playheadX, widthPx: 150, offsetPx: 0, domElement: mediaElement, filter: 'none', anim: 'none', isOffline: false });
+            let endClip = playheadX + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode(); triggerAutosave();
         }
 
         function makeDraggable(element, isPlayhead = false, clipId = null) {
@@ -487,11 +482,11 @@
                 e.preventDefault(); let x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; let newLeft = currentLeft + (x - startX); if(newLeft < 45) newLeft = 45; element.style.left = newLeft + 'px';
                 if(isPlayhead) {
                     playheadX = newLeft; globalTime = Math.floor((newLeft - 45) / (pixelsPerSecond/10)); updateTimecode();
-                    projectClips.forEach(c => { if((c.type === 'video' || c.type === 'audio') && c.domElement && newLeft >= c.startPx && newLeft <= c.startPx + c.widthPx) { let mediaTime = ((newLeft - c.startPx) + c.offsetPx) / pixelsPerSecond; if(mediaTime >= 0) c.domElement.currentTime = mediaTime; } });
+                    projectClips.forEach(c => { if((c.type === 'video' || c.type === 'audio') && c.domElement && newLeft >= c.startPx && newLeft <= c.startPx + c.widthPx && !c.isOffline) { let mediaTime = ((newLeft - c.startPx) + c.offsetPx) / pixelsPerSecond; if(mediaTime >= 0) c.domElement.currentTime = mediaTime; } });
                 } else if (clipId) { let clipObj = projectClips.find(c => c.id == clipId); if(clipObj) clipObj.startPx = newLeft; }
             }
-            function dragEnd(e) { document.removeEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', dragMove); document.removeEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', dragEnd); }
-            dragTarget.addEventListener('mousedown', dragStart); dragTarget.addEventListener('touchstart', dragStart, {passive: false});
+            function dragEnd(e) { document.removeEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', dragMove); document.removeEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', dragEnd); if(!isPlayhead) triggerAutosave(); }
+            if(dragTarget) { dragTarget.addEventListener('mousedown', dragStart); dragTarget.addEventListener('touchstart', dragStart, {passive: false}); }
         }
         makeDraggable(document.getElementById('playhead'), true);
 
@@ -499,29 +494,8 @@
             const handle = document.createElement('div'); handle.className = 'resize-handle'; clipUi.appendChild(handle); let isResizing = false; let startX = 0; let startWidth = 0;
             function resizeStart(e) { e.stopPropagation(); isResizing = true; startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; startWidth = parseInt(clipUi.style.width, 10); document.addEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', resizeMove, {passive: false}); document.addEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', resizeEnd); }
             function resizeMove(e) { if (!isResizing) return; e.preventDefault(); let currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; let newWidth = startWidth + (currentX - startX); if (newWidth < 30) newWidth = 30; clipUi.style.width = newWidth + 'px'; let clipObj = projectClips.find(c => c.id == clipId); if (clipObj) clipObj.widthPx = newWidth; }
-            function resizeEnd(e) { isResizing = false; document.removeEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', resizeMove); document.removeEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', resizeEnd); }
+            function resizeEnd(e) { isResizing = false; document.removeEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', resizeMove); document.removeEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', resizeEnd); triggerAutosave(); }
             handle.addEventListener('mousedown', resizeStart); handle.addEventListener('touchstart', resizeStart, {passive: false});
-        }
-
-        // --- NARRACIÓN ---
-        let isRecordingVoice = false; let voiceStream; let voiceRecorder; let voiceChunks = []; let voiceStartTime = 0;
-        async function toggleVoiceRecord() {
-            initAudio(); const btn = document.getElementById('btnRecVoice'); const badge = document.getElementById('recBadge');
-            if (!isRecordingVoice) {
-                try {
-                    voiceStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); voiceChunks = []; voiceRecorder = new MediaRecorder(voiceStream); voiceRecorder.ondataavailable = e => { if (e.data.size > 0) voiceChunks.push(e.data); };
-                    voiceRecorder.onstop = () => {
-                        let realDurationSec = (Date.now() - voiceStartTime) / 1000; let finalWidth = Math.max(30, realDurationSec * pixelsPerSecond); const clipId = Date.now();
-                        const clipUi = document.createElement('div'); clipUi.className = 'clip-block audio'; clipUi.style.left = playheadX + 'px'; clipUi.style.width = finalWidth + 'px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-microphone"></i> &nbsp;Voz</div>`;
-                        makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById('audioTrack').appendChild(clipUi);
-                        const blob = new Blob(voiceChunks, { type: 'audio/webm' }); const audioUrl = URL.createObjectURL(blob); const audioEl = document.createElement('audio'); audioEl.src = audioUrl; mediaContainer.appendChild(audioEl); const source = audioCtx.createMediaElementSource(audioEl); source.connect(audioCtx.destination); source.connect(audioMixer);
-                        projectClips.push({ id: clipId, type: 'audio', startPx: playheadX, widthPx: finalWidth, offsetPx: 0, domElement: audioEl }); voiceStream.getTracks().forEach(t => t.stop());
-                        let endClip = playheadX + finalWidth; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += finalWidth; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
-                    };
-                    voiceStartTime = Date.now(); voiceRecorder.start(); isRecordingVoice = true; btn.classList.add('danger'); btn.innerHTML = '<i class="fa-solid fa-stop"></i> Detener Narración'; badge.innerHTML = 'GRABANDO VOZ'; badge.style.display = 'block';
-                    if(!isPlaying) togglePlayback(); 
-                } catch(e) { alert("Permite acceso al micrófono."); }
-            } else { voiceRecorder.stop(); isRecordingVoice = false; if(isPlaying) togglePlayback(); btn.classList.remove('danger'); btn.innerHTML = '<i class="fa-solid fa-microphone"></i> Grabar Narración en Off'; badge.style.display = 'none'; }
         }
 
         // --- EXPORTAR ---
@@ -536,13 +510,14 @@
                 document.getElementById('recBadge').style.display = 'none'; document.getElementById('btnExport').innerHTML = '<i class="fa-solid fa-rocket"></i> EXPORTAR ZONA'; alert("¡Exportación completada!");
             };
             
-            // Iniciar exactamente en la línea de Inicio Verde
-            resetPlayhead(); 
-            isExporting = true; document.getElementById('recBadge').innerHTML = "EXPORTANDO ZONA..."; document.getElementById('recBadge').style.display = 'block'; document.getElementById('btnExport').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...';
+            resetPlayhead(); isExporting = true; document.getElementById('recBadge').innerHTML = "EXPORTANDO ZONA..."; document.getElementById('recBadge').style.display = 'block'; document.getElementById('btnExport').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...';
             mainRecorder.start(); togglePlayback(); 
         }
 
         function switchTab(tabId) { document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active')); document.getElementById(tabId).classList.add('active'); event.currentTarget.classList.add('active'); }
+        
+        // Cargar historial al iniciar
+        window.onload = loadProjectList;
     </script>
 </body>
 </html>
