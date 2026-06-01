@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CapacitiumX Studio V22 - Historial Pro</title>
+    <title>CapacitiumX Studio V23 - Auto Títulos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --neon: #3b82f6; --bg: #050507; --panel: #121216; --track-bg: #1f1f23; }
@@ -80,7 +80,7 @@
 
     <div class="app-header">
         <div style="display: flex; align-items: center; gap: 15px;">
-            <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Estudio Pro V22</span>
+            <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Estudio Pro V23</span>
             <div class="autosave-badge" id="saveIndicator"><i class="fa-solid fa-cloud"></i> Guardado</div>
         </div>
         <button class="btn-save" id="btnExport" onclick="exportVideo()"><i class="fa-solid fa-rocket"></i> EXPORTAR HASTA LÍNEA AMARILLA</button>
@@ -133,7 +133,7 @@
 
         <!-- MEDIOS -->
         <div id="media" class="tab-content active">
-            <div class="btn primary" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-film"></i> Importar Múltiples Videos/Fotos</div>
+            <div class="btn primary" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-film"></i> Cargar Varias Fotos / Videos de jalón</div>
             <input type="file" id="fileUpload" accept="image/*,video/*" multiple style="display:none;" onchange="addMediaToTimeline(event)">
             
             <div style="background: #121216; padding: 10px; border-radius: 6px; margin-top: 5px; border: 1px solid #333;">
@@ -236,12 +236,12 @@
             </div>
         </div>
 
-        <!-- PROYECTOS / HISTORIAL ACTUALIZADO -->
+        <!-- PROYECTOS / HISTORIAL -->
         <div id="projects" class="tab-content">
             <div style="background: #121216; padding: 15px; border-radius: 6px; border: 1px solid #10b981;">
                 <label style="font-size: 11px; color: #aaa;">Nombrar Proyecto Actual</label>
                 <div style="display: flex; gap: 5px; margin-top: 5px;">
-                    <input type="text" id="projectName" placeholder="Ej: Proyecto Capacitium..." value="Proyecto Sin Título">
+                    <input type="text" id="projectName" placeholder="Ej: Video Monterreyense..." value="Proyecto Sin Título">
                     <button class="btn primary" onclick="forceSaveProject()"><i class="fa-solid fa-save"></i> Guardar</button>
                 </div>
             </div>
@@ -301,7 +301,6 @@
 
         function forceSaveProject() { triggerAutosave(); }
 
-        // Cargar lista con botón de borrar INDIVIDUAL
         function loadProjectList() {
             const container = document.getElementById('projectListDisplay'); container.innerHTML = '';
             let allProjects = JSON.parse(localStorage.getItem('capacitiumProjects') || '[]');
@@ -318,7 +317,6 @@
             });
         }
         
-        // BORRAR UN SOLO PROYECTO
         function deleteSingleProject(id) {
             if(confirm("¿Seguro que quieres borrar este proyecto específico del historial?")) {
                 let allProjects = JSON.parse(localStorage.getItem('capacitiumProjects') || '[]');
@@ -514,39 +512,83 @@
             projectClips.push({ id: clipId, type: 'text', content: textContent, color: fontColor, font: fontType, useBg: hasBg, bgColor: bgColor, x: 640, y: 360, size: 80, startPx: playheadX, widthPx: 150, offsetPx: 0, filter: 'none', anim: 'none', isOffline: false });
             
             clipUi.dispatchEvent(new Event('mousedown')); document.getElementById('overlayText').value = textContent;
+
             let endClip = playheadX + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode(); triggerAutosave();
         }
 
         // --- CONVERTIR ARCHIVOS A BASE64 ---
         function getBase64(file, callback) { var reader = new FileReader(); reader.readAsDataURL(file); reader.onload = function () { callback(reader.result); }; }
 
-        // --- IMPORTACIÓN MULTIPLE ---
+        // --- IMPORTACIÓN MULTIPLE ("DE JALÓN") CON TÍTULOS AUTOMÁTICOS ---
         function addMediaToTimeline(event) {
-            initAudio(); const files = event.target.files; if (!files || files.length === 0) return; 
+            initAudio(); 
+            const files = event.target.files; 
+            if (!files || files.length === 0) return; 
 
             for (let i = 0; i < files.length; i++) {
-                const file = files[i]; const isVideo = file.type.startsWith('video/'); const url = URL.createObjectURL(file); const clipId = Date.now() + i; 
-                const clipUi = document.createElement('div'); clipUi.className = `clip-block ${isVideo ? '' : 'image'}`; 
+                const file = files[i];
+                const isVideo = file.type.startsWith('video/'); 
+                const url = URL.createObjectURL(file); 
+                
+                // Extraer el nombre del archivo sin extensión para el Auto-Título
+                const fileNameRaw = file.name.replace(/\.[^/.]+$/, "");
+                
+                // 1. CREAR CLIP DE MEDIO (Video o Imagen)
+                const mediaClipId = Date.now() + 'm' + i; 
+                const mediaClipUi = document.createElement('div'); 
+                mediaClipUi.className = `clip-block ${isVideo ? '' : 'image'}`; 
                 const currentPx = playheadX;
                 
-                clipUi.style.left = currentPx + 'px'; clipUi.style.width = '150px'; clipUi.setAttribute('data-id', clipId); 
-                clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${isVideo ? 'film' : 'image'}"></i> &nbsp;${file.name.substring(0,8)}</div>`;
+                mediaClipUi.style.left = currentPx + 'px'; 
+                mediaClipUi.style.width = '150px'; 
+                mediaClipUi.setAttribute('data-id', mediaClipId); 
+                mediaClipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${isVideo ? 'film' : 'image'}"></i> &nbsp;${file.name.substring(0,8)}</div>`;
                 
-                makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById(isVideo ? 'videoTrack' : 'imageTrack').appendChild(clipUi);
+                makeDraggable(mediaClipUi, false, mediaClipId); makeResizable(mediaClipUi, mediaClipId); 
+                mediaClipUi.addEventListener('mousedown', selectClip); mediaClipUi.addEventListener('touchstart', selectClip, {passive: true}); 
+                document.getElementById(isVideo ? 'videoTrack' : 'imageTrack').appendChild(mediaClipUi);
                 
                 let mediaElement;
                 if(isVideo) {
                     mediaElement = document.createElement('video'); mediaElement.src = url; mediaElement.playsInline = true; mediaElement.crossOrigin = "anonymous"; mediaElement.volume = document.getElementById('masterVolume').value / 100; mediaContainer.appendChild(mediaElement);
                     mediaElement.oncanplay = () => { if (!mediaElement.hasAudioConnected) { try { const source = audioCtx.createMediaElementSource(mediaElement); source.connect(audioCtx.destination); source.connect(audioMixer); mediaElement.hasAudioConnected = true; } catch(e) {} } };
-                    projectClips.push({ id: clipId, type: 'video', startPx: currentPx, widthPx: 150, offsetPx: 0, domElement: mediaElement, filter: 'none', anim: 'none', isOffline: false });
-                    triggerAutosave();
+                    projectClips.push({ id: mediaClipId, type: 'video', startPx: currentPx, widthPx: 150, offsetPx: 0, domElement: mediaElement, filter: 'none', anim: 'none', isOffline: false });
                 } else { 
                     mediaElement = new Image(); mediaElement.src = url; 
-                    getBase64(file, (b64) => { projectClips.push({ id: clipId, type: 'image', startPx: currentPx, widthPx: 150, offsetPx: 0, domElement: mediaElement, filter: 'none', anim: 'none', isOffline: false, base64Data: b64 }); triggerAutosave(); });
+                    getBase64(file, (b64) => { projectClips.push({ id: mediaClipId, type: 'image', startPx: currentPx, widthPx: 150, offsetPx: 0, domElement: mediaElement, filter: 'none', anim: 'none', isOffline: false, base64Data: b64 }); });
                 }
-                let endClip = currentPx + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 160; 
+
+                // 2. CREAR CLIP DE TEXTO AUTOMÁTICO
+                const textClipId = Date.now() + 't' + i;
+                const textClipUi = document.createElement('div');
+                textClipUi.className = 'clip-block text';
+                textClipUi.style.left = currentPx + 'px';
+                textClipUi.style.width = '150px';
+                textClipUi.setAttribute('data-id', textClipId);
+                textClipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-font"></i> &nbsp;${fileNameRaw.substring(0,8)}</div>`;
+                
+                makeDraggable(textClipUi, false, textClipId); makeResizable(textClipUi, textClipId);
+                textClipUi.addEventListener('mousedown', selectClip); textClipUi.addEventListener('touchstart', selectClip, {passive: true});
+                document.getElementById('textTrack').appendChild(textClipUi);
+
+                // Configurar el texto para que sea grande, amarillo y en la parte inferior
+                projectClips.push({
+                    id: textClipId, type: 'text', content: fileNameRaw, 
+                    color: "#ffff00", font: "Impact", 
+                    useBg: false, bgColor: "#000000", 
+                    x: 640, y: 640, // Abajito
+                    size: 90, // Grande
+                    startPx: currentPx, widthPx: 150, offsetPx: 0, 
+                    filter: 'none', anim: 'none', isOffline: false
+                });
+
+                let endClip = currentPx + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } 
+                playheadX += 160; 
             }
-            document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode(); event.target.value = ''; 
+            
+            document.getElementById('playhead').style.left = playheadX + 'px'; 
+            updateTimecode(); triggerAutosave();
+            event.target.value = ''; 
         }
 
         function addStickerToTimeline(event) {
@@ -602,7 +644,7 @@
             handle.addEventListener('mousedown', resizeStart); handle.addEventListener('touchstart', resizeStart, {passive: false});
         }
 
-        // --- TÁCTIL EN CANVAS ---
+        // TÁCTIL EN CANVAS
         function getCanvasPos(e) { const rect = canvas.getBoundingClientRect(); const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY; return { x: (clientX - rect.left) * (canvas.width / rect.width), y: (clientY - rect.top) * (canvas.height / rect.height) }; }
         function handleCanvasStart(e) {
             const pos = getCanvasPos(e); let found = null;
@@ -619,7 +661,7 @@
         function handleCanvasEnd(e) { if(isDraggingOverlay){ isDraggingOverlay = false; triggerAutosave(); } }
         canvas.addEventListener('mousedown', handleCanvasStart); canvas.addEventListener('touchstart', handleCanvasStart, {passive: false}); canvas.addEventListener('mousemove', handleCanvasMove);  canvas.addEventListener('touchmove', handleCanvasMove, {passive: false}); window.addEventListener('mouseup', handleCanvasEnd); window.addEventListener('touchend', handleCanvasEnd);
 
-        // --- RENDERIZADO VISUAL PARA PREVIEW Y MINIATURAS ---
+        // --- RENDERIZADO VISUAL PARA PREVIEW Y MINIATURAS (CON LIMITADOR DE TEXTO) ---
         function renderCanvasGraphics() {
             ctx.fillStyle = "#111115"; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -655,15 +697,18 @@
                     ctx.save(); ctx.translate(o.x + t.tx, o.y + t.ty); ctx.rotate(t.angle); ctx.scale(t.scale, t.scale); ctx.globalAlpha = t.alpha; ctx.filter = (o.filter && o.filter !== 'none' ? o.filter : '') + t.extraFilter; ctx.textAlign = "center"; ctx.textBaseline = "middle";
 
                     if (o.type === 'text') {
-                        ctx.font = `bold ${o.size}px ${o.font || 'sans-serif'}`; let w = ctx.measureText(o.content).width; let h = o.size;
+                        ctx.font = `bold ${o.size}px ${o.font || 'sans-serif'}`; 
+                        let maxWidth = canvas.width - 80; // Margen de seguridad de 40px por lado
+                        let w = Math.min(ctx.measureText(o.content).width, maxWidth); 
+                        let h = o.size;
                         if(o.useBg) { ctx.fillStyle = o.bgColor || '#000000'; ctx.fillRect(-w/2 - 15, -h/2 - 10, w + 30, h + 20); }
-                        ctx.strokeStyle = '#000000'; ctx.lineWidth = o.size / 10; ctx.strokeText(o.content, 0, 0); ctx.fillStyle = o.color; ctx.fillText(o.content, 0, 0);
+                        ctx.strokeStyle = '#000000'; ctx.lineWidth = o.size / 10; ctx.strokeText(o.content, 0, 0, maxWidth); ctx.fillStyle = o.color; ctx.fillText(o.content, 0, 0, maxWidth);
                     } else if (o.type === 'sticker') { let w = o.size; let h = o.size * o.ratio; ctx.drawImage(o.imgObj, -w/2, -h/2, w, h); }
                     ctx.restore();
 
                     if (selectedClipEl && selectedClipEl.getAttribute('data-id') == o.id && !isExporting && !o.tempHidden) {
                         ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 3; ctx.setLineDash([10, 10]);
-                        if (o.type === 'text') { ctx.font = `bold ${o.size}px ${o.font || 'sans-serif'}`; let w = ctx.measureText(o.content).width; let h = o.size; ctx.strokeRect(o.x - w/2 - 15, o.y - h/2 - 15, w + 30, h + 30); } 
+                        if (o.type === 'text') { let w = Math.min(ctx.measureText(o.content).width, canvas.width - 80); let h = o.size; ctx.strokeRect(o.x - w/2 - 15, o.y - h/2 - 15, w + 30, h + 30); } 
                         else if (o.type === 'sticker') { let w = o.size; let h = o.size * o.ratio; ctx.strokeRect(o.x - w/2 - 5, o.y - h/2 - 5, w + 10, h + 10); }
                         ctx.setLineDash([]);
                     }
