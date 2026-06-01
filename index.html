@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CapacitiumX Studio V17 - Edición en Vivo</title>
+    <title>CapacitiumX Studio V18 - Audio Guardado</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --neon: #3b82f6; --bg: #050507; --panel: #121216; --track-bg: #1f1f23; }
@@ -80,10 +80,10 @@
 
     <div class="app-header">
         <div style="display: flex; align-items: center; gap: 15px;">
-            <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Estudio Pro V17</span>
+            <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Estudio Pro</span>
             <div class="autosave-badge" id="saveIndicator"><i class="fa-solid fa-cloud"></i> Guardado</div>
         </div>
-        <button class="btn-save" id="btnExport" onclick="exportVideo()"><i class="fa-solid fa-rocket"></i> EXPORTAR HASTA LÍNEA AMARILLA</button>
+        <button class="btn-save" id="btnExport" onclick="exportVideo()"><i class="fa-solid fa-rocket"></i> EXPORTAR ZONA</button>
     </div>
 
     <div class="preview-area">
@@ -185,7 +185,11 @@
                 </div>
             </div>
             
-            <h4 style="font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 5px; margin: 10px 0 5px 0;">Historial de Proyectos</h4>
+            <label style="font-size: 11px; color: #aaa; text-align: center; margin-top: 10px; display: block;">Micrófono IA (Aislamiento Acústico Activo)</label>
+            <div class="btn primary" id="btnRecVoice" onclick="toggleVoiceRecord()" style="padding: 16px; margin-top: 5px; font-size: 14px;"><i class="fa-solid fa-microphone"></i> Grabar Narración en Off</div>
+            <p style="font-size: 9px; color: #10b981; text-align: center; margin-top: 5px;">*Tus audios grabados aquí ahora se guardan automáticamente en el historial.*</p>
+
+            <h4 style="font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 5px; margin: 15px 0 5px 0;">Historial de Proyectos</h4>
             <div class="project-list" id="projectListDisplay">
                 <!-- Se llena vía JS -->
             </div>
@@ -206,7 +210,7 @@
         let projectClips = []; 
         let selectedClipEl = null; let isDraggingOverlay = false; let isExporting = false;
 
-        // --- SISTEMA DE AUTOGUARDADO AVANZADO (Base64 para imágenes) ---
+        // --- SISTEMA DE AUTOGUARDADO AVANZADO (Base64 para imágenes y audio) ---
         let currentProjectId = Date.now().toString();
 
         function triggerAutosave() {
@@ -218,8 +222,8 @@
                     id: c.id, type: c.type, startPx: c.startPx, widthPx: c.widthPx, offsetPx: c.offsetPx,
                     content: c.content, color: c.color, font: c.font, useBg: c.useBg, bgColor: c.bgColor,
                     x: c.x, y: c.y, size: c.size, filter: c.filter, anim: c.anim, ratio: c.ratio,
-                    base64Data: c.base64Data || null, // Guarda la imagen convertida a código
-                    isOffline: (c.type === 'video' || c.type === 'audio') 
+                    base64Data: c.base64Data || null,
+                    isOffline: (c.type === 'video') // Ahora solo los videos se marcan como offline forzosamente
                 };
             });
 
@@ -234,9 +238,8 @@
                 localStorage.setItem('capacitiumProjects', JSON.stringify(allProjects));
                 setTimeout(() => { ind.innerHTML = '<i class="fa-solid fa-check" style="color:#10b981;"></i> Guardado'; loadProjectList(); }, 500);
             } catch (e) {
-                // Si la imagen es muy grande, la memoria local se llena
                 ind.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;"></i> Memoria Llena';
-                alert("Atención: Has subido demasiadas imágenes pesadas y la memoria temporal del navegador se llenó. Las últimas imágenes no se guardaron en el historial, pero puedes seguir editando.");
+                alert("¡Límite de memoria del navegador alcanzado! Has grabado demasiado audio o subido fotos muy pesadas. Libera espacio borrando proyectos antiguos o los últimos cambios no se guardarán en el historial al cerrar la ventana.");
             }
         }
 
@@ -271,11 +274,24 @@
                 const clipUi = document.createElement('div');
                 clipUi.className = `clip-block ${c.type === 'text' ? 'text' : (c.type === 'audio' ? 'audio' : (c.type === 'image' || c.type === 'sticker' ? 'image' : ''))}`;
                 
-                // Si es imagen/sticker y tiene base64, recuperarlo. Si no, marcar offline
                 let domEl = null; let imgObj = null;
+                // Restaurar Imágenes y Stickers desde Base64
                 if ((c.type === 'image' || c.type === 'sticker') && c.base64Data) {
                     let img = new Image(); img.src = c.base64Data;
                     if(c.type === 'image') domEl = img; else imgObj = img;
+                    c.isOffline = false;
+                }
+                
+                // Restaurar Audio desde Base64
+                if (c.type === 'audio' && c.base64Data) {
+                    let audioEl = document.createElement('audio'); audioEl.src = c.base64Data;
+                    mediaContainer.appendChild(audioEl);
+                    audioEl.oncanplay = () => {
+                        if (!audioEl.hasAudioConnected) {
+                            try { const source = audioCtx.createMediaElementSource(audioEl); source.connect(audioCtx.destination); source.connect(audioMixer); audioEl.hasAudioConnected = true; } catch(e) {}
+                        }
+                    };
+                    domEl = audioEl;
                     c.isOffline = false;
                 }
 
@@ -283,7 +299,7 @@
                 clipUi.style.left = c.startPx + 'px'; clipUi.style.width = c.widthPx + 'px'; clipUi.setAttribute('data-id', c.id);
                 
                 let icon = c.type === 'video' ? 'film' : (c.type === 'audio' ? 'microphone' : (c.type === 'text' ? 'font' : 'image'));
-                let title = c.type === 'text' ? c.content.substring(0,6) : (c.isOffline ? 'Toca para reconectar' : (c.type === 'sticker' ? 'Sticker' : 'Foto'));
+                let title = c.type === 'text' ? c.content.substring(0,6) : (c.isOffline ? 'Toca para reconectar' : (c.type === 'sticker' ? 'Sticker' : (c.type === 'audio' ? 'Voz_Off' : 'Foto')));
                 clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${icon}"></i> &nbsp;${title}</div>`;
                 
                 makeDraggable(clipUi, false, c.id); makeResizable(clipUi, c.id);
@@ -308,7 +324,7 @@
 
                 projectClips.push({...c, domElement: domEl, imgObj: imgObj});
             });
-            resetPlayhead(); 
+            resetPlayhead(); alert("Proyecto cargado. Tus audios, textos y fotos están listos. Si usaste un Video MP4, haz doble clic en su bloque gris para reconectarlo.");
         }
 
         // --- SISTEMA DE MARCADORES (LÍNEA AMARILLA) ---
@@ -329,7 +345,7 @@
 
         function updateMasterVolume() { let vol = document.getElementById('masterVolume').value / 100; projectClips.forEach(c => { if (c.type === 'video' && c.domElement) c.domElement.volume = vol; }); }
 
-        // --- CORTAR Y DUPLICAR ---
+        // --- CORTE QUIRÚRGICO (TIJERAS) ---
         function splitSelectedClip() {
             if(!selectedClipEl) return alert("Selecciona un clip para cortarlo.");
             const id = selectedClipEl.getAttribute('data-id'); const orig = projectClips.find(c => c.id == id);
@@ -371,12 +387,9 @@
             const id = selectedClipEl.getAttribute('data-id'); const c = projectClips.find(clip => clip.id == id);
             if(c) {
                 if(c.type === 'text' || c.type === 'sticker') document.getElementById('elementSize').value = c.size;
-                // Cargar datos en los inputs para edición en vivo
                 if(c.type === 'text') {
-                    document.getElementById('overlayText').value = c.content;
-                    document.getElementById('overlayColor').value = c.color;
-                    document.getElementById('overlayBg').value = c.bgColor || '#000000';
-                    document.getElementById('textFont').value = c.font || 'sans-serif';
+                    document.getElementById('overlayText').value = c.content; document.getElementById('overlayColor').value = c.color;
+                    document.getElementById('overlayBg').value = c.bgColor || '#000000'; document.getElementById('textFont').value = c.font || 'sans-serif';
                     document.getElementById('useBgOption').value = c.useBg ? 'color' : 'transparent';
                 }
             }
@@ -387,37 +400,28 @@
             makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById('textTrack').appendChild(clipUi);
 
             projectClips.push({ id: clipId, type: 'text', content: "Nuevo Texto", color: "#ffffff", font: "sans-serif", useBg: false, bgColor: "#000000", x: 640, y: 360, size: 80, startPx: playheadX, widthPx: 150, offsetPx: 0, filter: 'none', anim: 'none', isOffline: false });
-            
-            // Simular click para seleccionarlo y poder editarlo en vivo
-            clipUi.dispatchEvent(new Event('mousedown'));
-            document.getElementById('overlayText').value = "Nuevo Texto";
-            document.getElementById('overlayText').focus();
+            clipUi.dispatchEvent(new Event('mousedown')); document.getElementById('overlayText').value = "Nuevo Texto"; document.getElementById('overlayText').focus();
 
             let endClip = playheadX + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
             triggerAutosave();
         }
 
-        // --- CONVERTIR IMAGEN A BASE64 PARA AUTOGUARDADO ---
-        function getBase64(file, callback) {
-            var reader = new FileReader(); reader.readAsDataURL(file);
-            reader.onload = function () { callback(reader.result); };
-        }
+        // --- CONVERTIR ARCHIVOS A BASE64 PARA AUTOGUARDADO ---
+        function getBase64(file, callback) { var reader = new FileReader(); reader.readAsDataURL(file); reader.onload = function () { callback(reader.result); }; }
 
         function addMediaToTimeline(event) {
             initAudio(); const file = event.target.files[0]; if (!file) return; const isVideo = file.type.startsWith('video/'); const url = URL.createObjectURL(file); const clipId = Date.now();
             const clipUi = document.createElement('div'); clipUi.className = `clip-block ${isVideo ? '' : 'image'}`; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '150px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${isVideo ? 'film' : 'image'}"></i> &nbsp;${file.name.substring(0,8)}</div>`;
             makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById(isVideo ? 'videoTrack' : 'imageTrack').appendChild(clipUi);
             
-            let mediaElement; let base64Data = null;
+            let mediaElement;
             if(isVideo) {
                 mediaElement = document.createElement('video'); mediaElement.src = url; mediaElement.playsInline = true; mediaElement.crossOrigin = "anonymous"; mediaElement.volume = document.getElementById('masterVolume').value / 100; mediaContainer.appendChild(mediaElement);
                 mediaElement.oncanplay = () => { if (!mediaElement.hasAudioConnected) { try { const source = audioCtx.createMediaElementSource(mediaElement); source.connect(audioCtx.destination); source.connect(audioMixer); mediaElement.hasAudioConnected = true; } catch(e) {} } };
                 pushMediaObj(clipId, 'video', mediaElement, null, null);
             } else { 
                 mediaElement = new Image(); mediaElement.src = url; 
-                getBase64(file, (b64) => { 
-                    pushMediaObj(clipId, 'image', mediaElement, null, b64); 
-                });
+                getBase64(file, (b64) => { pushMediaObj(clipId, 'image', mediaElement, null, b64); });
             }
         }
 
@@ -426,12 +430,7 @@
             img.onload = () => {
                 const clipId = Date.now(); const clipUi = document.createElement('div'); clipUi.className = 'clip-block image'; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '100px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-face-smile"></i> &nbsp;Sticker</div>`;
                 makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById('textTrack').appendChild(clipUi); 
-                
-                getBase64(file, (b64) => {
-                    projectClips.push({ id: clipId, type: 'sticker', imgObj: img, ratio: img.height / img.width, x: 640, y: 360, size: 300, startPx: playheadX, widthPx: 100, offsetPx: 0, filter: 'none', anim: 'none', isOffline: false, base64Data: b64 });
-                    triggerAutosave();
-                });
-                
+                getBase64(file, (b64) => { projectClips.push({ id: clipId, type: 'sticker', imgObj: img, ratio: img.height / img.width, x: 640, y: 360, size: 300, startPx: playheadX, widthPx: 100, offsetPx: 0, filter: 'none', anim: 'none', isOffline: false, base64Data: b64 }); triggerAutosave(); });
                 let endClip = playheadX + 100; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 110; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
             }; 
         }
@@ -538,7 +537,7 @@
         }
         renderLoop();
 
-        // --- SISTEMA DE TIEMPOS Y EXPORTACIÓN ---
+        // --- SISTEMA DE TIEMPOS ---
         let globalTime = 0; let isPlaying = false; let playInterval; let playheadX = 45; const pixelsPerSecond = 20; 
         function updateTimecode() { let secs = Math.floor(globalTime / 10); let decs = globalTime % 10; document.getElementById('timecode').innerText = `00:${secs.toString().padStart(2,'0')}.${decs}`; }
         function togglePlayback() {
@@ -556,7 +555,43 @@
             playheadX = inMarkerX; document.getElementById('playhead').style.left = playheadX + 'px'; globalTime = Math.floor((playheadX - 45) / (pixelsPerSecond/10)); updateTimecode(); document.getElementById('timelineScroll').scrollLeft = playheadX - 100; 
             projectClips.forEach(clip => { if((clip.type === 'video' || clip.type === 'audio') && clip.domElement && !clip.isOffline) { let mediaTime = ((playheadX - clip.startPx) + clip.offsetPx) / pixelsPerSecond; if(mediaTime >= 0) clip.domElement.currentTime = mediaTime; } });
         }
-        
+
+        // --- NARRACIÓN Y BASE64 AUDIO ---
+        let isRecordingVoice = false; let voiceStream; let voiceRecorder; let voiceChunks = []; let voiceStartTime = 0;
+        async function toggleVoiceRecord() {
+            initAudio(); const btn = document.getElementById('btnRecVoice'); const badge = document.getElementById('recBadge');
+            if (!isRecordingVoice) {
+                try {
+                    voiceStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); voiceChunks = []; voiceRecorder = new MediaRecorder(voiceStream); voiceRecorder.ondataavailable = e => { if (e.data.size > 0) voiceChunks.push(e.data); };
+                    voiceRecorder.onstop = () => {
+                        let realDurationSec = (Date.now() - voiceStartTime) / 1000; let finalWidth = Math.max(30, realDurationSec * pixelsPerSecond); const clipId = Date.now();
+                        const clipUi = document.createElement('div'); clipUi.className = 'clip-block audio'; clipUi.style.left = playheadX + 'px'; clipUi.style.width = finalWidth + 'px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-microphone"></i> &nbsp;Voz</div>`;
+                        makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById('audioTrack').appendChild(clipUi);
+                        
+                        const blob = new Blob(voiceChunks, { type: 'audio/webm' }); 
+                        
+                        // Convertir a Base64 para guardarlo en localStorage
+                        getBase64(blob, (b64Audio) => {
+                            const audioEl = document.createElement('audio'); audioEl.src = b64Audio; mediaContainer.appendChild(audioEl); 
+                            audioEl.oncanplay = () => {
+                                if(!audioEl.hasAudioConnected) {
+                                    try { const source = audioCtx.createMediaElementSource(audioEl); source.connect(audioCtx.destination); source.connect(audioMixer); audioEl.hasAudioConnected = true; } catch(e){}
+                                }
+                            };
+                            projectClips.push({ id: clipId, type: 'audio', startPx: playheadX, widthPx: finalWidth, offsetPx: 0, domElement: audioEl, isOffline: false, base64Data: b64Audio }); 
+                            triggerAutosave();
+                        });
+
+                        voiceStream.getTracks().forEach(t => t.stop());
+                        let endClip = playheadX + finalWidth; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += finalWidth; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
+                    };
+                    voiceStartTime = Date.now(); voiceRecorder.start(); isRecordingVoice = true; btn.classList.add('danger'); btn.innerHTML = '<i class="fa-solid fa-stop"></i> Detener Narración'; badge.innerHTML = 'GRABANDO VOZ'; badge.style.display = 'block';
+                    if(!isPlaying) togglePlayback(); 
+                } catch(e) { alert("Permite acceso al micrófono."); }
+            } else { voiceRecorder.stop(); isRecordingVoice = false; if(isPlaying) togglePlayback(); btn.classList.remove('danger'); btn.innerHTML = '<i class="fa-solid fa-microphone"></i> Grabar Narración en Off'; badge.style.display = 'none'; }
+        }
+
+        // --- EXPORTAR ---
         let mainRecorder; let exportChunks = [];
         function exportVideo() {
             initAudio(); if(projectClips.length === 0) return alert("Agrega medios antes de exportar."); if(selectedClipEl) selectedClipEl.classList.remove('selected'); selectedClipEl = null; if(exportChunks.length > 0) exportChunks = [];
@@ -564,7 +599,7 @@
             try { mainRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm;codecs=vp9,opus' }); } catch (e) { mainRecorder = new MediaRecorder(finalStream); }
             mainRecorder.ondataavailable = e => { if (e.data.size > 0) exportChunks.push(e.data); };
             mainRecorder.onstop = () => {
-                isExporting = false; const blob = new Blob(exportChunks, { type: 'video/webm' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = `Produccion_${Date.now()}.webm`; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
+                isExporting = false; const blob = new Blob(exportChunks, { type: 'video/webm' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = `CapacitiumX_Produccion_${Date.now()}.webm`; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
                 document.getElementById('recBadge').style.display = 'none'; document.getElementById('btnExport').innerHTML = '<i class="fa-solid fa-rocket"></i> EXPORTAR ZONA'; alert("¡Exportación completada!");
             };
             
