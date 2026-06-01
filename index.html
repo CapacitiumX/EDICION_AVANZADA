@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CapacitiumX Studio V16 - AutoGuardado</title>
+    <title>CapacitiumX Studio V17 - Edición en Vivo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --neon: #3b82f6; --bg: #050507; --panel: #121216; --track-bg: #1f1f23; }
@@ -80,7 +80,7 @@
 
     <div class="app-header">
         <div style="display: flex; align-items: center; gap: 15px;">
-            <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Estudio Pro</span>
+            <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Estudio Pro V17</span>
             <div class="autosave-badge" id="saveIndicator"><i class="fa-solid fa-cloud"></i> Guardado</div>
         </div>
         <button class="btn-save" id="btnExport" onclick="exportVideo()"><i class="fa-solid fa-rocket"></i> EXPORTAR HASTA LÍNEA AMARILLA</button>
@@ -106,7 +106,7 @@
         </div>
         
         <div class="tracks-container" id="timelineScroll">
-            <!-- DELIMITADORES DE EXPORTACIÓN -->
+            <!-- DELIMITADORES -->
             <div class="export-zone" id="exportZone"></div>
             <div class="marker-in" id="markerIn"></div>
             <div class="marker-out" id="markerOut"></div>
@@ -127,9 +127,10 @@
         <div class="tab-menu">
             <div class="tab-btn active" onclick="switchTab('media')"><i class="fa-solid fa-folder-open"></i> Medios</div>
             <div class="tab-btn" onclick="switchTab('fx')"><i class="fa-solid fa-wand-magic-sparkles"></i> Textos y FX</div>
-            <div class="tab-btn" onclick="switchTab('projects')"><i class="fa-solid fa-floppy-disk"></i> Mis Proyectos</div>
+            <div class="tab-btn" onclick="switchTab('projects')"><i class="fa-solid fa-floppy-disk"></i> Historial</div>
         </div>
 
+        <!-- MEDIOS -->
         <div id="media" class="tab-content active">
             <div class="btn primary" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-film"></i> Importar Video / Foto Base</div>
             <input type="file" id="fileUpload" accept="image/*,video/*" style="display:none;" onchange="addMediaToTimeline(event)">
@@ -141,26 +142,27 @@
             <p style="font-size: 10px; color: #888; text-align: center;">Mueve la <b>línea amarilla</b> para indicarle al sistema dónde debe detener la grabación automáticamente al exportar.</p>
         </div>
 
+        <!-- TEXTOS Y FX (EDICIÓN EN VIVO) -->
         <div id="fx" class="tab-content">
-            <div style="background: #121216; padding: 10px; border-radius: 6px; border: 1px solid #333;">
-                <label style="font-size: 11px; color: #aaa;">Añadir Texto</label>
-                <input type="text" id="overlayText" placeholder="Escribe tu título..." style="margin-bottom: 5px;">
+            <div style="background: #121216; padding: 10px; border-radius: 6px; border: 1px solid #3b82f6;">
+                <label style="font-size: 11px; color: #3b82f6; font-weight: bold;">Editor de Texto (Toca un texto morado para editarlo en vivo)</label>
+                <input type="text" id="overlayText" placeholder="Escribe tu título..." style="margin-bottom: 5px;" oninput="liveUpdateText()">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                    <div><label style="font-size: 9px; color: #888;">Fuente</label><select id="textFont"><option value="sans-serif">Arial</option><option value="serif">Times</option><option value="Impact">Impact</option><option value="Courier New">Máquina Escribir</option></select></div>
-                    <div><label style="font-size: 9px; color: #888;">Color Letra</label><input type="color" id="overlayColor" value="#ffffff"></div>
+                    <div><label style="font-size: 9px; color: #888;">Fuente</label><select id="textFont" onchange="liveUpdateText()"><option value="sans-serif">Arial</option><option value="serif">Times</option><option value="Impact">Impact</option><option value="Courier New">Máquina Escribir</option></select></div>
+                    <div><label style="font-size: 9px; color: #888;">Color Letra</label><input type="color" id="overlayColor" value="#ffffff" oninput="liveUpdateText()"></div>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px; align-items: center;">
                     <div>
                         <label style="font-size: 9px; color: #888;">¿Fondo en el Texto?</label>
-                        <select id="useBgOption">
+                        <select id="useBgOption" onchange="liveUpdateText()">
                             <option value="transparent">Sin Fondo</option>
                             <option value="color">Con Fondo de Color</option>
                         </select>
                     </div>
-                    <div><label style="font-size: 9px; color: #888;">Color de Fondo</label><input type="color" id="overlayBg" value="#e50000"></div>
+                    <div><label style="font-size: 9px; color: #888;">Color de Fondo</label><input type="color" id="overlayBg" value="#e50000" oninput="liveUpdateText()"></div>
                 </div>
-                <button class="btn primary" onclick="addTextToTimeline()" style="width: 100%; margin-top: 10px; padding: 8px;"><i class="fa-solid fa-plus"></i> Añadir Capa de Texto</button>
+                <button class="btn primary" onclick="addTextToTimeline()" style="width: 100%; margin-top: 10px; padding: 8px;"><i class="fa-solid fa-plus"></i> Crear Nueva Capa de Texto</button>
             </div>
             
             <div class="grid-2" style="margin-top: 10px;">
@@ -173,7 +175,7 @@
             <input type="file" id="stickerUpload" accept="image/*" style="display:none;" onchange="addStickerToTimeline(event)">
         </div>
 
-        <!-- PESTAÑA PROYECTOS / AUTOGUARDADO -->
+        <!-- PROYECTOS / AUTOGUARDADO -->
         <div id="projects" class="tab-content">
             <div style="background: #121216; padding: 15px; border-radius: 6px; border: 1px solid #10b981;">
                 <label style="font-size: 11px; color: #aaa;">Nombrar Proyecto Actual</label>
@@ -181,14 +183,12 @@
                     <input type="text" id="projectName" placeholder="Ej: Video Monterreyense..." value="Proyecto Sin Título">
                     <button class="btn primary" onclick="forceSaveProject()"><i class="fa-solid fa-save"></i> Guardar</button>
                 </div>
-                <p style="font-size: 9px; color: #888; margin-top: 5px;">El sistema guarda tus cortes y textos automáticamente. Por políticas del navegador web, si cierras la ventana, tendrás que volver a cargar los archivos de video pesados, pero el sistema recordará exactamente dónde los habías cortado.</p>
             </div>
             
-            <h4 style="font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 5px; margin: 10px 0 5px 0;">Proyectos Recientes</h4>
+            <h4 style="font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 5px; margin: 10px 0 5px 0;">Historial de Proyectos</h4>
             <div class="project-list" id="projectListDisplay">
                 <!-- Se llena vía JS -->
             </div>
-            
             <div class="btn danger" onclick="clearProjects()" style="margin-top: 10px;"><i class="fa-solid fa-trash"></i> Borrar Todo el Historial</div>
         </div>
     </div>
@@ -206,21 +206,20 @@
         let projectClips = []; 
         let selectedClipEl = null; let isDraggingOverlay = false; let isExporting = false;
 
-        // --- SISTEMA DE AUTOGUARDADO (LOCALSTORAGE) ---
+        // --- SISTEMA DE AUTOGUARDADO AVANZADO (Base64 para imágenes) ---
         let currentProjectId = Date.now().toString();
 
         function triggerAutosave() {
             const ind = document.getElementById('saveIndicator');
             ind.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
             
-            // Construir objeto serializable
             let saveData = projectClips.map(c => {
                 return {
                     id: c.id, type: c.type, startPx: c.startPx, widthPx: c.widthPx, offsetPx: c.offsetPx,
                     content: c.content, color: c.color, font: c.font, useBg: c.useBg, bgColor: c.bgColor,
-                    x: c.x, y: c.y, size: c.size, filter: c.filter, anim: c.anim,
-                    // No podemos guardar Blobs pesados en localStorage de manera confiable, marcamos como offline
-                    isOffline: (c.type === 'video' || c.type === 'audio' || c.type === 'sticker') 
+                    x: c.x, y: c.y, size: c.size, filter: c.filter, anim: c.anim, ratio: c.ratio,
+                    base64Data: c.base64Data || null, // Guarda la imagen convertida a código
+                    isOffline: (c.type === 'video' || c.type === 'audio') 
                 };
             });
 
@@ -231,9 +230,14 @@
             let existingIdx = allProjects.findIndex(p => p.id === currentProjectId);
             if(existingIdx >= 0) { allProjects[existingIdx] = projectInfo; } else { allProjects.push(projectInfo); }
             
-            localStorage.setItem('capacitiumProjects', JSON.stringify(allProjects));
-            
-            setTimeout(() => { ind.innerHTML = '<i class="fa-solid fa-check" style="color:#10b981;"></i> Guardado'; loadProjectList(); }, 500);
+            try {
+                localStorage.setItem('capacitiumProjects', JSON.stringify(allProjects));
+                setTimeout(() => { ind.innerHTML = '<i class="fa-solid fa-check" style="color:#10b981;"></i> Guardado'; loadProjectList(); }, 500);
+            } catch (e) {
+                // Si la imagen es muy grande, la memoria local se llena
+                ind.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;"></i> Memoria Llena';
+                alert("Atención: Has subido demasiadas imágenes pesadas y la memoria temporal del navegador se llenó. Las últimas imágenes no se guardaron en el historial, pero puedes seguir editando.");
+            }
         }
 
         function forceSaveProject() { triggerAutosave(); }
@@ -254,7 +258,6 @@
             let allProjects = JSON.parse(localStorage.getItem('capacitiumProjects') || '[]');
             let p = allProjects.find(x => x.id === id); if(!p) return;
             
-            // Limpiar DOM
             document.getElementById('videoTrack').innerHTML = '<div class="track-label"><i class="fa-solid fa-video"></i> Vid</div>';
             document.getElementById('imageTrack').innerHTML = '<div class="track-label"><i class="fa-solid fa-image"></i> Img</div>';
             document.getElementById('textTrack').innerHTML = '<div class="track-label"><i class="fa-solid fa-font"></i> Txt</div>';
@@ -266,44 +269,49 @@
 
             p.clips.forEach(c => {
                 const clipUi = document.createElement('div');
-                clipUi.className = `clip-block ${c.type === 'text' ? 'text' : (c.type === 'audio' ? 'audio' : (c.type === 'image' ? 'image' : ''))}`;
+                clipUi.className = `clip-block ${c.type === 'text' ? 'text' : (c.type === 'audio' ? 'audio' : (c.type === 'image' || c.type === 'sticker' ? 'image' : ''))}`;
+                
+                // Si es imagen/sticker y tiene base64, recuperarlo. Si no, marcar offline
+                let domEl = null; let imgObj = null;
+                if ((c.type === 'image' || c.type === 'sticker') && c.base64Data) {
+                    let img = new Image(); img.src = c.base64Data;
+                    if(c.type === 'image') domEl = img; else imgObj = img;
+                    c.isOffline = false;
+                }
+
                 if(c.isOffline) clipUi.classList.add('offline');
                 clipUi.style.left = c.startPx + 'px'; clipUi.style.width = c.widthPx + 'px'; clipUi.setAttribute('data-id', c.id);
                 
                 let icon = c.type === 'video' ? 'film' : (c.type === 'audio' ? 'microphone' : (c.type === 'text' ? 'font' : 'image'));
-                let title = c.type === 'text' ? c.content.substring(0,6) : (c.isOffline ? 'Toca para reconectar archivo' : 'Medio');
+                let title = c.type === 'text' ? c.content.substring(0,6) : (c.isOffline ? 'Toca para reconectar' : (c.type === 'sticker' ? 'Sticker' : 'Foto'));
                 clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${icon}"></i> &nbsp;${title}</div>`;
                 
                 makeDraggable(clipUi, false, c.id); makeResizable(clipUi, c.id);
                 clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true});
                 
-                // Reconexión de archivos
                 if(c.isOffline) {
                     clipUi.addEventListener('dblclick', () => {
                         let input = document.createElement('input'); input.type = 'file'; input.accept = c.type === 'audio' ? 'audio/*,video/*' : 'image/*,video/*';
                         input.onchange = (e) => {
-                            let file = e.target.files[0]; if(!file) return;
-                            let url = URL.createObjectURL(file);
+                            let file = e.target.files[0]; if(!file) return; let url = URL.createObjectURL(file);
                             let mediaEl;
                             if(c.type === 'video' || c.type === 'audio') { mediaEl = document.createElement('video'); mediaEl.src = url; mediaEl.crossOrigin = "anonymous"; mediaContainer.appendChild(mediaEl); } 
                             else { mediaEl = new Image(); mediaEl.src = url; }
-                            
                             let found = projectClips.find(pc => pc.id == c.id);
                             if(found) { found.domElement = mediaEl; found.isOffline = false; clipUi.classList.remove('offline'); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${icon}"></i> &nbsp;${file.name.substring(0,6)}</div>`; triggerAutosave(); }
-                        };
-                        input.click();
+                        }; input.click();
                     });
                 }
 
                 let trackId = c.type === 'text' ? 'textTrack' : (c.type === 'audio' ? 'audioTrack' : (c.type === 'sticker' || c.type === 'image' ? 'imageTrack' : 'videoTrack'));
                 document.getElementById(trackId).appendChild(clipUi);
 
-                projectClips.push({...c, domElement: null});
+                projectClips.push({...c, domElement: domEl, imgObj: imgObj});
             });
-            resetPlayhead(); alert("Proyecto cargado. Haz doble clic en los bloques grises para reconectar los archivos de video/imagen de tu dispositivo.");
+            resetPlayhead(); 
         }
 
-        // --- SISTEMA DE MARCADORES (IN / OUT - LÍNEA AMARILLA) ---
+        // --- SISTEMA DE MARCADORES (LÍNEA AMARILLA) ---
         let inMarkerX = 45; let outMarkerX = 300; 
         function updateExportZone() { document.getElementById('markerIn').style.left = inMarkerX + 'px'; document.getElementById('markerOut').style.left = outMarkerX + 'px'; document.getElementById('exportZone').style.left = inMarkerX + 'px'; document.getElementById('exportZone').style.width = Math.max(0, outMarkerX - inMarkerX) + 'px'; triggerAutosave(); }
         updateExportZone();
@@ -321,7 +329,7 @@
 
         function updateMasterVolume() { let vol = document.getElementById('masterVolume').value / 100; projectClips.forEach(c => { if (c.type === 'video' && c.domElement) c.domElement.volume = vol; }); }
 
-        // --- CORTE QUIRÚRGICO (TIJERAS) ---
+        // --- CORTAR Y DUPLICAR ---
         function splitSelectedClip() {
             if(!selectedClipEl) return alert("Selecciona un clip para cortarlo.");
             const id = selectedClipEl.getAttribute('data-id'); const orig = projectClips.find(c => c.id == id);
@@ -342,29 +350,95 @@
             triggerAutosave();
         }
 
-        // --- TEXTOS ---
+        // --- EDICIÓN EN VIVO DE TEXTO ---
+        function liveUpdateText() {
+            if(selectedClipEl) {
+                const id = selectedClipEl.getAttribute('data-id'); let clipObj = projectClips.find(c => c.id == id);
+                if(clipObj && clipObj.type === 'text') {
+                    clipObj.content = document.getElementById('overlayText').value || "Texto";
+                    clipObj.color = document.getElementById('overlayColor').value;
+                    clipObj.bgColor = document.getElementById('overlayBg').value;
+                    clipObj.font = document.getElementById('textFont').value;
+                    clipObj.useBg = document.getElementById('useBgOption').value === 'color';
+                    selectedClipEl.querySelector('.drag-area').innerHTML = `<i class="fa-solid fa-font"></i> &nbsp;${clipObj.content.substring(0,6)}`;
+                    triggerAutosave();
+                }
+            }
+        }
+
+        function selectClip(e) {
+            if(selectedClipEl) selectedClipEl.classList.remove('selected'); selectedClipEl = e.currentTarget; selectedClipEl.classList.add('selected');
+            const id = selectedClipEl.getAttribute('data-id'); const c = projectClips.find(clip => clip.id == id);
+            if(c) {
+                if(c.type === 'text' || c.type === 'sticker') document.getElementById('elementSize').value = c.size;
+                // Cargar datos en los inputs para edición en vivo
+                if(c.type === 'text') {
+                    document.getElementById('overlayText').value = c.content;
+                    document.getElementById('overlayColor').value = c.color;
+                    document.getElementById('overlayBg').value = c.bgColor || '#000000';
+                    document.getElementById('textFont').value = c.font || 'sans-serif';
+                    document.getElementById('useBgOption').value = c.useBg ? 'color' : 'transparent';
+                }
+            }
+        }
+
         function addTextToTimeline() {
-            const text = document.getElementById('overlayText').value; if (!text) return;
-            const clipId = Date.now(); const clipUi = document.createElement('div'); clipUi.className = 'clip-block text'; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '150px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-font"></i> &nbsp;${text.substring(0,6)}</div>`;
+            const clipId = Date.now(); const clipUi = document.createElement('div'); clipUi.className = 'clip-block text'; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '150px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-font"></i> &nbsp;Nuevo</div>`;
             makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById('textTrack').appendChild(clipUi);
 
-            const useBgOption = document.getElementById('useBgOption').value; const useBg = useBgOption === 'color'; 
-            projectClips.push({ id: clipId, type: 'text', content: text, color: document.getElementById('overlayColor').value, font: document.getElementById('textFont').value, useBg: useBg, bgColor: document.getElementById('overlayBg').value, x: 640, y: 360, size: 80, startPx: playheadX, widthPx: 150, offsetPx: 0, filter: 'none', anim: 'none', isOffline: false });
-            document.getElementById('overlayText').value = '';
+            projectClips.push({ id: clipId, type: 'text', content: "Nuevo Texto", color: "#ffffff", font: "sans-serif", useBg: false, bgColor: "#000000", x: 640, y: 360, size: 80, startPx: playheadX, widthPx: 150, offsetPx: 0, filter: 'none', anim: 'none', isOffline: false });
             
+            // Simular click para seleccionarlo y poder editarlo en vivo
+            clipUi.dispatchEvent(new Event('mousedown'));
+            document.getElementById('overlayText').value = "Nuevo Texto";
+            document.getElementById('overlayText').focus();
+
             let endClip = playheadX + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
             triggerAutosave();
         }
 
+        // --- CONVERTIR IMAGEN A BASE64 PARA AUTOGUARDADO ---
+        function getBase64(file, callback) {
+            var reader = new FileReader(); reader.readAsDataURL(file);
+            reader.onload = function () { callback(reader.result); };
+        }
+
+        function addMediaToTimeline(event) {
+            initAudio(); const file = event.target.files[0]; if (!file) return; const isVideo = file.type.startsWith('video/'); const url = URL.createObjectURL(file); const clipId = Date.now();
+            const clipUi = document.createElement('div'); clipUi.className = `clip-block ${isVideo ? '' : 'image'}`; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '150px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${isVideo ? 'film' : 'image'}"></i> &nbsp;${file.name.substring(0,8)}</div>`;
+            makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById(isVideo ? 'videoTrack' : 'imageTrack').appendChild(clipUi);
+            
+            let mediaElement; let base64Data = null;
+            if(isVideo) {
+                mediaElement = document.createElement('video'); mediaElement.src = url; mediaElement.playsInline = true; mediaElement.crossOrigin = "anonymous"; mediaElement.volume = document.getElementById('masterVolume').value / 100; mediaContainer.appendChild(mediaElement);
+                mediaElement.oncanplay = () => { if (!mediaElement.hasAudioConnected) { try { const source = audioCtx.createMediaElementSource(mediaElement); source.connect(audioCtx.destination); source.connect(audioMixer); mediaElement.hasAudioConnected = true; } catch(e) {} } };
+                pushMediaObj(clipId, 'video', mediaElement, null, null);
+            } else { 
+                mediaElement = new Image(); mediaElement.src = url; 
+                getBase64(file, (b64) => { 
+                    pushMediaObj(clipId, 'image', mediaElement, null, b64); 
+                });
+            }
+        }
+
         function addStickerToTimeline(event) {
-            const file = event.target.files[0]; if (!file) return; const img = new Image();
+            const file = event.target.files[0]; if (!file) return; const img = new Image(); const url = URL.createObjectURL(file); img.src = url;
             img.onload = () => {
                 const clipId = Date.now(); const clipUi = document.createElement('div'); clipUi.className = 'clip-block image'; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '100px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-face-smile"></i> &nbsp;Sticker</div>`;
                 makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById('textTrack').appendChild(clipUi); 
-                projectClips.push({ id: clipId, type: 'sticker', imgObj: img, ratio: img.height / img.width, x: 640, y: 360, size: 300, startPx: playheadX, widthPx: 100, offsetPx: 0, filter: 'none', anim: 'none', isOffline: false });
                 
-                let endClip = playheadX + 100; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 110; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode(); triggerAutosave();
-            }; img.src = URL.createObjectURL(file);
+                getBase64(file, (b64) => {
+                    projectClips.push({ id: clipId, type: 'sticker', imgObj: img, ratio: img.height / img.width, x: 640, y: 360, size: 300, startPx: playheadX, widthPx: 100, offsetPx: 0, filter: 'none', anim: 'none', isOffline: false, base64Data: b64 });
+                    triggerAutosave();
+                });
+                
+                let endClip = playheadX + 100; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 110; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode();
+            }; 
+        }
+
+        function pushMediaObj(id, type, domElement, imgObj, b64) {
+            projectClips.push({ id: id, type: type, startPx: playheadX, widthPx: 150, offsetPx: 0, domElement: domElement, imgObj: imgObj, filter: 'none', anim: 'none', isOffline: false, base64Data: b64 });
+            let endClip = playheadX + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode(); triggerAutosave();
         }
 
         function duplicateSelectedClip() {
@@ -380,6 +454,33 @@
 
         function updateSelectedOverlaySize() { if (selectedClipEl) { const id = selectedClipEl.getAttribute('data-id'); let clipObj = projectClips.find(c => c.id == id); if (clipObj && (clipObj.type === 'text' || clipObj.type === 'sticker')) { clipObj.size = parseInt(document.getElementById('elementSize').value); triggerAutosave(); } } }
 
+        function deleteSelectedClip() { if(selectedClipEl) { const id = selectedClipEl.getAttribute('data-id'); let clipObj = projectClips.find(c => c.id == id); if (clipObj && clipObj.domElement) clipObj.domElement.remove(); projectClips = projectClips.filter(c => c.id != id); selectedClipEl.remove(); selectedClipEl = null; triggerAutosave(); } }
+
+        // --- ARRASTRE ---
+        function makeDraggable(element, isPlayhead = false, clipId = null) {
+            let startX = 0, currentLeft = 0; const dragTarget = isPlayhead ? element : element.querySelector('.drag-area');
+            function dragStart(e) { if(isPlaying) togglePlayback(); e.preventDefault(); startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; currentLeft = parseInt(element.style.left || 45); document.addEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', dragMove, {passive: false}); document.addEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', dragEnd); }
+            function dragMove(e) {
+                e.preventDefault(); let x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; let newLeft = currentLeft + (x - startX); if(newLeft < 45) newLeft = 45; element.style.left = newLeft + 'px';
+                if(isPlayhead) {
+                    playheadX = newLeft; globalTime = Math.floor((newLeft - 45) / (pixelsPerSecond/10)); updateTimecode();
+                    projectClips.forEach(c => { if((c.type === 'video' || c.type === 'audio') && c.domElement && newLeft >= c.startPx && newLeft <= c.startPx + c.widthPx && !c.isOffline) { let mediaTime = ((newLeft - c.startPx) + c.offsetPx) / pixelsPerSecond; if(mediaTime >= 0) c.domElement.currentTime = mediaTime; } });
+                } else if (clipId) { let clipObj = projectClips.find(c => c.id == clipId); if(clipObj) clipObj.startPx = newLeft; }
+            }
+            function dragEnd(e) { document.removeEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', dragMove); document.removeEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', dragEnd); if(!isPlayhead) triggerAutosave(); }
+            if(dragTarget) { dragTarget.addEventListener('mousedown', dragStart); dragTarget.addEventListener('touchstart', dragStart, {passive: false}); }
+        }
+        makeDraggable(document.getElementById('playhead'), true);
+
+        function makeResizable(clipUi, clipId) {
+            const handle = document.createElement('div'); handle.className = 'resize-handle'; clipUi.appendChild(handle); let isResizing = false; let startX = 0; let startWidth = 0;
+            function resizeStart(e) { e.stopPropagation(); isResizing = true; startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; startWidth = parseInt(clipUi.style.width, 10); document.addEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', resizeMove, {passive: false}); document.addEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', resizeEnd); }
+            function resizeMove(e) { if (!isResizing) return; e.preventDefault(); let currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; let newWidth = startWidth + (currentX - startX); if (newWidth < 30) newWidth = 30; clipUi.style.width = newWidth + 'px'; let clipObj = projectClips.find(c => c.id == clipId); if (clipObj) clipObj.widthPx = newWidth; }
+            function resizeEnd(e) { isResizing = false; document.removeEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', resizeMove); document.removeEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', resizeEnd); triggerAutosave(); }
+            handle.addEventListener('mousedown', resizeStart); handle.addEventListener('touchstart', resizeStart, {passive: false});
+        }
+
+        // TÁCTIL EN CANVAS
         function getCanvasPos(e) { const rect = canvas.getBoundingClientRect(); const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY; return { x: (clientX - rect.left) * (canvas.width / rect.width), y: (clientY - rect.top) * (canvas.height / rect.height) }; }
         function handleCanvasStart(e) {
             const pos = getCanvasPos(e); let found = null;
@@ -390,10 +491,10 @@
                     else if (o.type === 'sticker') { let w = o.size; let h = o.size * o.ratio; if (pos.x >= o.x - w/2 - 30 && pos.x <= o.x + w/2 + 30 && pos.y >= o.y - h/2 - 30 && pos.y <= o.y + h/2 + 30) { found = o; break; } }
                 }
             }
-            if (found) { isDraggingOverlay = true; let clipDom = document.querySelector(`.clip-block[data-id="${found.id}"]`); if (clipDom) { if(selectedClipEl) selectedClipEl.classList.remove('selected'); selectedClipEl = clipDom; selectedClipEl.classList.add('selected'); } document.getElementById('elementSize').value = found.size; e.preventDefault(); }
+            if (found) { isDraggingOverlay = true; let clipDom = document.querySelector(`.clip-block[data-id="${found.id}"]`); if (clipDom) { clipDom.dispatchEvent(new Event('mousedown')); } document.getElementById('elementSize').value = found.size; e.preventDefault(); }
         }
         function handleCanvasMove(e) { if (!isDraggingOverlay || !selectedClipEl) return; e.preventDefault(); const pos = getCanvasPos(e); const id = selectedClipEl.getAttribute('data-id'); let clipObj = projectClips.find(c => c.id == id); if(clipObj && (clipObj.type === 'text' || clipObj.type === 'sticker')) { clipObj.x = pos.x; clipObj.y = pos.y; } }
-        function handleCanvasEnd(e) { if(isDraggingOverlay) { isDraggingOverlay = false; triggerAutosave(); } }
+        function handleCanvasEnd(e) { if(isDraggingOverlay){ isDraggingOverlay = false; triggerAutosave(); } }
         canvas.addEventListener('mousedown', handleCanvasStart); canvas.addEventListener('touchstart', handleCanvasStart, {passive: false}); canvas.addEventListener('mousemove', handleCanvasMove);  canvas.addEventListener('touchmove', handleCanvasMove, {passive: false}); window.addEventListener('mouseup', handleCanvasEnd); window.addEventListener('touchend', handleCanvasEnd);
 
         // --- RENDERIZADO ---
@@ -437,7 +538,7 @@
         }
         renderLoop();
 
-        // --- SISTEMA DE TIEMPOS ---
+        // --- SISTEMA DE TIEMPOS Y EXPORTACIÓN ---
         let globalTime = 0; let isPlaying = false; let playInterval; let playheadX = 45; const pixelsPerSecond = 20; 
         function updateTimecode() { let secs = Math.floor(globalTime / 10); let decs = globalTime % 10; document.getElementById('timecode').innerText = `00:${secs.toString().padStart(2,'0')}.${decs}`; }
         function togglePlayback() {
@@ -455,50 +556,7 @@
             playheadX = inMarkerX; document.getElementById('playhead').style.left = playheadX + 'px'; globalTime = Math.floor((playheadX - 45) / (pixelsPerSecond/10)); updateTimecode(); document.getElementById('timelineScroll').scrollLeft = playheadX - 100; 
             projectClips.forEach(clip => { if((clip.type === 'video' || clip.type === 'audio') && clip.domElement && !clip.isOffline) { let mediaTime = ((playheadX - clip.startPx) + clip.offsetPx) / pixelsPerSecond; if(mediaTime >= 0) clip.domElement.currentTime = mediaTime; } });
         }
-        function selectClip(e) {
-            if(selectedClipEl) selectedClipEl.classList.remove('selected'); selectedClipEl = e.currentTarget; selectedClipEl.classList.add('selected');
-            const id = selectedClipEl.getAttribute('data-id'); const c = projectClips.find(clip => clip.id == id);
-            if(c && (c.type === 'text' || c.type === 'sticker')) document.getElementById('elementSize').value = c.size;
-        }
-        function deleteSelectedClip() { if(selectedClipEl) { const id = selectedClipEl.getAttribute('data-id'); let clipObj = projectClips.find(c => c.id == id); if (clipObj && clipObj.domElement) clipObj.domElement.remove(); projectClips = projectClips.filter(c => c.id != id); selectedClipEl.remove(); selectedClipEl = null; triggerAutosave(); } }
-
-        function addMediaToTimeline(event) {
-            initAudio(); const file = event.target.files[0]; if (!file) return; const isVideo = file.type.startsWith('video/'); const url = URL.createObjectURL(file); const clipId = Date.now();
-            const clipUi = document.createElement('div'); clipUi.className = `clip-block ${isVideo ? '' : 'image'}`; clipUi.style.left = playheadX + 'px'; clipUi.style.width = '150px'; clipUi.setAttribute('data-id', clipId); clipUi.innerHTML = `<div class="drag-area"><i class="fa-solid fa-${isVideo ? 'film' : 'image'}"></i> &nbsp;${file.name.substring(0,8)}</div>`;
-            makeDraggable(clipUi, false, clipId); makeResizable(clipUi, clipId); clipUi.addEventListener('mousedown', selectClip); clipUi.addEventListener('touchstart', selectClip, {passive: true}); document.getElementById(isVideo ? 'videoTrack' : 'imageTrack').appendChild(clipUi);
-            let mediaElement;
-            if(isVideo) {
-                mediaElement = document.createElement('video'); mediaElement.src = url; mediaElement.playsInline = true; mediaElement.crossOrigin = "anonymous"; mediaElement.volume = document.getElementById('masterVolume').value / 100; mediaContainer.appendChild(mediaElement);
-                mediaElement.oncanplay = () => { if (!mediaElement.hasAudioConnected) { try { const source = audioCtx.createMediaElementSource(mediaElement); source.connect(audioCtx.destination); source.connect(audioMixer); mediaElement.hasAudioConnected = true; } catch(e) {} } };
-            } else { mediaElement = new Image(); mediaElement.src = url; }
-            projectClips.push({ id: clipId, type: isVideo ? 'video' : 'image', startPx: playheadX, widthPx: 150, offsetPx: 0, domElement: mediaElement, filter: 'none', anim: 'none', isOffline: false });
-            let endClip = playheadX + 150; if (endClip > outMarkerX) { outMarkerX = endClip; updateExportZone(); } playheadX += 160; document.getElementById('playhead').style.left = playheadX + 'px'; updateTimecode(); triggerAutosave();
-        }
-
-        function makeDraggable(element, isPlayhead = false, clipId = null) {
-            let startX = 0, currentLeft = 0; const dragTarget = isPlayhead ? element : element.querySelector('.drag-area');
-            function dragStart(e) { if(isPlaying) togglePlayback(); e.preventDefault(); startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; currentLeft = parseInt(element.style.left || 45); document.addEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', dragMove, {passive: false}); document.addEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', dragEnd); }
-            function dragMove(e) {
-                e.preventDefault(); let x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; let newLeft = currentLeft + (x - startX); if(newLeft < 45) newLeft = 45; element.style.left = newLeft + 'px';
-                if(isPlayhead) {
-                    playheadX = newLeft; globalTime = Math.floor((newLeft - 45) / (pixelsPerSecond/10)); updateTimecode();
-                    projectClips.forEach(c => { if((c.type === 'video' || c.type === 'audio') && c.domElement && newLeft >= c.startPx && newLeft <= c.startPx + c.widthPx && !c.isOffline) { let mediaTime = ((newLeft - c.startPx) + c.offsetPx) / pixelsPerSecond; if(mediaTime >= 0) c.domElement.currentTime = mediaTime; } });
-                } else if (clipId) { let clipObj = projectClips.find(c => c.id == clipId); if(clipObj) clipObj.startPx = newLeft; }
-            }
-            function dragEnd(e) { document.removeEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', dragMove); document.removeEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', dragEnd); if(!isPlayhead) triggerAutosave(); }
-            if(dragTarget) { dragTarget.addEventListener('mousedown', dragStart); dragTarget.addEventListener('touchstart', dragStart, {passive: false}); }
-        }
-        makeDraggable(document.getElementById('playhead'), true);
-
-        function makeResizable(clipUi, clipId) {
-            const handle = document.createElement('div'); handle.className = 'resize-handle'; clipUi.appendChild(handle); let isResizing = false; let startX = 0; let startWidth = 0;
-            function resizeStart(e) { e.stopPropagation(); isResizing = true; startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; startWidth = parseInt(clipUi.style.width, 10); document.addEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', resizeMove, {passive: false}); document.addEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', resizeEnd); }
-            function resizeMove(e) { if (!isResizing) return; e.preventDefault(); let currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; let newWidth = startWidth + (currentX - startX); if (newWidth < 30) newWidth = 30; clipUi.style.width = newWidth + 'px'; let clipObj = projectClips.find(c => c.id == clipId); if (clipObj) clipObj.widthPx = newWidth; }
-            function resizeEnd(e) { isResizing = false; document.removeEventListener(e.type.includes('touch') ? 'touchmove' : 'mousemove', resizeMove); document.removeEventListener(e.type.includes('touch') ? 'touchend' : 'mouseup', resizeEnd); triggerAutosave(); }
-            handle.addEventListener('mousedown', resizeStart); handle.addEventListener('touchstart', resizeStart, {passive: false});
-        }
-
-        // --- EXPORTAR ---
+        
         let mainRecorder; let exportChunks = [];
         function exportVideo() {
             initAudio(); if(projectClips.length === 0) return alert("Agrega medios antes de exportar."); if(selectedClipEl) selectedClipEl.classList.remove('selected'); selectedClipEl = null; if(exportChunks.length > 0) exportChunks = [];
@@ -506,7 +564,7 @@
             try { mainRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm;codecs=vp9,opus' }); } catch (e) { mainRecorder = new MediaRecorder(finalStream); }
             mainRecorder.ondataavailable = e => { if (e.data.size > 0) exportChunks.push(e.data); };
             mainRecorder.onstop = () => {
-                isExporting = false; const blob = new Blob(exportChunks, { type: 'video/webm' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = `CapacitiumX_Produccion_${Date.now()}.webm`; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
+                isExporting = false; const blob = new Blob(exportChunks, { type: 'video/webm' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = `Produccion_${Date.now()}.webm`; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
                 document.getElementById('recBadge').style.display = 'none'; document.getElementById('btnExport').innerHTML = '<i class="fa-solid fa-rocket"></i> EXPORTAR ZONA'; alert("¡Exportación completada!");
             };
             
@@ -515,8 +573,6 @@
         }
 
         function switchTab(tabId) { document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active')); document.getElementById(tabId).classList.add('active'); event.currentTarget.classList.add('active'); }
-        
-        // Cargar historial al iniciar
         window.onload = loadProjectList;
     </script>
 </body>
